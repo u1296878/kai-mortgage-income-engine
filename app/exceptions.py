@@ -20,3 +20,7 @@ class CaseNotFound(Exception):
 
 class JobNotFound(Exception):
     pass
+
+
+class ResultNotFound(Exception):
+    pass
