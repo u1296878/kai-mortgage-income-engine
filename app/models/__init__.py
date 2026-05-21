@@ -1,3 +1,4 @@
+from app.models.case import Case
 from app.models.document import Document
 
-__all__ = ["Document"]
+__all__ = ["Case", "Document"]

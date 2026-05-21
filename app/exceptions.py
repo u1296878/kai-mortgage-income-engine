@@ -12,3 +12,7 @@ class ExtractionFailed(Exception):
 
 class JobAlreadyProcessed(Exception):
     pass
+
+
+class CaseNotFound(Exception):
+    pass
