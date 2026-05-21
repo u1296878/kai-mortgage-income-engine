@@ -31,6 +31,15 @@ def w2_blocks():
     ]
 
 
+def paystub_blocks():
+    return [
+        {"text": "YTD Gross", "page": 1, "x1": 10, "y1": 20, "x2": 80, "y2": 30},
+        {"text": "$42,500.00", "page": 1, "x1": 100, "y1": 20, "x2": 170, "y2": 30},
+        {"text": "Gross Pay", "page": 1, "x1": 10, "y1": 50, "x2": 80, "y2": 60},
+        {"text": "$3,269.23", "page": 1, "x1": 100, "y1": 50, "x2": 170, "y2": 60},
+    ]
+
+
 def test_extract_fields_w2_returns_correct_fields(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
@@ -43,12 +52,13 @@ def test_extract_fields_w2_returns_correct_fields(monkeypatch):
     ]
 
 
-def test_extract_fields_pay_stub_returns_correct_fields():
+def test_extract_fields_pay_stub_returns_correct_fields(monkeypatch):
     document_id = uuid4()
+    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: paystub_blocks())
 
     fields = extraction_service.extract_fields(document_id, Path("pay.pdf"), "pay_stub")
 
-    assert [field.field for field in fields] == ["gross_ytd", "gross_per_period"]
+    assert [field.field for field in fields] == ["gross_ytd", "gross_this_period"]
 
 
 def test_extract_fields_returns_source_references(monkeypatch):
@@ -71,10 +81,14 @@ def test_extract_fields_unsupported_type_raises():
 
 def test_extract_fields_all_doc_types_return_fields(monkeypatch):
     document_id = uuid4()
-    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
+    monkeypatch.setattr(
+        extraction_service,
+        "parse_pdf",
+        lambda file_path: paystub_blocks() if "pay" in str(file_path) else w2_blocks(),
+    )
 
     field_counts = [
-        len(extraction_service.extract_fields(document_id, Path("doc.pdf"), doc_type))
+        len(extraction_service.extract_fields(document_id, Path(f"{doc_type}.pdf"), doc_type))
         for doc_type in DocumentType
     ]
 

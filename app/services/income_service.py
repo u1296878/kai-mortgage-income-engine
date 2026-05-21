@@ -12,9 +12,7 @@ def compute_annual_income(
     if doc_type == "w2":
         return values["w2_wages"], "high", None
     if doc_type == "pay_stub":
-        annual_income = values["gross_ytd"] / datetime.now().month * 12
-        notes = _pay_stub_notes(annual_income, values.get("gross_per_period"))
-        return annual_income, "medium", notes
+        return _compute_pay_stub_income(fields, values)
     if doc_type == "tax_return":
         return values["agi"], "high", None
     if doc_type == "bank_statement":
@@ -37,14 +35,40 @@ def summarize_case_income(results: list[Result]) -> tuple[float, list[ExtractedF
     return total, sources
 
 
-def _pay_stub_notes(
-    annual_income: float,
-    gross_per_period: float | None,
-) -> str | None:
-    if gross_per_period is None:
+def _compute_pay_stub_income(
+    fields: list[ExtractedField],
+    values: dict[str, float],
+) -> tuple[float, str, str | None]:
+    period_income = _period_based_income(fields, values)
+    if "gross_ytd" in values:
+        annual_income = values["gross_ytd"] / datetime.now().month * 12
+        notes = _pay_stub_notes(annual_income, period_income)
+        return annual_income, "medium", notes
+    if period_income is not None:
+        return period_income, "low", None
+    return 0.0, "low", "No gross income fields found"
+
+
+def _period_based_income(
+    fields: list[ExtractedField],
+    values: dict[str, float],
+) -> float | None:
+    multiplier = _period_multiplier(fields)
+    if multiplier is None or "gross_this_period" not in values:
         return None
-    per_period_projection = gross_per_period * 26
-    variance = abs(annual_income - per_period_projection) / annual_income
+    return values["gross_this_period"] * multiplier
+
+
+def _period_multiplier(fields: list[ExtractedField]) -> int | None:
+    multipliers = {"weekly": 52, "biweekly": 26, "semimonthly": 24, "monthly": 12}
+    period = next((field.raw_text for field in fields if field.field == "pay_period_type"), None)
+    return multipliers.get(period or "")
+
+
+def _pay_stub_notes(annual_income: float, period_income: float | None) -> str | None:
+    if period_income is None or annual_income == 0:
+        return None
+    variance = abs(annual_income - period_income) / annual_income
     if variance > 0.2:
-        return "YTD projection differs from per-period projection by more than 20%"
+        return f"YTD and period-based projections differ by {variance:.0%}"
     return None

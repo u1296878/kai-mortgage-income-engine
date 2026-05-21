@@ -1,6 +1,7 @@
 from pathlib import Path
 from uuid import UUID
 
+from app.extractors.paystub_extractor import extract_paystub_fields
 from app.extractors.w2_extractor import extract_w2_fields
 from app.exceptions import UnsupportedDocumentType
 from app.models.document_type import DocumentType
@@ -9,10 +10,6 @@ from app.parsers.pdf_parser import parse_pdf
 from app.schemas.extraction import BoundingBox, ExtractedField
 
 STUB_FIELDS = {
-    DocumentType.pay_stub: (
-        ("gross_ytd", 42500.00),
-        ("gross_per_period", 3269.23),
-    ),
     DocumentType.tax_return: (
         ("agi", 79000.00),
         ("wages", 85000.00),
@@ -43,6 +40,11 @@ def extract_fields(
         if not blocks:
             blocks = parse_with_ocr(file_path)
         return extract_w2_fields(blocks, document_id)
+    if valid_doc_type == DocumentType.pay_stub:
+        blocks = parse_pdf(file_path)
+        if not blocks:
+            blocks = parse_with_ocr(file_path)
+        return extract_paystub_fields(blocks, document_id)
     return _stub_fields(document_id, valid_doc_type)
 
 
