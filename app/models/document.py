@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import DateTime, String
@@ -21,7 +21,7 @@ class Document(Base):
     case_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     broker_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     uploaded_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )

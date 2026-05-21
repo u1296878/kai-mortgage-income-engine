@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -40,7 +40,7 @@ def claim_next_pending_job(db: Session) -> Job | None:
     if job is None:
         return None
     job.status = JobStatus.processing.value
-    job.started_at = datetime.utcnow()
+    job.started_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(job)
     return job
@@ -56,7 +56,7 @@ def update_job_status(
     job.status = status
     job.error = error
     if status in {JobStatus.complete.value, JobStatus.failed.value}:
-        job.completed_at = datetime.utcnow()
+        job.completed_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(job)
     return job
