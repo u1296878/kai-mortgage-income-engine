@@ -7,6 +7,14 @@ Kai Mortgage Income Engine is a local-first FastAPI backend for internal mortgag
 - Python 3.11+
 - pip
 
+For PDF parsing:
+
+```bash
+# macOS: brew install tesseract
+# Ubuntu: apt-get install tesseract-ocr
+# Windows: https://github.com/UB-Mannheim/tesseract/wiki
+```
+
 ## Installation
 
 ```bash
@@ -37,7 +45,7 @@ The background worker starts automatically with the app and polls for pending jo
 pytest
 ```
 
-Expected test count after this step: 71.
+Expected test count after this step: 82.
 
 ## Exercising the pipeline manually
 
@@ -80,6 +88,6 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 
 ## Current limitations
 
-- Extraction returns hardcoded mock data; real PDF parsing is not yet implemented.
+- W-2 extraction uses real PDF parsing; other document types still return hardcoded mock data.
 - Auth is not implemented; all endpoints are open.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.

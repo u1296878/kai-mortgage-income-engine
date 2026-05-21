@@ -3,3 +3,4 @@ __pycache__/
 local.db
 local.db-journal
 .pytest_cache/
+test_documents/*.pdf

@@ -1,18 +1,14 @@
 from pathlib import Path
 from uuid import UUID
 
+from app.extractors.w2_extractor import extract_w2_fields
 from app.exceptions import UnsupportedDocumentType
 from app.models.document_type import DocumentType
+from app.parsers.ocr_parser import parse_with_ocr
+from app.parsers.pdf_parser import parse_pdf
 from app.schemas.extraction import BoundingBox, ExtractedField
 
-# STUB: returns hardcoded extraction fields until parser/extractor layers exist.
-# TODO: Replace with real parsers and extractors (see app/parsers/ and app/extractors/)
-
 STUB_FIELDS = {
-    DocumentType.w2: (
-        ("w2_wages", 85000.00),
-        ("w2_federal_tax_withheld", 12000.00),
-    ),
     DocumentType.pay_stub: (
         ("gross_ytd", 42500.00),
         ("gross_per_period", 3269.23),
@@ -34,7 +30,7 @@ STUB_FIELDS = {
 
 def extract_fields(
     document_id: UUID,
-    _file_path: Path,
+    file_path: Path,
     doc_type: str,
 ) -> list[ExtractedField]:
     try:
@@ -42,6 +38,17 @@ def extract_fields(
     except ValueError as error:
         raise UnsupportedDocumentType(f"Unsupported document type: {doc_type}") from error
 
+    if valid_doc_type == DocumentType.w2:
+        blocks = parse_pdf(file_path)
+        if not blocks:
+            blocks = parse_with_ocr(file_path)
+        return extract_w2_fields(blocks, document_id)
+    return _stub_fields(document_id, valid_doc_type)
+
+
+def _stub_fields(document_id: UUID, doc_type: DocumentType) -> list[ExtractedField]:
+    # STUB: non-W-2 document types keep mock data until their real parsers exist.
+    # TODO: Replace with per-document extractors as Phase 2 expands.
     return [
         ExtractedField(
             field=field,
@@ -50,5 +57,5 @@ def extract_fields(
             page=1,
             bounding_box=BoundingBox(x1=0.0, y1=0.0, x2=0.0, y2=0.0),
         )
-        for field, value in STUB_FIELDS[valid_doc_type]
+        for field, value in STUB_FIELDS[doc_type]
     ]

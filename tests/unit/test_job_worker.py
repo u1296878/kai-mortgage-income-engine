@@ -8,12 +8,12 @@ from app.services import extraction_service
 from app.workers import job_worker
 
 
-def make_document(doc_type="w2"):
+def make_document(doc_type="pay_stub"):
     return Document(
         id=str(uuid4()),
-        filename="w2.pdf",
+        filename="paystub.pdf",
         doc_type=doc_type,
-        storage_path="storage/path/w2.pdf",
+        storage_path="storage/path/paystub.pdf",
     )
 
 

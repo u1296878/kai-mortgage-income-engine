@@ -16,3 +16,4 @@ class ExtractedField(BaseModel):
     document_id: UUID
     page: int
     bounding_box: BoundingBox
+    raw_text: str | None = None

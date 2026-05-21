@@ -7,3 +7,4 @@
 - Step 5: Extraction stub and results - extraction service stub, result model, income service, result service, router, tests. Full pipeline shape exists. Extraction returns hardcoded fields in correct shape with source references.
 - Step 6: Background worker - polling worker runs inside FastAPI lifespan, picks up pending jobs, runs extraction, saves results, marks jobs complete or failed. Full pipeline operational with stub data.
 - Step 7: Smoke test and README - full broker workflow tested end to end, dependency override leak fixed, README documents installation, running, and manual curl walkthrough.
+- Phase 2, Step 1: W-2 PDF parsing - pdf_parser, ocr_parser, w2_extractor. Real extraction replaces stub for w2 doc type. Synthetic W-2 variant extracts wages with real coordinates; IRS and ADP public samples were checked but contain no extractable wage values.

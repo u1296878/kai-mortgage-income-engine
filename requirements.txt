@@ -8,3 +8,7 @@ aiofiles
 pytest
 pytest-asyncio
 httpx
+pdfplumber
+pytesseract
+Pillow
+pdf2image

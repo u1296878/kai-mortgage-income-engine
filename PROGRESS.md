@@ -2,7 +2,8 @@
 
 Last updated: 2026-05-21
 
-Current status: Prototype complete. The full stub-data pipeline is implemented, tested, and documented.
+Current status: Phase 2 in progress. W-2 real extraction complete.
+Remaining doc types still use stub: pay_stub, tax_return, bank_statement, other.
 
 - [x] Step 1: Project scaffold
 - [x] Step 2: Document upload
