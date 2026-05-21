@@ -4,6 +4,7 @@ Last updated: 2026-05-21
 
 Current status: Phase 2 in progress. W-2 real extraction complete.
 Remaining doc types still use stub: pay_stub, tax_return, bank_statement, other.
+Manual HTTP W-2 upload test is pending for local two-terminal verification.
 
 - [x] Step 1: Project scaffold
 - [x] Step 2: Document upload

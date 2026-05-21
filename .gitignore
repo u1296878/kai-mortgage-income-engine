@@ -2,5 +2,9 @@ __pycache__/
 *.py[cod]*
 local.db
 local.db-journal
+manual_test.db
+manual_test.db-journal
+manual_server*.log
 .pytest_cache/
+storage/
 test_documents/*.pdf
