@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./local.db"
     storage_path: str = "./storage"
+    worker_poll_interval: int = 5
 
 
 settings = Settings()

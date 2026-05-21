@@ -1,18 +1,37 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
+from threading import Event
 
 from fastapi import FastAPI
 
+from app.config import settings
 from app.db.init_db import init_db
+from app.db.session import SessionLocal
 from app.routers.cases import router as cases_router
 from app.routers.documents import router as documents_router
 from app.routers.jobs import router as jobs_router
 from app.routers.results import router as results_router
+from app.workers.job_worker import run_worker
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
-    yield
+    stop_event = Event()
+    loop = asyncio.get_running_loop()
+    worker = loop.run_in_executor(
+        None,
+        run_worker,
+        SessionLocal,
+        settings.worker_poll_interval,
+        stop_event,
+    )
+    try:
+        yield
+    finally:
+        stop_event.set()
+        with suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(worker, timeout=settings.worker_poll_interval + 2)
 
 
 app = FastAPI(title="Kai Mortgage Income Engine", lifespan=lifespan)
