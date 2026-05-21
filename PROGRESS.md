@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-21
 
-Current status: Step 6 complete. Background worker processes pending jobs through extraction and result saving with failure handling.
+Current status: Prototype complete. The full stub-data pipeline is implemented, tested, and documented.
 
 - [x] Step 1: Project scaffold
 - [x] Step 2: Document upload
@@ -10,4 +10,15 @@ Current status: Step 6 complete. Background worker processes pending jobs throug
 - [x] Step 4: Job queue
 - [x] Step 5: Extraction stub and results
 - [x] Step 6: Background worker
-- [ ] Step 7: End-to-end smoke test
+- [x] Step 7: End-to-end smoke test
+
+## Prototype complete
+
+The core pipeline is fully operational with stub data. Every step from document upload
+to income verification result is implemented, tested, and documented.
+
+Next phase: real PDF parsing
+- Replace extraction stub with pdfplumber for clean PDFs
+- Add Tesseract OCR for scanned documents
+- Build per-document-type extractors (W-2, pay stub, tax return, bank statement, rental)
+- Test with real mortgage documents

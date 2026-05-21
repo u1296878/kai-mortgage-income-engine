@@ -6,3 +6,4 @@
 - Step 4: Job queue - model, repo, service, router, tests. Jobs created automatically on document upload. Claim mechanism is atomic with SELECT FOR UPDATE SKIP LOCKED.
 - Step 5: Extraction stub and results - extraction service stub, result model, income service, result service, router, tests. Full pipeline shape exists. Extraction returns hardcoded fields in correct shape with source references.
 - Step 6: Background worker - polling worker runs inside FastAPI lifespan, picks up pending jobs, runs extraction, saves results, marks jobs complete or failed. Full pipeline operational with stub data.
+- Step 7: Smoke test and README - full broker workflow tested end to end, dependency override leak fixed, README documents installation, running, and manual curl walkthrough.

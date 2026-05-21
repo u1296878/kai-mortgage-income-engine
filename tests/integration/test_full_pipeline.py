@@ -28,14 +28,16 @@ def test_full_pipeline_upload_to_result(test_db, tmp_path, monkeypatch):
     updated_job = job_repo.get_job(test_db, job.id)
     result = result_repo.get_result_by_job(test_db, job.id)
 
-    app.dependency_overrides.clear()
-    assert original_status == "pending"
-    assert processed is True
-    assert updated_job.status == "complete"
-    assert result.annual_income is not None
-    assert result.extracted_fields[0]["document_id"] == document_id
-    assert result.extracted_fields[0]["page"] == 1
-    assert "bounding_box" in result.extracted_fields[0]
+    try:
+        assert original_status == "pending"
+        assert processed is True
+        assert updated_job.status == "complete"
+        assert result.annual_income is not None
+        assert result.extracted_fields[0]["document_id"] == document_id
+        assert result.extracted_fields[0]["page"] == 1
+        assert "bounding_box" in result.extracted_fields[0]
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_full_pipeline_failed_extraction_marks_job_failed(
@@ -65,7 +67,9 @@ def test_full_pipeline_failed_extraction_marks_job_failed(
     updated_job = job_repo.get_job(test_db, job.id)
     result = result_repo.get_result_by_job(test_db, job.id)
 
-    app.dependency_overrides.clear()
-    assert updated_job.status == "failed"
-    assert updated_job.error == "extractor failed"
-    assert result is None
+    try:
+        assert updated_job.status == "failed"
+        assert updated_job.error == "extractor failed"
+        assert result is None
+    finally:
+        app.dependency_overrides.clear()
