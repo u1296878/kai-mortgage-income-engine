@@ -11,6 +11,7 @@ from app.exceptions import UnsupportedDocumentType
 from app.models.document import Document
 from app.models.document_type import DocumentType
 from app.repositories import document_repo
+from app.services import job_service
 
 
 def upload_document(db: Session, file: UploadFile, doc_type: str) -> Document:
@@ -24,6 +25,7 @@ def upload_document(db: Session, file: UploadFile, doc_type: str) -> Document:
         storage_path=str(storage_path),
     )
     saved_document = document_repo.save_document(db, document)
+    job_service.create_job_for_document(db, saved_document.id)
     log_event(
         "document_uploaded",
         {"document_id": saved_document.id, "doc_type": saved_document.doc_type},

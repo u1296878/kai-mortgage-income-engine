@@ -16,3 +16,7 @@ class JobAlreadyProcessed(Exception):
 
 class CaseNotFound(Exception):
     pass
+
+
+class JobNotFound(Exception):
+    pass
