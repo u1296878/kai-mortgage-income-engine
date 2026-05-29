@@ -50,6 +50,17 @@ def tax_return_blocks():
     ]
 
 
+def bank_statement_blocks():
+    return [
+        {"text": "Statement Period:", "page": 1, "x1": 10, "y1": 10, "x2": 90, "y2": 20},
+        {"text": "2024-01-01", "page": 1, "x1": 100, "y1": 10, "x2": 170, "y2": 20},
+        {"text": "to", "page": 1, "x1": 180, "y1": 10, "x2": 190, "y2": 20},
+        {"text": "2024-03-31", "page": 1, "x1": 200, "y1": 10, "x2": 270, "y2": 20},
+        {"text": "Payroll Deposit", "page": 1, "x1": 10, "y1": 50, "x2": 100, "y2": 60},
+        {"text": "5000.00", "page": 1, "x1": 200, "y1": 50, "x2": 250, "y2": 60},
+    ]
+
+
 def test_extract_fields_w2_returns_correct_fields(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
@@ -80,6 +91,15 @@ def test_extract_fields_tax_return_returns_real_fields(monkeypatch):
     assert [field.field for field in fields] == ["agi"]
 
 
+def test_extract_fields_bank_statement_returns_real_fields(monkeypatch):
+    document_id = uuid4()
+    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: bank_statement_blocks())
+
+    fields = extraction_service.extract_fields(document_id, Path("bank.pdf"), "bank_statement")
+
+    assert "average_monthly_deposit" in {field.field for field in fields}
+
+
 def test_extract_fields_returns_source_references(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
@@ -108,6 +128,8 @@ def test_extract_fields_all_doc_types_return_fields(monkeypatch):
             if "pay" in str(file_path)
             else tax_return_blocks()
             if "tax_return" in str(file_path)
+            else bank_statement_blocks()
+            if "bank_statement" in str(file_path)
             else w2_blocks()
         ),
     )

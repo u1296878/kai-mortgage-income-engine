@@ -45,7 +45,7 @@ The background worker starts automatically with the app and polls for pending jo
 pytest
 ```
 
-Expected test count after this step: 113.
+Expected test count after this step: 127.
 
 ## Exercising the pipeline manually
 
@@ -88,6 +88,6 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 
 ## Current limitations
 
-- W-2, pay stub, and tax return extraction use real PDF parsing; remaining document types still return hardcoded mock data.
+- W-2, pay stub, tax return, and bank statement extraction use real PDF parsing; remaining document types still return hardcoded mock data.
 - Auth is not implemented; all endpoints are open.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.

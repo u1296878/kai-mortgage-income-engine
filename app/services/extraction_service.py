@@ -1,6 +1,7 @@
 from pathlib import Path
 from uuid import UUID
 
+from app.extractors.bank_statement_extractor import extract_bank_statement_fields
 from app.extractors.paystub_extractor import extract_paystub_fields
 from app.extractors.tax_return_extractor import extract_tax_return_fields
 from app.extractors.w2_extractor import extract_w2_fields
@@ -11,10 +12,6 @@ from app.parsers.pdf_parser import parse_pdf
 from app.schemas.extraction import BoundingBox, ExtractedField
 
 STUB_FIELDS = {
-    DocumentType.bank_statement: (
-        ("average_monthly_deposit", 7200.00),
-        ("months_sampled", 3.0),
-    ),
     DocumentType.other: (
         ("reported_income", 50000.00),
         ("period_months", 12.0),
@@ -47,6 +44,11 @@ def extract_fields(
         if not blocks:
             blocks = parse_with_ocr(file_path)
         return extract_tax_return_fields(blocks, document_id)
+    if valid_doc_type == DocumentType.bank_statement:
+        blocks = parse_pdf(file_path)
+        if not blocks:
+            blocks = parse_with_ocr(file_path)
+        return extract_bank_statement_fields(blocks, document_id)
     return _stub_fields(document_id, valid_doc_type)
 
 

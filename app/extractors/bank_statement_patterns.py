@@ -1,0 +1,46 @@
+DEPOSIT_KEYWORDS = (
+    "deposit",
+    "deposits",
+    "credit",
+    "credits",
+    "direct deposit",
+    "ach credit",
+    "payroll",
+    "mobile deposit",
+    "remote deposit",
+    "electronic deposit",
+    "incoming wire",
+    "zelle received",
+    "transfer from",
+)
+
+EXCLUSION_KEYWORDS = (
+    "withdrawal",
+    "debit",
+    "card purchase",
+    "atm",
+    "check",
+    "fee",
+    "service charge",
+    "interest charge",
+    "loan payment",
+    "mortgage payment",
+    "rent payment",
+    "overdraft",
+    "nsf",
+    "reversal",
+    "returned",
+    "refund",
+    "balance",
+    "beginning balance",
+    "ending balance",
+    "available balance",
+)
+
+DATE_PATTERNS = (
+    r"\d{4}-\d{1,2}-\d{1,2}",
+    r"\d{1,2}/\d{1,2}/\d{4}",
+    r"\d{1,2}-\d{1,2}-\d{4}",
+    r"[A-Z][a-z]+ \d{1,2}, \d{4}",
+    r"[A-Z][a-z]{2} \d{1,2}, \d{4}",
+)
