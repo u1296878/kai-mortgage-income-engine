@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_db
+from app.dependencies import get_current_user, get_db
 from app.exceptions import CaseNotFound
 from app.main import app
 from app.services import case_service
@@ -16,7 +16,11 @@ def client():
     def override_db():
         yield "test-db"
 
+    def override_user():
+        return SimpleNamespace(id=str(uuid4()), role="broker")
+
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = override_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -36,7 +40,11 @@ def make_case(**overrides):
 
 def test_create_case_returns_case_response(client, monkeypatch):
     case = make_case()
-    monkeypatch.setattr(case_service, "create_case", lambda db, title, broker_id: case)
+    monkeypatch.setattr(
+        case_service,
+        "create_case",
+        lambda db, title, broker_id, current_user: case,
+    )
 
     response = client.post(
         "/cases",
@@ -49,7 +57,11 @@ def test_create_case_returns_case_response(client, monkeypatch):
 
 def test_list_cases_returns_list(client, monkeypatch):
     case = make_case()
-    monkeypatch.setattr(case_service, "list_cases", lambda db, broker_id=None: [case])
+    monkeypatch.setattr(
+        case_service,
+        "list_cases",
+        lambda db, current_user, broker_id=None: [case],
+    )
 
     response = client.get("/cases")
 
@@ -59,7 +71,7 @@ def test_list_cases_returns_list(client, monkeypatch):
 
 def test_get_case_returns_case(client, monkeypatch):
     case = make_case()
-    monkeypatch.setattr(case_service, "get_case", lambda db, case_id: case)
+    monkeypatch.setattr(case_service, "get_case", lambda db, case_id, current_user: case)
 
     response = client.get(f"/cases/{case.id}")
 
@@ -68,7 +80,7 @@ def test_get_case_returns_case(client, monkeypatch):
 
 
 def test_get_missing_case_returns_404(client, monkeypatch):
-    def raise_not_found(db, case_id):
+    def raise_not_found(db, case_id, current_user):
         raise CaseNotFound("Case not found")
 
     case_id = uuid4()
@@ -91,7 +103,7 @@ def test_get_case_with_documents_returns_documents(client, monkeypatch):
     monkeypatch.setattr(
         case_service,
         "get_case_with_documents",
-        lambda db, case_id, broker_id=None: case,
+        lambda db, case_id, current_user, broker_id=None: case,
     )
 
     response = client.get(f"/cases/{case.id}/documents")
@@ -102,7 +114,11 @@ def test_get_case_with_documents_returns_documents(client, monkeypatch):
 
 def test_patch_case_returns_updated_case(client, monkeypatch):
     case = make_case(title="Updated Title")
-    monkeypatch.setattr(case_service, "update_case", lambda db, case_id, updates: case)
+    monkeypatch.setattr(
+        case_service,
+        "update_case",
+        lambda db, case_id, updates, current_user: case,
+    )
 
     response = client.patch(f"/cases/{case.id}", json={"title": "Updated Title"})
 
@@ -112,7 +128,11 @@ def test_patch_case_returns_updated_case(client, monkeypatch):
 
 def test_delete_case_returns_204(client, monkeypatch):
     case_id = uuid4()
-    monkeypatch.setattr(case_service, "delete_case", lambda db, case_id: None)
+    monkeypatch.setattr(
+        case_service,
+        "delete_case",
+        lambda db, case_id, current_user: None,
+    )
 
     response = client.delete(f"/cases/{case_id}")
 

@@ -7,6 +7,7 @@ from app.repositories import job_repo, result_repo
 from app.services import extraction_service
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
+from tests.auth_helpers import auth_headers
 
 
 def test_full_pipeline_upload_to_result(test_db, tmp_path, monkeypatch):
@@ -16,11 +17,13 @@ def test_full_pipeline_upload_to_result(test_db, tmp_path, monkeypatch):
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
+    headers = auth_headers(client)
 
     response = client.post(
         "/documents/upload",
         files={"file": ("w2.pdf", _w2_pdf_bytes(), "application/pdf")},
         data={"doc_type": "w2"},
+        headers=headers,
     )
     document_id = response.json()["id"]
     job = job_repo.get_job_by_document(test_db, document_id)
@@ -56,11 +59,13 @@ def test_full_pipeline_failed_extraction_marks_job_failed(
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     monkeypatch.setattr(extraction_service, "extract_fields", raise_extraction_failed)
     client = TestClient(app)
+    headers = auth_headers(client)
 
     response = client.post(
         "/documents/upload",
         files={"file": ("w2.pdf", _w2_pdf_bytes(), "application/pdf")},
         data={"doc_type": "w2"},
+        headers=headers,
     )
     document_id = response.json()["id"]
     job = job_repo.get_job_by_document(test_db, document_id)

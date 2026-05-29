@@ -9,6 +9,7 @@ from app.main import app
 from app.repositories import job_repo, result_repo
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
+from tests.auth_helpers import auth_headers
 
 
 def test_rental_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
@@ -18,6 +19,7 @@ def test_rental_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
+    headers = auth_headers(client)
 
     try:
         response = client.post(
@@ -25,6 +27,7 @@ def test_rental_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
             files={"file": ("rental.pdf", _rental_pdf_bytes(), "application/pdf")},
             # other currently represents rental-income documents.
             data={"doc_type": "other"},
+            headers=headers,
         )
         assert response.status_code == 200
         job = job_repo.get_job_by_document(test_db, response.json()["id"])

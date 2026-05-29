@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_db
+from app.dependencies import get_current_user, get_db
 from app.exceptions import JobNotFound
 from app.main import app
 from app.services import job_service
@@ -16,7 +16,11 @@ def client():
     def override_db():
         yield "test-db"
 
+    def override_user():
+        return SimpleNamespace(id=str(uuid4()), role="broker")
+
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = override_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -37,7 +41,7 @@ def make_job(**overrides):
 
 def test_get_job_returns_status_response(client, monkeypatch):
     job = make_job()
-    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id: job)
+    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id, user: job)
 
     response = client.get(f"/jobs/{job.id}")
 
@@ -47,7 +51,7 @@ def test_get_job_returns_status_response(client, monkeypatch):
 
 
 def test_get_missing_job_returns_404(client, monkeypatch):
-    def raise_not_found(db, job_id):
+    def raise_not_found(db, job_id, user):
         raise JobNotFound("Job not found")
 
     job_id = uuid4()
@@ -61,7 +65,11 @@ def test_get_missing_job_returns_404(client, monkeypatch):
 def test_get_job_by_document_returns_job(client, monkeypatch):
     document_id = uuid4()
     job = make_job(document_id=str(document_id))
-    monkeypatch.setattr(job_service, "get_job_for_document", lambda db, doc_id: job)
+    monkeypatch.setattr(
+        job_service,
+        "get_job_for_document",
+        lambda db, doc_id, user: job,
+    )
 
     response = client.get(f"/documents/{document_id}/job")
 
@@ -70,7 +78,7 @@ def test_get_job_by_document_returns_job(client, monkeypatch):
 
 
 def test_get_job_by_document_returns_404_when_no_job(client, monkeypatch):
-    def raise_not_found(db, document_id):
+    def raise_not_found(db, document_id, user):
         raise JobNotFound("Job not found")
 
     document_id = uuid4()

@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_db
+from app.dependencies import get_current_user, get_db
 from app.exceptions import ResultNotFound
 from app.main import app
 from app.services import result_service
@@ -16,7 +16,11 @@ def client():
     def override_db():
         yield "test-db"
 
+    def override_user():
+        return SimpleNamespace(id=str(uuid4()), role="broker")
+
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = override_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -51,7 +55,11 @@ def make_result(**overrides):
 
 def test_get_result_returns_result_response(client, monkeypatch):
     result = make_result()
-    monkeypatch.setattr(result_service, "get_result", lambda db, result_id: result)
+    monkeypatch.setattr(
+        result_service,
+        "get_result",
+        lambda db, result_id, current_user: result,
+    )
 
     response = client.get(f"/results/{result.id}")
 
@@ -60,7 +68,7 @@ def test_get_result_returns_result_response(client, monkeypatch):
 
 
 def test_get_missing_result_returns_404(client, monkeypatch):
-    def raise_not_found(db, result_id):
+    def raise_not_found(db, result_id, current_user):
         raise ResultNotFound("Result not found")
 
     result_id = uuid4()
@@ -80,7 +88,11 @@ def test_get_case_summary_returns_summary(client, monkeypatch):
         results=[result],
         sources=result.extracted_fields,
     )
-    monkeypatch.setattr(result_service, "get_case_summary", lambda db, case_id: summary)
+    monkeypatch.setattr(
+        result_service,
+        "get_case_summary",
+        lambda db, case_id, current_user: summary,
+    )
 
     response = client.get(f"/cases/{case_id}/summary")
 

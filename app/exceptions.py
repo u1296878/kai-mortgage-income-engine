@@ -36,3 +36,7 @@ class InvalidCredentials(Exception):
 
 class Unauthorized(Exception):
     pass
+
+
+class InvalidCaseRequest(Exception):
+    pass

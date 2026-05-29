@@ -3,9 +3,11 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.audit.logger import log_event
-from app.exceptions import ResultNotFound
+from app.exceptions import CaseNotFound, DocumentNotFound, JobNotFound, ResultNotFound
 from app.models.result import Result
-from app.repositories import result_repo
+from app.models.user import User
+from app.models.user_role import UserRole
+from app.repositories import case_repo, document_repo, job_repo, result_repo
 from app.schemas.extraction import ExtractedField
 from app.schemas.result import CaseSummaryResponse
 from app.services import income_service
@@ -45,7 +47,14 @@ def save_extraction_result(
     return saved_result
 
 
-def get_case_summary(db: Session, case_id: UUID) -> CaseSummaryResponse:
+def get_case_summary(
+    db: Session,
+    case_id: UUID,
+    current_user: User,
+) -> CaseSummaryResponse:
+    case = case_repo.get_case(db, case_id)
+    if not _is_manager(current_user) and case.broker_id != current_user.id:
+        raise CaseNotFound(f"Case not found: {case_id}")
     results = result_repo.list_results_by_case(db, case_id)
     total, sources = income_service.summarize_case_income(results)
     return CaseSummaryResponse(
@@ -56,12 +65,45 @@ def get_case_summary(db: Session, case_id: UUID) -> CaseSummaryResponse:
     )
 
 
-def get_result(db: Session, result_id: UUID) -> Result:
-    return result_repo.get_result(db, result_id)
+def get_result(db: Session, result_id: UUID, current_user: User) -> Result:
+    result = result_repo.get_result(db, result_id)
+    _ensure_result_access(db, result, current_user)
+    return result
 
 
-def get_result_for_job(db: Session, job_id: UUID) -> Result:
+def get_result_for_job(db: Session, job_id: UUID, current_user: User) -> Result:
+    try:
+        job = job_repo.get_job(db, job_id)
+    except JobNotFound as error:
+        raise ResultNotFound(f"Result not found for job: {job_id}") from error
+    _ensure_job_access(db, job, current_user)
     result = result_repo.get_result_by_job(db, job_id)
     if result is None:
         raise ResultNotFound(f"Result not found for job: {job_id}")
     return result
+
+
+def _ensure_result_access(db: Session, result: Result, current_user: User) -> None:
+    if _is_manager(current_user):
+        return
+    try:
+        document = document_repo.get_document(db, UUID(result.document_id))
+    except DocumentNotFound as error:
+        raise ResultNotFound(f"Result not found: {result.id}") from error
+    if document.broker_id != current_user.id:
+        raise ResultNotFound(f"Result not found: {result.id}")
+
+
+def _ensure_job_access(db: Session, job, current_user: User) -> None:
+    if _is_manager(current_user):
+        return
+    try:
+        document = document_repo.get_document(db, UUID(job.document_id))
+    except DocumentNotFound as error:
+        raise ResultNotFound(f"Result not found for job: {job.id}") from error
+    if document.broker_id != current_user.id:
+        raise ResultNotFound(f"Result not found for job: {job.id}")
+
+
+def _is_manager(user: User) -> bool:
+    return user.role == UserRole.manager.value

@@ -9,7 +9,7 @@ from app.schemas.document import DocumentResponse
 
 class CaseCreate(BaseModel):
     title: str
-    broker_id: UUID
+    broker_id: UUID | None = None
 
 
 class CaseUpdate(BaseModel):

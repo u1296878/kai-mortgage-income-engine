@@ -4,6 +4,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.repositories import job_repo
 from app.storage import local_storage
+from tests.auth_helpers import auth_headers
 
 
 def test_uploading_document_automatically_creates_pending_job(
@@ -17,11 +18,13 @@ def test_uploading_document_automatically_creates_pending_job(
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
+    headers = auth_headers(client)
 
     response = client.post(
         "/documents/upload",
         files={"file": ("paystub.pdf", b"contents", "application/pdf")},
         data={"doc_type": "pay_stub"},
+        headers=headers,
     )
     document_id = response.json()["id"]
     job = job_repo.get_job_by_document(test_db, document_id)

@@ -9,6 +9,7 @@ from app.main import app
 from app.repositories import job_repo, result_repo
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
+from tests.auth_helpers import auth_headers
 
 
 def test_paystub_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
@@ -18,12 +19,14 @@ def test_paystub_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
+    headers = auth_headers(client)
 
     try:
         response = client.post(
             "/documents/upload",
             files={"file": ("paystub.pdf", _paystub_pdf_bytes(), "application/pdf")},
             data={"doc_type": "pay_stub"},
+            headers=headers,
         )
         assert response.status_code == 200
         document_id = response.json()["id"]

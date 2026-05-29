@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_db
+from app.dependencies import get_current_user, get_db
 from app.exceptions import DocumentNotFound
 from app.main import app
 from app.services import document_service
@@ -16,7 +16,11 @@ def client():
     def override_db():
         yield "test-db"
 
+    def override_user():
+        return SimpleNamespace(id=str(uuid4()), role="broker")
+
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = override_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -36,7 +40,11 @@ def make_document(**overrides):
 
 def test_upload_endpoint_returns_document_response(client, monkeypatch):
     document = make_document()
-    monkeypatch.setattr(document_service, "upload_document", lambda db, file, doc_type: document)
+    monkeypatch.setattr(
+        document_service,
+        "upload_document",
+        lambda db, file, doc_type, current_user: document,
+    )
 
     response = client.post(
         "/documents/upload",
@@ -61,7 +69,11 @@ def test_upload_invalid_doc_type_returns_422(client):
 
 def test_get_document_returns_document(client, monkeypatch):
     document = make_document()
-    monkeypatch.setattr(document_service, "get_document", lambda db, document_id: document)
+    monkeypatch.setattr(
+        document_service,
+        "get_document",
+        lambda db, document_id, current_user: document,
+    )
 
     response = client.get(f"/documents/{document.id}")
 
@@ -71,7 +83,7 @@ def test_get_document_returns_document(client, monkeypatch):
 
 
 def test_get_missing_document_returns_404(client, monkeypatch):
-    def raise_not_found(db, document_id):
+    def raise_not_found(db, document_id, current_user):
         raise DocumentNotFound("Document not found")
 
     document_id = uuid4()
@@ -88,7 +100,7 @@ def test_patch_case_link_returns_updated_document(client, monkeypatch):
     monkeypatch.setattr(
         document_service,
         "link_document_to_case",
-        lambda db, document_id, linked_case_id: document,
+        lambda db, document_id, linked_case_id, current_user: document,
     )
 
     response = client.patch(

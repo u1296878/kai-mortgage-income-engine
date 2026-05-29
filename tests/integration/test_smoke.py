@@ -6,6 +6,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
+from tests.auth_helpers import auth_headers
 
 
 def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatch):
@@ -15,12 +16,13 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    broker_id = str(uuid4())
+    headers = auth_headers(client)
 
     try:
         case_response = client.post(
             "/cases",
-            json={"title": "Johnson Refinance 2024", "broker_id": broker_id},
+            json={"title": "Johnson Refinance 2024", "broker_id": str(uuid4())},
+            headers=headers,
         )
         assert case_response.status_code == 200
         case_id = case_response.json()["id"]
@@ -29,6 +31,7 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
             "/documents/upload",
             files={"file": ("w2.pdf", _w2_pdf_bytes(), "application/pdf")},
             data={"doc_type": "w2"},
+            headers=headers,
         )
         assert upload_response.status_code == 200
         document_id = upload_response.json()["id"]
@@ -36,10 +39,11 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
         link_response = client.patch(
             f"/documents/{document_id}/case",
             json={"case_id": case_id},
+            headers=headers,
         )
         assert link_response.status_code == 200
 
-        job_response = client.get(f"/documents/{document_id}/job")
+        job_response = client.get(f"/documents/{document_id}/job", headers=headers)
         assert job_response.status_code == 200
         assert job_response.json()["status"] == "pending"
         job_id = job_response.json()["id"]
@@ -47,16 +51,16 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
         processed = process_next_job(test_db)
         assert processed is True
 
-        completed_job_response = client.get(f"/jobs/{job_id}")
+        completed_job_response = client.get(f"/jobs/{job_id}", headers=headers)
         assert completed_job_response.status_code == 200
         assert completed_job_response.json()["status"] == "complete"
 
-        result_response = client.get(f"/jobs/{job_id}/result")
+        result_response = client.get(f"/jobs/{job_id}/result", headers=headers)
         assert result_response.status_code == 200
         assert result_response.json()["annual_income"] is not None
         assert result_response.json()["extracted_fields"]
 
-        summary_response = client.get(f"/cases/{case_id}/summary")
+        summary_response = client.get(f"/cases/{case_id}/summary", headers=headers)
         assert summary_response.status_code == 200
         assert summary_response.json()["total_annual_income"] is not None
         sources = summary_response.json()["sources"]

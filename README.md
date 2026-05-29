@@ -54,43 +54,59 @@ python -m app.worker_main
 pytest
 ```
 
-Expected test count after this step: 173.
+Expected test count after this step: 181.
 
 ## Authentication
 
-Local JWT auth is available. Users can register and log in at `/auth/register` and `/auth/login`, then call protected endpoints with `Authorization: Bearer <token>`. `/auth/me` returns the current authenticated user. Full broker/manager resource scoping is the next phase.
+Local JWT auth is available. Users register and log in at `/auth/register` and `/auth/login`, then call protected endpoints with `Authorization: Bearer <token>`. `/auth/me` returns the current authenticated user.
+
+Brokers can access only their own cases, documents, jobs, results, and summaries. Managers can access all records.
 
 ## Exercising the pipeline manually
 
 These examples assume the API is running at `http://127.0.0.1:8000`. `jq` is optional but makes response handling easier.
 
 ```bash
-BROKER_ID="11111111-1111-1111-1111-111111111111"
+curl -s -X POST http://127.0.0.1:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"broker@example.com","password":"secret-password"}' | jq
+
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"broker@example.com","password":"secret-password"}' \
+  | jq -r '.access_token')
 
 CASE_ID=$(curl -s -X POST http://127.0.0.1:8000/cases \
   -H "Content-Type: application/json" \
-  -d "{\"title\":\"Johnson Refinance 2024\",\"broker_id\":\"$BROKER_ID\"}" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"title":"Johnson Refinance 2024"}' \
   | jq -r '.id')
 
 DOCUMENT_ID=$(curl -s -X POST http://127.0.0.1:8000/documents/upload \
+  -H "Authorization: Bearer $TOKEN" \
   -F "doc_type=w2" \
   -F "file=@./sample.pdf;type=application/pdf" \
   | jq -r '.id')
 
 curl -s -X PATCH "http://127.0.0.1:8000/documents/$DOCUMENT_ID/case" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d "{\"case_id\":\"$CASE_ID\"}" | jq
 
-JOB_ID=$(curl -s "http://127.0.0.1:8000/documents/$DOCUMENT_ID/job" | jq -r '.id')
+JOB_ID=$(curl -s "http://127.0.0.1:8000/documents/$DOCUMENT_ID/job" \
+  -H "Authorization: Bearer $TOKEN" | jq -r '.id')
 
-curl -s "http://127.0.0.1:8000/jobs/$JOB_ID" | jq
+curl -s "http://127.0.0.1:8000/jobs/$JOB_ID" \
+  -H "Authorization: Bearer $TOKEN" | jq
 
 # Wait a few seconds for the worker to process the pending job.
 sleep 6
 
-curl -s "http://127.0.0.1:8000/jobs/$JOB_ID/result" | jq
+curl -s "http://127.0.0.1:8000/jobs/$JOB_ID/result" \
+  -H "Authorization: Bearer $TOKEN" | jq
 
-curl -s "http://127.0.0.1:8000/cases/$CASE_ID/summary" | jq
+curl -s "http://127.0.0.1:8000/cases/$CASE_ID/summary" \
+  -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ## Pipeline overview
@@ -103,5 +119,5 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
-- JWT auth is implemented; full broker/manager resource scoping is still pending.
+- JWT auth and broker/manager resource scoping are implemented.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.
