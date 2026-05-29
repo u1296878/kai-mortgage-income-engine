@@ -44,6 +44,9 @@ python -m app.worker_main
 | `DATABASE_URL` | `sqlite:///./local.db` | SQLAlchemy database URL used by the app. |
 | `STORAGE_PATH` | `./storage` | Local folder where uploaded documents are stored. |
 | `WORKER_POLL_INTERVAL` | `5` | Seconds between background worker job polls. |
+| `JWT_SECRET_KEY` | local development secret | JWT signing secret. Set a secure value in production. |
+| `JWT_ALGORITHM` | `HS256` | JWT signing algorithm. |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access token lifetime in minutes. |
 
 ## Running tests
 
@@ -51,7 +54,11 @@ python -m app.worker_main
 pytest
 ```
 
-Expected test count after this step: 156.
+Expected test count after this step: 173.
+
+## Authentication
+
+Local JWT auth is available. Users can register and log in at `/auth/register` and `/auth/login`, then call protected endpoints with `Authorization: Bearer <token>`. `/auth/me` returns the current authenticated user. Full broker/manager resource scoping is the next phase.
 
 ## Exercising the pipeline manually
 
@@ -96,5 +103,5 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
-- Auth is not implemented; all endpoints are open.
+- JWT auth is implemented; full broker/manager resource scoping is still pending.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.
