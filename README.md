@@ -62,6 +62,8 @@ Local JWT auth is available. Users register and log in at `/auth/register` and `
 
 Brokers can access only their own cases, documents, jobs, results, and summaries. Managers can access all records.
 
+Production note: manager provisioning is still a hardening item. Before production, manager account creation should move behind an admin-only or deployment-controlled flow.
+
 ## Exercising the pipeline manually
 
 These examples assume the API is running at `http://127.0.0.1:8000`. `jq` is optional but makes response handling easier.
@@ -120,4 +122,6 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
 - JWT auth and broker/manager resource scoping are implemented.
+- Case income summaries still aggregate all case results together; an income stream model is needed before production.
+- Manager account provisioning is not production-hardened yet.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.

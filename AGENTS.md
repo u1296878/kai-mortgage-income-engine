@@ -37,7 +37,7 @@ These are decided. Do not revisit them without a good reason.
 | Validation | Pydantic v2 | |
 | File storage | Local `storage/` folder | Swap to S3/R2 later |
 | Job queue | DB-backed polling worker | Swap to Redis/Celery later |
-| Auth | JWT tokens | Not built yet — stub exists |
+| Auth | JWT tokens | Implemented for brokers and managers |
 | Deployment | Railway | |
 
 ---
@@ -96,14 +96,14 @@ All data access goes through the API. Always.
 ### Document storage paths come from internal IDs only
 Never derive a file storage path from user input. Use internal IDs.
 
-### Security layers are not built yet — do not close the door on them
-Auth, permissions, and audit logging will be added as separate layers.
-Do not make decisions now that would require unpicking the codebase to add them later.
+### Security layers must stay easy to extend
+Auth and broker/manager permissions are implemented. Audit logging is still local and will be expanded separately.
+Do not make decisions now that would require unpicking the codebase to add production audit logging, admin provisioning, or stronger auth controls later.
 
 ### Every broker's data is scoped to them
 Every case, document, and result belongs to a broker.
-When auth is added, all queries for broker-role users will filter by their ID.
-Write queries so this filter can be added without restructuring them.
+Broker-role users are filtered by their ID in the service layer.
+Write new queries so ownership filters can be applied without restructuring them.
 
 ---
 
@@ -124,7 +124,7 @@ Nothing else does income math.
 ### Two roles exist: broker and manager
 - Brokers see only their own cases, documents, and results.
 - Managers see everything.
-- Role enforcement is not built yet but the data model must support it from the start.
+- Role enforcement is implemented in services. Keep authorization out of repository functions and do not rely on routers alone.
 
 ---
 

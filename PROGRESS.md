@@ -34,3 +34,13 @@ Broker/manager data scoping:
 - Brokers can access only their own cases, documents, jobs, results, and summaries
 - Managers can access all records
 - Broker case creation uses the authenticated user id instead of trusting request-provided broker_id
+
+## Phase 3 complete
+
+The private workflow is protected by JWT auth and service-layer authorization. Brokers are isolated to their own records across cases, documents, jobs, results, and summaries. Managers have full visibility across broker-owned records.
+
+Ready for Phase 4 focus:
+- Income stream model for cases with multiple income sources
+- Production admin/user provisioning
+- Production storage and deployment hardening
+- Expanded audit logging

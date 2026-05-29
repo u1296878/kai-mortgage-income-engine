@@ -15,3 +15,4 @@
 - Phase 2 cleanup and hardening - verified all document types route through real extractors, removed stale stub references, confirmed source-reference and unhappy-path test coverage, refreshed docs after completing real PDF extraction.
 - Phase 3, Step 1: JWT auth foundation - user model, password hashing, JWT creation/verification, auth service/repository/router, current-user dependency, and auth tests added.
 - Phase 3, Step 2: Broker and manager data scoping - protected private routes with JWT auth, enforced broker ownership in services, allowed manager-wide access, and added authorization tests for cases, documents, jobs, results, and summaries.
+- Phase 3 cleanup and hardening - refreshed AGENTS/README/progress tracking after auth and scoping completion, verified private route protection, service-layer authorization, broker isolation, manager visibility, and full test coverage before Phase 4.
