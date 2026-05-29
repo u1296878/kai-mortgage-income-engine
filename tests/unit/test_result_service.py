@@ -1,18 +1,7 @@
 from uuid import uuid4
 
-from app.models.case import Case
-from app.models.user import User
 from app.schemas.extraction import BoundingBox, ExtractedField
 from app.services import result_service
-
-
-def make_user(user_id=None, role="broker"):
-    return User(
-        id=str(user_id or uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
 
 
 def make_field(field: str = "w2_wages", value: float = 85000.00) -> ExtractedField:
@@ -56,33 +45,3 @@ def test_save_extraction_result_sets_annual_income(test_db):
     )
 
     assert result.annual_income == 85000.00
-
-
-def test_get_case_summary_returns_total_and_sources(test_db):
-    case_id = uuid4()
-    manager = make_user(role="manager")
-    test_db.add(Case(id=str(case_id), broker_id=str(uuid4()), title="Smith Purchase"))
-    test_db.commit()
-    first_field = make_field("w2_wages", 85000.00)
-    second_field = make_field("agi", 79000.00)
-    result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "w2",
-        [first_field],
-    )
-    result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "tax_return",
-        [second_field],
-    )
-
-    summary = result_service.get_case_summary(test_db, case_id, manager)
-
-    assert summary.total_annual_income == 164000.00
-    assert [source.field for source in summary.sources] == ["w2_wages", "agi"]

@@ -40,3 +40,11 @@ class Unauthorized(Exception):
 
 class InvalidCaseRequest(Exception):
     pass
+
+
+class IncomeStreamNotFound(Exception):
+    pass
+
+
+class InvalidIncomeStreamAssignment(Exception):
+    pass

@@ -18,6 +18,7 @@ class Result(Base):
     job_id: Mapped[str] = mapped_column(String(36), nullable=False)
     document_id: Mapped[str] = mapped_column(String(36), nullable=False)
     case_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    income_stream_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     doc_type: Mapped[str] = mapped_column(String, nullable=False)
     extracted_fields: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
     annual_income: Mapped[float | None] = mapped_column(Float, nullable=True)

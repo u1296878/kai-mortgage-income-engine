@@ -54,7 +54,7 @@ python -m app.worker_main
 pytest
 ```
 
-Expected test count after this step: 181.
+Expected test count after this step: 205.
 
 ## Authentication
 
@@ -63,6 +63,10 @@ Local JWT auth is available. Users register and log in at `/auth/register` and `
 Brokers can access only their own cases, documents, jobs, results, and summaries. Managers can access all records.
 
 Production note: manager provisioning is still a hardening item. Before production, manager account creation should move behind an admin-only or deployment-controlled flow.
+
+## Income streams
+
+Results can be grouped into case-level income streams (for example employment, rental, or bank-statement income) through authenticated stream endpoints. When a case has income streams, case summary totals use stream annual incomes instead of blindly summing every result. This avoids double-counting when multiple documents support the same income source.
 
 ## Exercising the pipeline manually
 
@@ -122,6 +126,6 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
 - JWT auth and broker/manager resource scoping are implemented.
-- Case income summaries still aggregate all case results together; an income stream model is needed before production.
+- Automatic stream suggestion/matching is not implemented yet; stream assignment is currently explicit.
 - Manager account provisioning is not production-hardened yet.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.

@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-29
 
-Current status: Phase 3 broker/manager data scoping complete. Phase 2 real PDF extraction is complete, JWT auth foundation is complete, and private mortgage workflow routes now enforce ownership.
+Current status: Phase 4 income stream foundation complete. Phase 2 real PDF extraction and Phase 3 auth/scoping are complete, and case summaries can now use stream totals to avoid double-counting supporting documents.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -44,3 +44,11 @@ Ready for Phase 4 focus:
 - Production admin/user provisioning
 - Production storage and deployment hardening
 - Expanded audit logging
+
+## Phase 4 in progress
+
+Phase 4, Step 1 is complete:
+- Income stream model, repository, service, schemas, and router added
+- Result-to-stream assignment and removal implemented with same-case validation
+- Stream annual income recalculates with deterministic confidence ordering: `high > medium > low`, then most recent result
+- Case summaries use stream totals when streams exist and fall back to result totals when streams do not

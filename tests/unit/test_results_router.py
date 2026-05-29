@@ -42,6 +42,7 @@ def make_result(**overrides):
         "job_id": str(uuid4()),
         "document_id": str(document_id),
         "case_id": None,
+        "income_stream_id": None,
         "doc_type": "w2",
         "extracted_fields": [make_field(document_id)],
         "annual_income": 85000.00,
@@ -85,6 +86,7 @@ def test_get_case_summary_returns_summary(client, monkeypatch):
     summary = SimpleNamespace(
         case_id=str(case_id),
         total_annual_income=85000.00,
+        income_streams=[],
         results=[result],
         sources=result.extracted_fields,
     )
