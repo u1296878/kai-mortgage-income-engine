@@ -31,6 +31,12 @@ uvicorn app.main:app --reload
 
 The background worker starts automatically with the app and polls for pending jobs.
 
+To run the worker as its own process:
+
+```bash
+python -m app.worker_main
+```
+
 ## Environment variables
 
 | Variable | Default | Description |

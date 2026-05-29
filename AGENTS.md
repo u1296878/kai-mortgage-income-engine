@@ -119,7 +119,7 @@ This is a hard requirement for audit and review.
 
 ### Income logic is isolated
 Income calculations, totals, and consistency checks live in one place only.
-Nothing else does income math.
+Nothing else does income math. 
 
 ### Two roles exist: broker and manager
 - Brokers see only their own cases, documents, and results.
@@ -241,3 +241,52 @@ The broker must be able to click any income figure in their results and be taken
 
 ### How the frontend uses it
 The frontend renders PDFs using PDF.js. Each source reference becomes a clickable link that opens the document at the specified page and draws a highlight overlay at the bounding box coordinates. The result record must carry enough information for the frontend to do this without any additional lookups.
+
+
+---
+
+## Parsing and Extraction Architecture
+
+Document processing is split into two distinct concerns. Keep them separate.
+
+### Parsers — getting text out of the file
+Parsers live in `app/parsers/`. They take a file and return raw text plus bounding box coordinates. They know nothing about mortgage documents or income fields.
+
+```
+app/parsers/
+    pdf_parser.py     — pdfplumber for clean digital PDFs
+    ocr_parser.py     — Tesseract for scanned PDFs and images
+```
+
+A parser returns a list of text blocks, each with page number and bounding box. That is all it does.
+
+### Extractors — finding fields in the text
+Extractors live in `app/extractors/`. They take the raw text blocks from a parser and return structured fields with source references. They know the layout of specific document types. They do not touch files.
+
+```
+app/extractors/
+    w2_extractor.py
+    paystub_extractor.py
+    tax_return_extractor.py
+    bank_statement_extractor.py
+    rental_extractor.py
+```
+
+Each extractor is independent. Improving one never touches another.
+
+### How they connect
+`extraction_service.py` owns the handoff:
+1. Determine document type
+2. Call the right parser based on whether the PDF has real text or is a scanned image
+3. Pass the result to the matching extractor
+4. Return structured fields with source references
+
+### Rules
+- Parsers never know what document type they are processing
+- Extractors never read files directly
+- No extractor imports another extractor
+- Rules-based extraction first — regex and known field positions per document type. No LLM unless rules fail.
+- Every extracted field must include page number and bounding box coordinates (see Source References section)
+
+### Why rules over LLM
+W-2s, pay stubs, and 1040s are standardized forms. Field positions are predictable. Rules-based extraction is free, instant, and deterministic. An LLM is only added as a fallback for documents that do not match known patterns. Do not reach for an LLM when a regex will do.

@@ -21,6 +21,10 @@ def get_case(db: Session, case_id: UUID) -> Case:
     return case
 
 
+def find_case(db: Session, case_id: UUID) -> Case | None:
+    return db.get(Case, str(case_id))
+
+
 def list_cases(db: Session, broker_id: UUID | None = None) -> list[Case]:
     statement = select(Case)
     if broker_id is not None:

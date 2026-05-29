@@ -4,7 +4,7 @@ from app.exceptions import ExtractionFailed
 from app.models.document import Document
 from app.models.job import Job
 from app.repositories import job_repo, result_repo
-from app.services import extraction_service
+from app.services import extraction_service, job_processing_service
 from app.workers import job_worker
 
 
@@ -80,7 +80,11 @@ def test_process_next_job_logs_completion(test_db, monkeypatch):
     job = make_pending_job(document.id)
     test_db.add_all([document, job])
     test_db.commit()
-    monkeypatch.setattr(job_worker, "log_event", lambda event, payload: events.append(event))
+    monkeypatch.setattr(
+        job_processing_service,
+        "log_event",
+        lambda event, payload: events.append(event),
+    )
 
     job_worker.process_next_job(test_db)
 
@@ -98,7 +102,25 @@ def test_process_next_job_logs_failure(test_db, monkeypatch):
         raise ExtractionFailed("extraction exploded")
 
     monkeypatch.setattr(extraction_service, "extract_fields", raise_extraction_failed)
-    monkeypatch.setattr(job_worker, "log_event", lambda event, payload: events.append(event))
+    monkeypatch.setattr(
+        job_processing_service,
+        "log_event",
+        lambda event, payload: events.append(event),
+    )
     job_worker.process_next_job(test_db)
 
     assert "job_failed" in events
+
+
+def test_process_next_job_delegates_to_processing_service(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        job_processing_service,
+        "process_next_job",
+        lambda db: calls.append(db) or True,
+    )
+
+    processed = job_worker.process_next_job("test-db")
+
+    assert processed is True
+    assert calls == ["test-db"]

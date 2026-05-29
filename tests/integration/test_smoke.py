@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from app.services import document_service
+from app.storage import local_storage
 from app.workers.job_worker import process_next_job
 
 
@@ -13,7 +13,7 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
         yield test_db
 
     app.dependency_overrides[get_db] = override_db
-    monkeypatch.setattr(document_service.settings, "storage_path", str(tmp_path))
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
     broker_id = str(uuid4())
 

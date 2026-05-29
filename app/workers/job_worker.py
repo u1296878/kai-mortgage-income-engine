@@ -1,14 +1,9 @@
-from pathlib import Path
 from threading import Event
-from time import sleep
-from uuid import UUID
 
 from sqlalchemy.orm import sessionmaker
 
 from app.audit.logger import log_event
-from app.models.job_status import JobStatus
-from app.repositories import document_repo, job_repo
-from app.services import extraction_service, result_service
+from app.services import job_processing_service
 
 
 def run_worker(
@@ -22,43 +17,7 @@ def run_worker(
 
 
 def process_next_job(db) -> bool:
-    job = None
-    try:
-        job = job_repo.claim_next_pending_job(db)
-        if job is None:
-            return False
-        document = document_repo.get_document(db, UUID(job.document_id))
-        fields = extraction_service.extract_fields(
-            UUID(document.id),
-            Path(document.storage_path),
-            document.doc_type,
-        )
-        result = result_service.save_extraction_result(
-            db,
-            UUID(job.id),
-            UUID(document.id),
-            UUID(document.case_id) if document.case_id else None,
-            document.doc_type,
-            fields,
-        )
-        job_repo.update_job_status(db, UUID(job.id), JobStatus.complete.value)
-        log_event(
-            "job_completed",
-            {"job_id": job.id, "document_id": document.id, "result_id": result.id},
-        )
-        return True
-    except Exception as error:
-        if job is not None:
-            job_repo.update_job_status(
-                db,
-                UUID(job.id),
-                JobStatus.failed.value,
-                str(error),
-            )
-            log_event("job_failed", {"job_id": job.id, "error": str(error)})
-        else:
-            log_event("job_failed", {"job_id": None, "error": str(error)})
-        return False
+    return job_processing_service.process_next_job(db)
 
 
 def _worker_loop(

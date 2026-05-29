@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import get_db
 from app.main import app
 from app.repositories import job_repo
-from app.services import document_service
+from app.storage import local_storage
 
 
 def test_uploading_document_automatically_creates_pending_job(
@@ -15,7 +15,7 @@ def test_uploading_document_automatically_creates_pending_job(
         yield test_db
 
     app.dependency_overrides[get_db] = override_db
-    monkeypatch.setattr(document_service.settings, "storage_path", str(tmp_path))
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
 
     response = client.post(

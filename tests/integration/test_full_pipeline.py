@@ -4,7 +4,8 @@ from app.dependencies import get_db
 from app.exceptions import ExtractionFailed
 from app.main import app
 from app.repositories import job_repo, result_repo
-from app.services import document_service, extraction_service
+from app.services import extraction_service
+from app.storage import local_storage
 from app.workers.job_worker import process_next_job
 
 
@@ -13,7 +14,7 @@ def test_full_pipeline_upload_to_result(test_db, tmp_path, monkeypatch):
         yield test_db
 
     app.dependency_overrides[get_db] = override_db
-    monkeypatch.setattr(document_service.settings, "storage_path", str(tmp_path))
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
 
     response = client.post(
@@ -52,7 +53,7 @@ def test_full_pipeline_failed_extraction_marks_job_failed(
         raise ExtractionFailed("extractor failed")
 
     app.dependency_overrides[get_db] = override_db
-    monkeypatch.setattr(document_service.settings, "storage_path", str(tmp_path))
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     monkeypatch.setattr(extraction_service, "extract_fields", raise_extraction_failed)
     client = TestClient(app)
 

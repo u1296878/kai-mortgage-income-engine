@@ -6,5 +6,5 @@ manual_test.db
 manual_test.db-journal
 manual_server*.log
 .pytest_cache/
-storage/
+/storage/
 test_documents/*.pdf
