@@ -26,7 +26,7 @@ def summarize_case_income(results: list[Result]) -> tuple[float, list[ExtractedF
         for result in results
         if result.annual_income is not None
     ]
-    total = sum(annual_incomes) / len(annual_incomes) if annual_incomes else 0.0
+    total = sum(annual_incomes)
     sources = [
         ExtractedField.model_validate(field)
         for result in results

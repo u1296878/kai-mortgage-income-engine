@@ -70,5 +70,5 @@ def test_get_case_summary_returns_total_and_sources(test_db):
 
     summary = result_service.get_case_summary(test_db, case_id)
 
-    assert summary.total_annual_income == 82000.00
+    assert summary.total_annual_income == 164000.00
     assert [source.field for source in summary.sources] == ["w2_wages", "agi"]

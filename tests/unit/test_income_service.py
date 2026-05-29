@@ -53,7 +53,7 @@ def test_compute_annual_income_bank_statement_confidence_is_low():
     assert confidence == "low"
 
 
-def test_summarize_case_income_averages_results():
+def test_summarize_case_income_sums_results():
     first_result = Result(annual_income=80000.00, extracted_fields=[])
     second_result = Result(annual_income=100000.00, extracted_fields=[])
 
@@ -61,7 +61,18 @@ def test_summarize_case_income_averages_results():
         [first_result, second_result],
     )
 
-    assert total == 90000.00
+    assert total == 180000.00
+
+
+def test_summarize_case_income_ignores_missing_annual_income():
+    first_result = Result(annual_income=80000.00, extracted_fields=[])
+    second_result = Result(annual_income=None, extracted_fields=[])
+
+    total, sources = income_service.summarize_case_income(
+        [first_result, second_result],
+    )
+
+    assert total == 80000.00
 
 
 def test_summarize_case_income_flattens_sources():
