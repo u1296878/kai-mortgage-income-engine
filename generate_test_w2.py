@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 
-c = canvas.Canvas("test_documents/w2_fake_filled.pdf", pagesize=letter)
+output_path = Path("test_documents") / "w2_fake_filled.pdf"
+c = canvas.Canvas(str(output_path), pagesize=letter)
 
 # Employer info
 c.drawString(50, 700, "Employer: Acme Corp")
@@ -28,4 +31,4 @@ c.drawString(300, 530, "85000.00")
 c.drawString(50, 750, "W-2 Wage and Tax Statement 2023")
 
 c.save()
-print("Done: test_documents/w2_fake_filled.pdf")
+print(f"Done: {output_path}")

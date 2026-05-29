@@ -95,5 +95,6 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 ## Current limitations
 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
+- `other` currently represents rental-income documents until a dedicated rental document type is introduced.
 - Auth is not implemented; all endpoints are open.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.

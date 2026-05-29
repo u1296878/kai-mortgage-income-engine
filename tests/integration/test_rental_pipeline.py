@@ -23,6 +23,7 @@ def test_rental_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
         response = client.post(
             "/documents/upload",
             files={"file": ("rental.pdf", _rental_pdf_bytes(), "application/pdf")},
+            # other currently represents rental-income documents.
             data={"doc_type": "other"},
         )
         assert response.status_code == 200

@@ -5,3 +5,7 @@
 - [x] Phase 2, Step 4: Bank statement PDF parsing
 - [x] Phase 2, Step 5: Rental income PDF parsing
 - [ ] Add income stream model so case summaries group documents by source instead of treating all results as one global pool
+- [ ] Add auth and broker/manager role enforcement
+- [ ] Swap local file storage for S3 or Cloudflare R2 before production
+- [ ] Add production deployment configuration
+- [ ] Expand audit logging beyond local stdout

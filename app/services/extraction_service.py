@@ -43,6 +43,7 @@ def extract_fields(
         if not blocks:
             blocks = parse_with_ocr(file_path)
         return extract_bank_statement_fields(blocks, document_id)
+    # other currently represents rental-income documents until a dedicated type exists.
     blocks = parse_pdf(file_path)
     if not blocks:
         blocks = parse_with_ocr(file_path)
