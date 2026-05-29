@@ -63,8 +63,8 @@ Nothing outside `repositories/` queries the database. No exceptions.
 ### No magic
 If something non-obvious is happening, add a one-line comment explaining *why*, not *what*.
 
-### No file over 150 lines
-If you are approaching 150 lines, the file needs to be split. This is a signal, not a suggestion.
+### Keep files small
+Aim to keep files under 150 lines. If a file is cleaner at slightly more than 150 lines, that is acceptable, but 175 lines is the hard cap. If you are approaching 175 lines, the file needs to be split.
 
 ### Stubs must be honest
 If something is not implemented yet, raise `NotImplementedError` with a clear message, or return mock data clearly labeled with a `# STUB` comment and a `# TODO` describing what replaces it. Do not expand stub complexity. Keep stubs minimal.
