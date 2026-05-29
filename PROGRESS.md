@@ -2,8 +2,8 @@
 
 Last updated: 2026-05-29
 
-Current status: Phase 2 in progress. W-2, pay stub, tax return, and bank statement real extraction complete.
-Remaining doc types still use stub: other.
+Current status: Phase 2 in progress. W-2, pay stub, tax return, bank statement, and rental income real extraction complete.
+No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
 - [x] Step 2: Document upload

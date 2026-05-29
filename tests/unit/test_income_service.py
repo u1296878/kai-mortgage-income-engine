@@ -63,6 +63,33 @@ def test_compute_annual_income_bank_statement_confidence_is_low():
     assert confidence == "low"
 
 
+def test_compute_annual_income_other_uses_rental_net_income_when_present():
+    fields = [
+        make_field("reported_income", 50000.00),
+        make_field("rental_net_income", 18000.00),
+    ]
+
+    annual_income, confidence, notes = income_service.compute_annual_income(fields, "other")
+
+    assert annual_income == 18000.00
+
+
+def test_compute_annual_income_other_falls_back_to_reported_income():
+    fields = [make_field("reported_income", 18000.00)]
+
+    annual_income, confidence, notes = income_service.compute_annual_income(fields, "other")
+
+    assert annual_income == 18000.00
+
+
+def test_compute_annual_income_other_confidence_is_low():
+    fields = [make_field("rental_net_income", 18000.00)]
+
+    annual_income, confidence, notes = income_service.compute_annual_income(fields, "other")
+
+    assert confidence == "low"
+
+
 def test_summarize_case_income_sums_results():
     first_result = Result(annual_income=80000.00, extracted_fields=[])
     second_result = Result(annual_income=100000.00, extracted_fields=[])

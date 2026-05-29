@@ -3,20 +3,14 @@ from uuid import UUID
 
 from app.extractors.bank_statement_extractor import extract_bank_statement_fields
 from app.extractors.paystub_extractor import extract_paystub_fields
+from app.extractors.rental_extractor import extract_rental_fields
 from app.extractors.tax_return_extractor import extract_tax_return_fields
 from app.extractors.w2_extractor import extract_w2_fields
 from app.exceptions import UnsupportedDocumentType
 from app.models.document_type import DocumentType
 from app.parsers.ocr_parser import parse_with_ocr
 from app.parsers.pdf_parser import parse_pdf
-from app.schemas.extraction import BoundingBox, ExtractedField
-
-STUB_FIELDS = {
-    DocumentType.other: (
-        ("reported_income", 50000.00),
-        ("period_months", 12.0),
-    ),
-}
+from app.schemas.extraction import ExtractedField
 
 
 def extract_fields(
@@ -49,19 +43,7 @@ def extract_fields(
         if not blocks:
             blocks = parse_with_ocr(file_path)
         return extract_bank_statement_fields(blocks, document_id)
-    return _stub_fields(document_id, valid_doc_type)
-
-
-def _stub_fields(document_id: UUID, doc_type: DocumentType) -> list[ExtractedField]:
-    # STUB: remaining document types keep mock data until their real parsers exist.
-    # TODO: Replace with per-document extractors as Phase 2 expands.
-    return [
-        ExtractedField(
-            field=field,
-            value=value,
-            document_id=document_id,
-            page=1,
-            bounding_box=BoundingBox(x1=0.0, y1=0.0, x2=0.0, y2=0.0),
-        )
-        for field, value in STUB_FIELDS[doc_type]
-    ]
+    blocks = parse_pdf(file_path)
+    if not blocks:
+        blocks = parse_with_ocr(file_path)
+    return extract_rental_fields(blocks, document_id)

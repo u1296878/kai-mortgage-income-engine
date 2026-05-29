@@ -61,6 +61,16 @@ def bank_statement_blocks():
     ]
 
 
+def rental_blocks():
+    return [
+        {"text": "21", "page": 1, "x1": 10, "y1": 20, "x2": 20, "y2": 30},
+        {"text": "Income", "page": 1, "x1": 30, "y1": 20, "x2": 70, "y2": 30},
+        {"text": "or", "page": 1, "x1": 80, "y1": 20, "x2": 95, "y2": 30},
+        {"text": "loss", "page": 1, "x1": 100, "y1": 20, "x2": 130, "y2": 30},
+        {"text": "18000.00", "page": 1, "x1": 200, "y1": 20, "x2": 260, "y2": 30},
+    ]
+
+
 def test_extract_fields_w2_returns_correct_fields(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
@@ -100,6 +110,15 @@ def test_extract_fields_bank_statement_returns_real_fields(monkeypatch):
     assert "average_monthly_deposit" in {field.field for field in fields}
 
 
+def test_extract_fields_other_returns_real_rental_fields(monkeypatch):
+    document_id = uuid4()
+    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: rental_blocks())
+
+    fields = extraction_service.extract_fields(document_id, Path("rental.pdf"), "other")
+
+    assert {"reported_income", "rental_net_income"} <= {field.field for field in fields}
+
+
 def test_extract_fields_returns_source_references(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
@@ -130,6 +149,8 @@ def test_extract_fields_all_doc_types_return_fields(monkeypatch):
             if "tax_return" in str(file_path)
             else bank_statement_blocks()
             if "bank_statement" in str(file_path)
+            else rental_blocks()
+            if "other" in str(file_path)
             else w2_blocks()
         ),
     )

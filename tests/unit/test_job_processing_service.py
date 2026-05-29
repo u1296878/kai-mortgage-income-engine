@@ -5,6 +5,7 @@ from app.models.document import Document
 from app.models.job import Job
 from app.repositories import job_repo, result_repo
 from app.services import extraction_service, job_processing_service
+from app.schemas.extraction import BoundingBox, ExtractedField
 
 
 def make_document(doc_type="other"):
@@ -20,17 +21,33 @@ def make_pending_job(document_id):
     return Job(id=str(uuid4()), document_id=str(document_id), status="pending")
 
 
+def make_field(field: str, value: float) -> ExtractedField:
+    return ExtractedField(
+        field=field,
+        value=value,
+        document_id=uuid4(),
+        page=1,
+        bounding_box=BoundingBox(x1=1.0, y1=1.0, x2=2.0, y2=2.0),
+    )
+
+
 def test_process_next_job_returns_false_when_queue_empty(test_db):
     processed = job_processing_service.process_next_job(test_db)
 
     assert processed is False
 
 
-def test_process_next_job_claims_and_processes_job(test_db):
+def test_process_next_job_claims_and_processes_job(test_db, monkeypatch):
     document = make_document()
     job = make_pending_job(document.id)
     test_db.add_all([document, job])
     test_db.commit()
+    fields = [make_field("reported_income", 18000.00)]
+    monkeypatch.setattr(
+        extraction_service,
+        "extract_fields",
+        lambda document_id, file_path, doc_type: fields,
+    )
 
     processed = job_processing_service.process_next_job(test_db)
     result = result_repo.get_result_by_job(test_db, job.id)

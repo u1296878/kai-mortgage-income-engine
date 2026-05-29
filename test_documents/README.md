@@ -11,3 +11,4 @@ Expected files:
 - paystub_fake_filled.pdf - Generated fake pay stub for real extraction testing
 - tax_return_fake_filled.pdf - Generated fake Form 1040 for real extraction testing
 - bank_statement_fake_filled.pdf - Generated fake bank statement for real extraction testing
+- rental_fake_filled.pdf - Generated fake Schedule E-style rental document for real extraction testing

@@ -17,6 +17,8 @@ def compute_annual_income(
         return values["agi"], "high", None
     if doc_type == "bank_statement":
         return values["average_monthly_deposit"] * 12, "low", None
+    if "rental_net_income" in values:
+        return values["rental_net_income"], "low", None
     return values["reported_income"], "low", None
 
 
