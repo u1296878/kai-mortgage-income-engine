@@ -43,7 +43,8 @@ def _compute_pay_stub_income(
     if "gross_ytd" in values:
         annual_income = values["gross_ytd"] / datetime.now().month * 12
         notes = _pay_stub_notes(annual_income, period_income)
-        return annual_income, "medium", notes
+        confidence = "medium" if notes else "high"
+        return annual_income, confidence, notes
     if period_income is not None:
         return period_income, "low", None
     return 0.0, "low", "No gross income fields found"
