@@ -1,9 +1,9 @@
 # PROGRESS
 
-Last updated: 2026-05-21
+Last updated: 2026-05-29
 
-Current status: Phase 2 in progress. W-2 and pay stub real extraction complete.
-Remaining doc types still use stub: tax_return, bank_statement, other.
+Current status: Phase 2 in progress. W-2, pay stub, and tax return real extraction complete.
+Remaining doc types still use stub: bank_statement, other.
 
 - [x] Step 1: Project scaffold
 - [x] Step 2: Document upload

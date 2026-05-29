@@ -31,6 +31,8 @@ def make_field(
 
 def parse_float(text: str) -> float | None:
     clean_text = text.strip().replace("$", "").replace(",", "")
+    if clean_text.startswith("(") and clean_text.endswith(")"):
+        clean_text = f"-{clean_text[1:-1]}"
     try:
         return float(clean_text)
     except ValueError:

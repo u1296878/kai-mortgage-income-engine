@@ -40,6 +40,16 @@ def paystub_blocks():
     ]
 
 
+def tax_return_blocks():
+    return [
+        {"text": "11", "page": 1, "x1": 10, "y1": 20, "x2": 20, "y2": 30},
+        {"text": "Adjusted", "page": 1, "x1": 30, "y1": 20, "x2": 80, "y2": 30},
+        {"text": "gross", "page": 1, "x1": 90, "y1": 20, "x2": 120, "y2": 30},
+        {"text": "income", "page": 1, "x1": 130, "y1": 20, "x2": 170, "y2": 30},
+        {"text": "79000.00", "page": 1, "x1": 200, "y1": 20, "x2": 260, "y2": 30},
+    ]
+
+
 def test_extract_fields_w2_returns_correct_fields(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
@@ -59,6 +69,15 @@ def test_extract_fields_pay_stub_returns_correct_fields(monkeypatch):
     fields = extraction_service.extract_fields(document_id, Path("pay.pdf"), "pay_stub")
 
     assert [field.field for field in fields] == ["gross_ytd", "gross_this_period"]
+
+
+def test_extract_fields_tax_return_returns_real_fields(monkeypatch):
+    document_id = uuid4()
+    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: tax_return_blocks())
+
+    fields = extraction_service.extract_fields(document_id, Path("tax.pdf"), "tax_return")
+
+    assert [field.field for field in fields] == ["agi"]
 
 
 def test_extract_fields_returns_source_references(monkeypatch):
@@ -84,7 +103,13 @@ def test_extract_fields_all_doc_types_return_fields(monkeypatch):
     monkeypatch.setattr(
         extraction_service,
         "parse_pdf",
-        lambda file_path: paystub_blocks() if "pay" in str(file_path) else w2_blocks(),
+        lambda file_path: (
+            paystub_blocks()
+            if "pay" in str(file_path)
+            else tax_return_blocks()
+            if "tax_return" in str(file_path)
+            else w2_blocks()
+        ),
     )
 
     field_counts = [
@@ -92,4 +117,4 @@ def test_extract_fields_all_doc_types_return_fields(monkeypatch):
         for doc_type in DocumentType
     ]
 
-    assert all(count >= 2 for count in field_counts)
+    assert all(count >= 1 for count in field_counts)

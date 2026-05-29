@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import UUID
 
 from app.extractors.paystub_extractor import extract_paystub_fields
+from app.extractors.tax_return_extractor import extract_tax_return_fields
 from app.extractors.w2_extractor import extract_w2_fields
 from app.exceptions import UnsupportedDocumentType
 from app.models.document_type import DocumentType
@@ -10,10 +11,6 @@ from app.parsers.pdf_parser import parse_pdf
 from app.schemas.extraction import BoundingBox, ExtractedField
 
 STUB_FIELDS = {
-    DocumentType.tax_return: (
-        ("agi", 79000.00),
-        ("wages", 85000.00),
-    ),
     DocumentType.bank_statement: (
         ("average_monthly_deposit", 7200.00),
         ("months_sampled", 3.0),
@@ -45,11 +42,16 @@ def extract_fields(
         if not blocks:
             blocks = parse_with_ocr(file_path)
         return extract_paystub_fields(blocks, document_id)
+    if valid_doc_type == DocumentType.tax_return:
+        blocks = parse_pdf(file_path)
+        if not blocks:
+            blocks = parse_with_ocr(file_path)
+        return extract_tax_return_fields(blocks, document_id)
     return _stub_fields(document_id, valid_doc_type)
 
 
 def _stub_fields(document_id: UUID, doc_type: DocumentType) -> list[ExtractedField]:
-    # STUB: non-W-2 document types keep mock data until their real parsers exist.
+    # STUB: remaining document types keep mock data until their real parsers exist.
     # TODO: Replace with per-document extractors as Phase 2 expands.
     return [
         ExtractedField(

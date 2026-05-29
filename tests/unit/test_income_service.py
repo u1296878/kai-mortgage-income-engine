@@ -34,6 +34,16 @@ def test_compute_annual_income_bank_statement_annualizes():
     assert annual_income == 86400.00
 
 
+def test_compute_annual_income_tax_return_uses_agi():
+    fields = [make_field("agi", 79000.00)]
+
+    annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
+
+    assert annual_income == 79000.00
+    assert confidence == "high"
+    assert notes is None
+
+
 def test_compute_annual_income_w2_confidence_is_high():
     fields = [make_field("w2_wages", 85000.00)]
 
