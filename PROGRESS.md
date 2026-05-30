@@ -1,8 +1,8 @@
 # PROGRESS
 
-Last updated: 2026-05-29
+Last updated: 2026-05-30
 
-Current status: Phase 4 income stream foundation complete. Phase 2 real PDF extraction and Phase 3 auth/scoping are complete, and case summaries can now use stream totals to avoid double-counting supporting documents.
+Current status: Phase 4 income stream suggestion/matching complete. Phase 2 extraction and Phase 3 auth/scoping are complete, and case summaries use stream totals with deterministic matching support to reduce manual grouping.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -52,3 +52,10 @@ Phase 4, Step 1 is complete:
 - Result-to-stream assignment and removal implemented with same-case validation
 - Stream annual income recalculates with deterministic confidence ordering: `high > medium > low`, then most recent result
 - Case summaries use stream totals when streams exist and fall back to result totals when streams do not
+
+Phase 4, Step 2 is complete:
+- Deterministic match suggestions for case results based on stream type and extracted identifiers
+- Explainable suggestion reasons and confidence tiers (`high`, `medium`, `low`)
+- Preview and apply endpoints for matching
+- High-confidence auto-apply with manual assignment preservation by default
+- Same-case validation preserved for brokers and managers during matching and assignment

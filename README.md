@@ -54,7 +54,7 @@ python -m app.worker_main
 pytest
 ```
 
-Expected test count after this step: 205.
+Expected test count after this step: 222.
 
 ## Authentication
 
@@ -67,6 +67,8 @@ Production note: manager provisioning is still a hardening item. Before producti
 ## Income streams
 
 Results can be grouped into case-level income streams (for example employment, rental, or bank-statement income) through authenticated stream endpoints. When a case has income streams, case summary totals use stream annual incomes instead of blindly summing every result. This avoids double-counting when multiple documents support the same income source.
+
+Income stream matching endpoints now provide deterministic suggestion previews and high-confidence auto-apply. Manual assignments are preserved by default, and same-case validation prevents cross-case linking.
 
 ## Exercising the pipeline manually
 
@@ -126,6 +128,6 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
 - JWT auth and broker/manager resource scoping are implemented.
-- Automatic stream suggestion/matching is not implemented yet; stream assignment is currently explicit.
+- Matching is rules-based and intentionally conservative; advanced borrower-level and underwriting logic is still future work.
 - Manager account provisioning is not production-hardened yet.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.

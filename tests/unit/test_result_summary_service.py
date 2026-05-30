@@ -150,21 +150,22 @@ def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test
 
 def _manual_result(case_id, annual_income, confidence):
     document_id = uuid4()
+    fields = [
+        {
+            "field": "w2_wages",
+            "value": annual_income,
+            "document_id": str(document_id),
+            "page": 1,
+            "bounding_box": {"x1": 1, "y1": 1, "x2": 2, "y2": 2},
+        }
+    ]
     return Result(
         id=str(uuid4()),
         job_id=str(uuid4()),
         document_id=str(document_id),
         case_id=str(case_id),
         doc_type="w2",
-        extracted_fields=[
-            {
-                "field": "w2_wages",
-                "value": annual_income,
-                "document_id": str(document_id),
-                "page": 1,
-                "bounding_box": {"x1": 1, "y1": 1, "x2": 2, "y2": 2},
-            }
-        ],
+        extracted_fields=fields,
         annual_income=annual_income,
         confidence=confidence,
     )

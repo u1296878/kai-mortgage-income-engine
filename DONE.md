@@ -17,3 +17,4 @@
 - Phase 3, Step 2: Broker and manager data scoping - protected private routes with JWT auth, enforced broker ownership in services, allowed manager-wide access, and added authorization tests for cases, documents, jobs, results, and summaries.
 - Phase 3 cleanup and hardening - refreshed AGENTS/README/progress tracking after auth and scoping completion, verified private route protection, service-layer authorization, broker isolation, manager visibility, and full test coverage before Phase 4.
 - Phase 4, Step 1: Income stream model foundation — added income streams, result assignment, stream-based case summary totals, broker/manager scoping, and tests.
+- Phase 4, Step 2: Income stream suggestion and matching - added deterministic heuristics for matching results into streams, same-case validation, suggestion explanations, and tests.

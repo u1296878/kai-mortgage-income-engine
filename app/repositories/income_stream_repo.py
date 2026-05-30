@@ -22,7 +22,11 @@ def get_income_stream(db: Session, stream_id: UUID) -> IncomeStream:
 
 
 def list_income_streams_by_case(db: Session, case_id: UUID) -> list[IncomeStream]:
-    statement = select(IncomeStream).where(IncomeStream.case_id == str(case_id))
+    statement = (
+        select(IncomeStream)
+        .where(IncomeStream.case_id == str(case_id))
+        .order_by(IncomeStream.created_at, IncomeStream.id)
+    )
     return list(db.scalars(statement).all())
 
 

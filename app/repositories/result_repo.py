@@ -27,12 +27,30 @@ def get_result_by_job(db: Session, job_id: UUID) -> Result | None:
 
 
 def list_results_by_case(db: Session, case_id: UUID) -> list[Result]:
-    statement = select(Result).where(Result.case_id == str(case_id))
+    statement = (
+        select(Result)
+        .where(Result.case_id == str(case_id))
+        .order_by(Result.created_at, Result.id)
+    )
     return list(db.scalars(statement).all())
 
 
 def list_results_by_income_stream(db: Session, stream_id: UUID) -> list[Result]:
-    statement = select(Result).where(Result.income_stream_id == str(stream_id))
+    statement = (
+        select(Result)
+        .where(Result.income_stream_id == str(stream_id))
+        .order_by(Result.created_at, Result.id)
+    )
+    return list(db.scalars(statement).all())
+
+
+def list_unassigned_results_by_case(db: Session, case_id: UUID) -> list[Result]:
+    statement = (
+        select(Result)
+        .where(Result.case_id == str(case_id))
+        .where(Result.income_stream_id.is_(None))
+        .order_by(Result.created_at, Result.id)
+    )
     return list(db.scalars(statement).all())
 
 
