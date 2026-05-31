@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-31
 
-Current status: Phase 4 borrower model foundation complete. Phase 2 extraction and Phase 3 auth/scoping are complete, and case summaries use stream totals with deterministic matching support plus borrower-aware stream ownership.
+Current status: Phase 4 borrower model foundation complete. Phase 2 extraction and Phase 3 auth/scoping are complete, case summaries use stream totals with deterministic matching support plus borrower-aware stream ownership, and first-run manager seeding is now available for deployment startup.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -34,6 +34,7 @@ Broker/manager data scoping:
 - Brokers can access only their own cases, documents, jobs, results, and summaries
 - Managers can access all records
 - Broker case creation uses the authenticated user id instead of trusting request-provided broker_id
+- Startup manager seed can create exactly one manager account from `MANAGER_EMAIL` and `MANAGER_PASSWORD` when no manager exists
 
 ## Phase 3 complete
 

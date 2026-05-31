@@ -19,3 +19,4 @@
 - Phase 4, Step 1: Income stream model foundation — added income streams, result assignment, stream-based case summary totals, broker/manager scoping, and tests.
 - Phase 4, Step 2: Income stream suggestion and matching - added deterministic heuristics for matching results into streams, same-case validation, suggestion explanations, and tests.
 - Phase 4, Step 3: Borrower and co-borrower model foundation - added borrowers, borrower-to-case and borrower-to-income-stream associations, broker/manager scoping, and tests.
+- Deployment hardening: first-run manager seed - added startup seeding path that creates one manager account from `MANAGER_EMAIL`/`MANAGER_PASSWORD` only when no manager exists.

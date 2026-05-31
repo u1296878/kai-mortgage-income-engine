@@ -15,12 +15,18 @@ from app.routers.income_stream_matching import router as income_stream_matching_
 from app.routers.income_streams import router as income_streams_router
 from app.routers.jobs import router as jobs_router
 from app.routers.results import router as results_router
+from app.seed import seed_manager
 from app.workers.job_worker import run_worker
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    seed_db = SessionLocal()
+    try:
+        seed_manager(seed_db)
+    finally:
+        seed_db.close()
     stop_event = Event()
     loop = asyncio.get_running_loop()
     worker = loop.run_in_executor(

@@ -20,3 +20,8 @@ def get_user_by_email(db: Session, email: str) -> User | None:
 
 def get_user_by_id(db: Session, user_id: UUID) -> User | None:
     return db.get(User, str(user_id))
+
+
+def get_first_user_by_role(db: Session, role: str) -> User | None:
+    statement = select(User).where(User.role == role).limit(1)
+    return db.scalars(statement).first()

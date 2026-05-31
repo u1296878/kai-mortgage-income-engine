@@ -8,6 +8,7 @@ aiofiles
 pytest
 pytest-asyncio
 httpx
+PyJWT
 pdfplumber
 pytesseract
 Pillow

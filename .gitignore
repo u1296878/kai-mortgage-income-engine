@@ -8,3 +8,5 @@ manual_server*.log
 .pytest_cache/
 /storage/
 test_documents/*.pdf
+.env
+.env.*

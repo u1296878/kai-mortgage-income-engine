@@ -1,9 +1,13 @@
+import os
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
+
+os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-for-suite-32-bytes")
 
 
 @pytest.fixture(scope="session")

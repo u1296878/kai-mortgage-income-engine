@@ -60,6 +60,8 @@ def apply_case_matches(
                     f"Auto-match: {suggestion.reason}",
                     current_user,
                 )
+                # Append so subsequent results in this apply call can match
+                # streams created earlier in the same pass.
                 streams.append(stream)
                 created_stream_count += 1
             income_stream_service.assign_result_to_stream(

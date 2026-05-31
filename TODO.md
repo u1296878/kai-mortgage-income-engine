@@ -13,7 +13,7 @@
 - [ ] Phase 4, Step 4: richer matching heuristics (employer normalization, stronger tax-year and period linking, tie-break tuning)
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
 - [ ] Phase 4, Step 6: borrower-specific qualification logic and underwriting outputs
-- [ ] Add production-safe admin or manager provisioning so manager access is not self-service
+- [ ] Harden manager/admin provisioning beyond first-run seed (invite flow or deployment-controlled rotation)
 - [ ] Swap local file storage for S3 or Cloudflare R2 before production
 - [ ] Add production deployment configuration
 - [ ] Expand audit logging beyond local stdout
