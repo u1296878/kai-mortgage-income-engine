@@ -54,6 +54,34 @@ To run the worker as its own process:
 python -m app.worker_main
 ```
 
+## Frontend (Phase 5 foundation)
+
+A React frontend now lives in `frontend/` and covers:
+
+- `/login` for JWT sign-in
+- `/cases` for broker/manager case listing
+- `/cases/:caseId` for upload, job status, extracted fields, and case summary review
+
+Run the UI locally:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+By default the Vite dev server proxies `/api/*` to `http://127.0.0.1:8000`.
+To point at Railway, set `VITE_API_PROXY_TARGET` to your Railway backend URL in `frontend/.env`.
+
+Frontend tests/build:
+
+```bash
+cd frontend
+npm run test
+npm run build
+```
+
 ## Environment variables
 
 | Variable | Default | Description |

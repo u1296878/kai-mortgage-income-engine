@@ -10,9 +10,14 @@
 - [x] Phase 4, Step 1: income stream model foundation with result assignment and stream-based case summaries
 - [x] Phase 4, Step 2: automatic income stream suggestion/matching across supporting documents
 - [x] Phase 4, Step 3: borrower/co-borrower modeling for stream ownership and review workflows
+- [x] Phase 5, Step 1: React frontend foundation (login, protected routes, cases list/detail, upload + result review)
 - [ ] Phase 4, Step 4: richer matching heuristics (employer normalization, stronger tax-year and period linking, tie-break tuning)
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
 - [ ] Phase 4, Step 6: borrower-specific qualification logic and underwriting outputs
+- [ ] Phase 5, Step 2: PDF viewer with page jump/highlight polish for extracted source references
+- [ ] Phase 5, Step 3: income stream editing/assignment UI
+- [ ] Phase 5, Step 4: borrower/co-borrower management UI expansion
+- [ ] Phase 5, Step 5: manager dashboard and cross-broker case review enhancements
 - [ ] Railway deployment: set `JWT_SECRET_KEY`, `DATABASE_URL` (Postgres), `MANAGER_EMAIL`, `MANAGER_PASSWORD` as environment variables
 - [ ] Railway deployment: test startup without `.env` and validate required secret handling
 - [ ] Harden manager/admin provisioning beyond first-run seed (invite flow or deployment-controlled rotation)

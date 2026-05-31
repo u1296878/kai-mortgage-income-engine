@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-31
 
-Current status: Codebase cleaned and ready for Railway deployment. Phase 2 extraction and Phase 3 auth/scoping are complete, case summaries use stream totals with deterministic matching support plus borrower-aware stream ownership, first-run manager seeding is available, and storage backend binding is now swappable through `app/storage/__init__.py`.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend foundation is now complete and supports the broker workflow against the live backend: login, cases, case detail, upload, job status, extracted fields, source references, and case summary review.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -66,3 +66,13 @@ Phase 4, Step 3 is complete:
 - Borrower CRUD and borrower-to-income-stream assignment endpoints added with broker/manager scoping
 - Same-case borrower/stream assignment validation added for brokers and managers
 - Case summary now includes borrowers while preserving existing stream-total fallback behavior
+
+## Phase 5 in progress
+
+Phase 5, Step 1 is complete:
+- React + TypeScript + Vite frontend scaffold added in `frontend/`
+- JWT login and `/auth/me` session bootstrap with protected routes
+- Case list and case detail workflow wired to backend API
+- Upload flow linked to job polling and result refresh
+- Extracted field source references and case summary surfaced in UI
+- Frontend baseline tests added for login, auth guard, cases page, and case detail rendering
