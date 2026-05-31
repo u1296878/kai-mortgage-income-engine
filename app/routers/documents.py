@@ -20,8 +20,12 @@ def upload_document(
     doc_type: Annotated[DocumentType, Form()],
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    case_id: Annotated[UUID | None, Form()] = None,
 ) -> DocumentResponse:
-    return document_service.upload_document(db, file, doc_type, current_user)
+    try:
+        return document_service.upload_document(db, file, doc_type, current_user, case_id)
+    except DocumentNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)

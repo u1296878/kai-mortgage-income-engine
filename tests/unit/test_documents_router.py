@@ -43,7 +43,7 @@ def test_upload_endpoint_returns_document_response(client, monkeypatch):
     monkeypatch.setattr(
         document_service,
         "upload_document",
-        lambda db, file, doc_type, current_user: document,
+        lambda db, file, doc_type, current_user, case_id=None: document,
     )
 
     response = client.post(
@@ -110,3 +110,18 @@ def test_patch_case_link_returns_updated_document(client, monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["case_id"] == str(case_id)
+
+
+def test_upload_with_missing_case_returns_404(client, monkeypatch):
+    def raise_not_found(db, file, doc_type, current_user, case_id=None):
+        raise DocumentNotFound("Document not found")
+
+    monkeypatch.setattr(document_service, "upload_document", raise_not_found)
+
+    response = client.post(
+        "/documents/upload",
+        files={"file": ("paystub.pdf", b"contents", "application/pdf")},
+        data={"doc_type": "pay_stub", "case_id": str(uuid4())},
+    )
+
+    assert response.status_code == 404

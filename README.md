@@ -142,13 +142,9 @@ CASE_ID=$(curl -s -X POST http://127.0.0.1:8000/cases \
 DOCUMENT_ID=$(curl -s -X POST http://127.0.0.1:8000/documents/upload \
   -H "Authorization: Bearer $TOKEN" \
   -F "doc_type=w2" \
+  -F "case_id=$CASE_ID" \
   -F "file=@./sample.pdf;type=application/pdf" \
   | jq -r '.id')
-
-curl -s -X PATCH "http://127.0.0.1:8000/documents/$DOCUMENT_ID/case" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d "{\"case_id\":\"$CASE_ID\"}" | jq
 
 JOB_ID=$(curl -s "http://127.0.0.1:8000/documents/$DOCUMENT_ID/job" \
   -H "Authorization: Bearer $TOKEN" | jq -r '.id')

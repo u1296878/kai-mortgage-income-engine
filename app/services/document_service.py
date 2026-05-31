@@ -4,7 +4,7 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.audit.logger import log_event
-from app.exceptions import DocumentNotFound, UnsupportedDocumentType
+from app.exceptions import CaseNotFound, DocumentNotFound, UnsupportedDocumentType
 from app.models.document import Document
 from app.models.document_type import DocumentType
 from app.models.user import User
@@ -19,6 +19,7 @@ def upload_document(
     file: UploadFile,
     doc_type: str,
     current_user: User,
+    case_id: UUID | None = None,
 ) -> Document:
     valid_doc_type = _validate_doc_type(doc_type)
     document_id = uuid4()
@@ -30,6 +31,8 @@ def upload_document(
         storage_path=str(storage_path),
         broker_id=None if _is_manager(current_user) else current_user.id,
     )
+    if case_id is not None:
+        _set_document_case(db, document, case_id, current_user)
     saved_document = document_repo.save_document(db, document)
     job_service.create_job_for_document(db, saved_document.id)
     log_event(
@@ -48,14 +51,7 @@ def link_document_to_case(
     document = document_repo.get_document(db, document_id)
     if not _is_manager(current_user):
         _ensure_broker_document(document, document_id, current_user)
-        case = case_repo.get_case(db, case_id)
-        if case.broker_id != current_user.id:
-            raise DocumentNotFound(f"Document not found: {document_id}")
-    else:
-        case = case_repo.find_case(db, case_id)
-    document.case_id = str(case_id)
-    if case is not None:
-        document.broker_id = case.broker_id
+    _set_document_case(db, document, case_id, current_user)
     saved_document = document_repo.save_document(db, document)
     log_event(
         "document_linked_to_case",
@@ -93,3 +89,24 @@ def _ensure_broker_document(
 
 def _is_manager(user: User) -> bool:
     return user.role == UserRole.manager.value
+
+
+def _set_document_case(
+    db: Session,
+    document: Document,
+    case_id: UUID,
+    current_user: User,
+) -> None:
+    try:
+        if _is_manager(current_user):
+            case = case_repo.find_case(db, case_id)
+        else:
+            case = case_repo.get_case(db, case_id)
+            if case.broker_id != current_user.id:
+                raise DocumentNotFound(f"Document not found: {document.id}")
+    except CaseNotFound as error:
+        raise DocumentNotFound(f"Document not found: {document.id}") from error
+
+    document.case_id = str(case_id)
+    if case is not None:
+        document.broker_id = case.broker_id

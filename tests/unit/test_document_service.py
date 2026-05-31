@@ -48,6 +48,30 @@ def test_upload_document_saves_record(test_db, tmp_path, monkeypatch):
     assert document.case_id is None
 
 
+def test_upload_document_links_to_case_when_case_id_provided(test_db, tmp_path, monkeypatch):
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
+    broker_id = uuid4()
+    user = make_user(broker_id)
+    case = Case(id=str(uuid4()), broker_id=str(broker_id), title="Smith Purchase")
+    test_db.add(case)
+    test_db.commit()
+    file = make_upload_file("w2.pdf")
+
+    document = document_service.upload_document(test_db, file, "w2", user, case.id)
+
+    assert document.case_id == case.id
+    assert document.broker_id == str(broker_id)
+
+
+def test_upload_document_with_invalid_case_raises(test_db, tmp_path, monkeypatch):
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
+    user = make_user()
+    file = make_upload_file("w2.pdf")
+
+    with pytest.raises(DocumentNotFound):
+        document_service.upload_document(test_db, file, "w2", user, uuid4())
+
+
 def test_upload_invalid_doc_type_raises(test_db, tmp_path, monkeypatch):
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     file = make_upload_file()

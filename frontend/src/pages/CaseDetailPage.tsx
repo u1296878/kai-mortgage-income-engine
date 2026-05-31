@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { listCaseBorrowers } from "../api/borrowers";
 import { getCase, getCaseDocuments } from "../api/cases";
-import { linkDocumentToCase, uploadDocument } from "../api/documents";
+import { uploadDocument } from "../api/documents";
 import { listCaseIncomeStreams } from "../api/incomeStreams";
 import { getDocumentJob, waitForJobCompletion } from "../api/jobs";
 import { getJobResult, getCaseSummary } from "../api/results";
@@ -68,8 +68,7 @@ export function CaseDetailPage(): JSX.Element {
   const uploadMutation = useMutation({
     mutationFn: async ({ file, docType }: { file: File; docType: DocumentType }) => {
       setUploadState({ stage: "uploading", message: "Uploading document..." });
-      const document = await uploadDocument(file, docType);
-      await linkDocumentToCase(document.id, caseId!);
+      const document = await uploadDocument(file, docType, caseId);
       setUploadState({ stage: "processing", message: "Waiting for extraction result..." });
       const job = await getDocumentJob(document.id);
       const finishedJob = await waitForJobCompletion(job.id);
