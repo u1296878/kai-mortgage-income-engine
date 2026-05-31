@@ -63,6 +63,9 @@ Nothing outside `repositories/` queries the database. No exceptions.
 ### No magic
 If something non-obvious is happening, add a one-line comment explaining *why*, not *what*.
 
+### Commit and push cadence
+After each successful code change set (tests passing or otherwise validated), stage it, commit it, and push it to GitHub. Keep `PROMPT.md` out of commits unless explicitly requested.
+
 ### Keep files small
 Aim to keep files under 150 lines. If a file is cleaner at slightly more than 150 lines, that is acceptable, but 175 lines is the hard cap. If you are approaching 175 lines, the file needs to be split.
 
