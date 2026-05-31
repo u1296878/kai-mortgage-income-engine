@@ -9,4 +9,5 @@ manual_server*.log
 /storage/
 test_documents/*.pdf
 .env
+.env.local
 .env.*

@@ -2,7 +2,7 @@
 
 Last updated: 2026-05-31
 
-Current status: Phase 4 borrower model foundation complete. Phase 2 extraction and Phase 3 auth/scoping are complete, case summaries use stream totals with deterministic matching support plus borrower-aware stream ownership, and first-run manager seeding is now available for deployment startup.
+Current status: Codebase cleaned and ready for Railway deployment. Phase 2 extraction and Phase 3 auth/scoping are complete, case summaries use stream totals with deterministic matching support plus borrower-aware stream ownership, first-run manager seeding is available, and storage backend binding is now swappable through `app/storage/__init__.py`.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold

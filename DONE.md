@@ -20,3 +20,5 @@
 - Phase 4, Step 2: Income stream suggestion and matching - added deterministic heuristics for matching results into streams, same-case validation, suggestion explanations, and tests.
 - Phase 4, Step 3: Borrower and co-borrower model foundation - added borrowers, borrower-to-case and borrower-to-income-stream associations, broker/manager scoping, and tests.
 - Deployment hardening: first-run manager seed - added startup seeding path that creates one manager account from `MANAGER_EMAIL`/`MANAGER_PASSWORD` only when no manager exists.
+- Pre-deployment cleanup - `.env.example`, `.gitignore` hardening, README updated, stale stub comments reviewed, pydantic-settings `env_file` configured.
+- Storage abstraction cleanup - added `StorageBackend` protocol, wrapped local storage in `LocalStorage`, and switched service usage to package-level `storage` instance for one-line backend swap later.

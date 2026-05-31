@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.user_role import UserRole
 from app.repositories import case_repo, document_repo
 from app.services import job_service
-from app.storage import local_storage
+from app.storage import storage
 
 
 def upload_document(
@@ -22,7 +22,7 @@ def upload_document(
 ) -> Document:
     valid_doc_type = _validate_doc_type(doc_type)
     document_id = uuid4()
-    storage_path = local_storage.save_document_file(file.file, document_id)
+    storage_path = storage.save_document_file(file.file, document_id)
     document = Document(
         id=str(document_id),
         filename=file.filename or "",

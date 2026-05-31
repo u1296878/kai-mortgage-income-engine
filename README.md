@@ -23,6 +23,23 @@ cd kai-mortgage-income-engine
 pip install -r requirements.txt
 ```
 
+## Local environment setup
+
+Copy the example env file and fill in required values:
+
+    cp .env.example .env
+
+Edit `.env` and set at minimum:
+
+    JWT_SECRET_KEY=any-long-random-string-for-local-dev
+
+To create the first manager account on startup, also set:
+
+    MANAGER_EMAIL=manager@example.com
+    MANAGER_PASSWORD=your-chosen-password
+
+The app reads `.env` automatically via pydantic-settings.
+
 ## Running locally
 
 ```bash
@@ -44,9 +61,11 @@ python -m app.worker_main
 | `DATABASE_URL` | `sqlite:///./local.db` | SQLAlchemy database URL used by the app. |
 | `STORAGE_PATH` | `./storage` | Local folder where uploaded documents are stored. |
 | `WORKER_POLL_INTERVAL` | `5` | Seconds between background worker job polls. |
-| `JWT_SECRET_KEY` | local development secret | JWT signing secret. Set a secure value in production. |
+| `JWT_SECRET_KEY` | required | JWT signing secret. Provide a long random value in `.env` or deployment env vars. |
 | `JWT_ALGORITHM` | `HS256` | JWT signing algorithm. |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access token lifetime in minutes. |
+| `MANAGER_EMAIL` | empty | Optional first-run manager seed email. |
+| `MANAGER_PASSWORD` | empty | Optional first-run manager seed password. |
 
 ## Running tests
 
@@ -54,7 +73,7 @@ python -m app.worker_main
 pytest
 ```
 
-Expected test count after this step: 245.
+Expected test count after this step: 248.
 
 ## Authentication
 
@@ -132,4 +151,5 @@ upload -> store -> job created -> worker picks up -> extraction -> result saved 
 - JWT auth and broker/manager resource scoping are implemented.
 - Matching is rules-based and intentionally conservative; advanced borrower-level and underwriting logic is still future work.
 - Manager account provisioning is not production-hardened yet.
+- Railway deployment setup is not finalized yet; production environment variables and Postgres wiring still need to be applied.
 - File storage is local and must be swapped to S3 or Cloudflare R2 before production use.
