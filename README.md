@@ -54,7 +54,7 @@ python -m app.worker_main
 pytest
 ```
 
-Expected test count after this step: 222.
+Expected test count after this step: 245.
 
 ## Authentication
 
@@ -69,6 +69,8 @@ Production note: manager provisioning is still a hardening item. Before producti
 Results can be grouped into case-level income streams (for example employment, rental, or bank-statement income) through authenticated stream endpoints. When a case has income streams, case summary totals use stream annual incomes instead of blindly summing every result. This avoids double-counting when multiple documents support the same income source.
 
 Income stream matching endpoints now provide deterministic suggestion previews and high-confidence auto-apply. Manual assignments are preserved by default, and same-case validation prevents cross-case linking.
+
+Cases can now include borrowers (`primary` and `co_borrower`), and income streams can be tied to specific borrowers. Borrower and stream assignment routes follow the same broker/manager scope rules and same-case validation used elsewhere in the pipeline.
 
 ## Exercising the pipeline manually
 

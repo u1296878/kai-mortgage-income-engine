@@ -86,6 +86,7 @@ def test_get_case_summary_returns_summary(client, monkeypatch):
     summary = SimpleNamespace(
         case_id=str(case_id),
         total_annual_income=85000.00,
+        borrowers=[],
         income_streams=[],
         results=[result],
         sources=result.extracted_fields,

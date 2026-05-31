@@ -1,8 +1,8 @@
 # PROGRESS
 
-Last updated: 2026-05-30
+Last updated: 2026-05-31
 
-Current status: Phase 4 income stream suggestion/matching complete. Phase 2 extraction and Phase 3 auth/scoping are complete, and case summaries use stream totals with deterministic matching support to reduce manual grouping.
+Current status: Phase 4 borrower model foundation complete. Phase 2 extraction and Phase 3 auth/scoping are complete, and case summaries use stream totals with deterministic matching support plus borrower-aware stream ownership.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -59,3 +59,9 @@ Phase 4, Step 2 is complete:
 - Preview and apply endpoints for matching
 - High-confidence auto-apply with manual assignment preservation by default
 - Same-case validation preserved for brokers and managers during matching and assignment
+
+Phase 4, Step 3 is complete:
+- Borrower/co-borrower model added with case and broker ownership
+- Borrower CRUD and borrower-to-income-stream assignment endpoints added with broker/manager scoping
+- Same-case borrower/stream assignment validation added for brokers and managers
+- Case summary now includes borrowers while preserving existing stream-total fallback behavior

@@ -48,3 +48,11 @@ class IncomeStreamNotFound(Exception):
 
 class InvalidIncomeStreamAssignment(Exception):
     pass
+
+
+class BorrowerNotFound(Exception):
+    pass
+
+
+class InvalidBorrowerAssignment(Exception):
+    pass

@@ -30,10 +30,31 @@ def list_income_streams_by_case(db: Session, case_id: UUID) -> list[IncomeStream
     return list(db.scalars(statement).all())
 
 
+def list_income_streams_by_borrower(db: Session, borrower_id: UUID) -> list[IncomeStream]:
+    statement = (
+        select(IncomeStream)
+        .where(IncomeStream.borrower_id == str(borrower_id))
+        .order_by(IncomeStream.created_at, IncomeStream.id)
+    )
+    return list(db.scalars(statement).all())
+
+
 def update_income_stream(db: Session, stream_id: UUID, updates: dict) -> IncomeStream:
     stream = get_income_stream(db, stream_id)
     for field, value in updates.items():
         setattr(stream, field, value)
+    db.commit()
+    db.refresh(stream)
+    return stream
+
+
+def update_income_stream_borrower(
+    db: Session,
+    stream_id: UUID,
+    borrower_id: UUID | None,
+) -> IncomeStream:
+    stream = get_income_stream(db, stream_id)
+    stream.borrower_id = str(borrower_id) if borrower_id else None
     db.commit()
     db.refresh(stream)
     return stream

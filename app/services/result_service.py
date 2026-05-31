@@ -8,6 +8,7 @@ from app.models.result import Result
 from app.models.user import User
 from app.models.user_role import UserRole
 from app.repositories import (
+    borrower_repo,
     case_repo,
     document_repo,
     income_stream_repo,
@@ -16,7 +17,7 @@ from app.repositories import (
 )
 from app.schemas.extraction import ExtractedField
 from app.schemas.result import CaseSummaryResponse
-from app.services import income_service
+from app.services import case_summary_builder, income_service
 
 
 def save_extraction_result(
@@ -62,16 +63,13 @@ def get_case_summary(
     if not _is_manager(current_user) and case.broker_id != current_user.id:
         raise CaseNotFound(f"Case not found: {case_id}")
     results = result_repo.list_results_by_case(db, case_id)
+    borrowers = borrower_repo.list_borrowers_by_case(db, case_id)
     income_streams = income_stream_repo.list_income_streams_by_case(db, case_id)
-    result_total, sources = income_service.summarize_case_income(results)
-    stream_total = sum(stream.annual_income or 0.0 for stream in income_streams)
-    total = stream_total if income_streams else result_total
-    return CaseSummaryResponse(
+    return case_summary_builder.build_case_summary(
         case_id=case_id,
-        total_annual_income=total,
+        borrowers=borrowers,
         income_streams=income_streams,
         results=results,
-        sources=sources,
     )
 
 

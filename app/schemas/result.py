@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.borrower import BorrowerResponse
 from app.schemas.income_stream import IncomeStreamResponse
 from app.schemas.extraction import ExtractedField
 
@@ -26,6 +27,7 @@ class ResultResponse(BaseModel):
 class CaseSummaryResponse(BaseModel):
     case_id: UUID
     total_annual_income: float
+    borrowers: list[BorrowerResponse] = Field(default_factory=list)
     income_streams: list[IncomeStreamResponse] = Field(default_factory=list)
     results: list[ResultResponse]
     sources: list[ExtractedField]
