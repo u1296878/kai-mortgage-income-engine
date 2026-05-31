@@ -14,3 +14,4 @@ pytesseract
 Pillow
 pdf2image
 reportlab
+psycopg2-binary
