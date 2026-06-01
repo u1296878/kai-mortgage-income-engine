@@ -51,19 +51,31 @@ export function CaseDetailPage(): JSX.Element {
   });
 
   const documents = documentsQuery.data?.documents ?? [];
+  const documentsWithResults = useMemo(() => {
+    return new Set((summaryQuery.data?.results ?? []).map((result) => result.document_id));
+  }, [summaryQuery.data?.results]);
+  const documentsRequiringJobFetch = useMemo(() => {
+    return documents.filter((document) => !documentsWithResults.has(document.id));
+  }, [documents, documentsWithResults]);
   const jobQueries = useQueries({
-    queries: documents.map((document) => ({
+    queries: documentsRequiringJobFetch.map((document) => ({
       queryKey: ["documentJob", document.id],
       queryFn: () => getDocumentJob(document.id),
       staleTime: 3000,
     })),
   });
   const jobByDocumentId = useMemo(() => {
-    return documents.reduce<Record<string, string>>((acc, document, index) => {
-      acc[document.id] = jobQueries[index]?.data?.status ?? "unknown";
+    const fromResults = documents.reduce<Record<string, string>>((acc, document) => {
+      if (documentsWithResults.has(document.id)) {
+        acc[document.id] = "complete";
+      }
       return acc;
     }, {});
-  }, [documents, jobQueries]);
+    documentsRequiringJobFetch.forEach((document, index) => {
+      fromResults[document.id] = jobQueries[index]?.data?.status ?? "unknown";
+    });
+    return fromResults;
+  }, [documents, documentsWithResults, documentsRequiringJobFetch, jobQueries]);
 
   const uploadMutation = useMutation({
     mutationFn: async ({ file, docType }: { file: File; docType: DocumentType }) => {

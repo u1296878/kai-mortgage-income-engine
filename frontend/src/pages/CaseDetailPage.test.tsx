@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
+import { getDocumentJob } from "../api/jobs";
 import { renderWithQueryClient } from "../test/renderWithQueryClient";
 import { CaseDetailPage } from "./CaseDetailPage";
 
@@ -25,6 +26,13 @@ vi.mock("../api/cases", () => ({
         id: "doc-1",
         filename: "w2.pdf",
         doc_type: "w2",
+        case_id: "case-1",
+        uploaded_at: "2026-05-31T00:00:00Z",
+      },
+      {
+        id: "doc-2",
+        filename: "paystub.pdf",
+        doc_type: "pay_stub",
         case_id: "case-1",
         uploaded_at: "2026-05-31T00:00:00Z",
       },
@@ -99,5 +107,8 @@ describe("CaseDetailPage", () => {
     expect(await screen.findByText("Taylor Purchase")).toBeInTheDocument();
     expect(screen.getByText("agi")).toBeInTheDocument();
     expect(screen.getByText(/Source: page 1/)).toBeInTheDocument();
+    const calls = vi.mocked(getDocumentJob).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0]).toBe("doc-2");
   });
 });
