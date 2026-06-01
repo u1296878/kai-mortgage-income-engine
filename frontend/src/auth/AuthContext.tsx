@@ -26,11 +26,16 @@ export function AuthProvider({ children }: PropsWithChildren): JSX.Element {
 
   const login = useCallback(async (email: string, password: string) => {
     const token = await loginRequest({ email, password });
-    storeToken(token.access_token);
     setApiToken(token.access_token);
-    const me = await fetchMe();
-    setUser(me);
-  }, []);
+    try {
+      const me = await fetchMe();
+      storeToken(token.access_token);
+      setUser(me);
+    } catch (error) {
+      logout();
+      throw error;
+    }
+  }, [logout]);
 
   useEffect(() => {
     setUnauthorizedHandler(logout);
