@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager, suppress
 from threading import Event
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.db.init_db import init_db
@@ -45,6 +46,13 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Kai Mortgage Income Engine", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins.split(","),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(auth_router)
 app.include_router(borrowers_router)
 app.include_router(cases_router)
