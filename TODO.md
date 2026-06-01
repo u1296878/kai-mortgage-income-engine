@@ -14,7 +14,7 @@
 - [ ] Phase 4, Step 4: richer matching heuristics (employer normalization, stronger tax-year and period linking, tie-break tuning)
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
 - [ ] Phase 4, Step 6: borrower-specific qualification logic and underwriting outputs
-- [ ] Phase 5, Step 2: PDF viewer with page jump/highlight polish for extracted source references
+- [x] Phase 5, Step 2: PDF viewer with page jump/highlight polish for extracted source references
 - [ ] Phase 5, Step 3: income stream editing/assignment UI
 - [ ] Phase 5, Step 4: borrower/co-borrower management UI expansion
 - [ ] Phase 5, Step 5: manager dashboard and cross-broker case review enhancements

@@ -1,8 +1,8 @@
 # PROGRESS
 
-Last updated: 2026-05-31
+Last updated: 2026-06-01
 
-Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend foundation is now complete and supports the broker workflow against the live backend: login, cases, case detail, upload, job status, extracted fields, source references, and case summary review.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review with secure document file retrieval, right-drawer PDF viewing, page jump, and bounding-box highlight overlays.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -76,3 +76,10 @@ Phase 5, Step 1 is complete:
 - Upload flow linked to job polling and result refresh
 - Extracted field source references and case summary surfaced in UI
 - Frontend baseline tests added for login, auth guard, cases page, and case detail rendering
+
+Phase 5, Step 2 is complete:
+- Added authenticated `GET /documents/{document_id}/file` endpoint with broker/manager authorization checks
+- Added right-side `react-pdf` document viewer drawer in case detail
+- Added click-to-highlight source navigation from extracted fields
+- Added coordinate transform for PDF bottom-left bounding boxes to top-left viewer overlays
+- Added backend endpoint access tests plus frontend viewer smoke test

@@ -1,10 +1,11 @@
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.audit.logger import log_event
-from app.exceptions import CaseNotFound, DocumentNotFound, UnsupportedDocumentType
+from app.exceptions import CaseNotFound, DocumentNotFound, Unauthorized, UnsupportedDocumentType
 from app.models.document import Document
 from app.models.document_type import DocumentType
 from app.models.user import User
@@ -69,6 +70,20 @@ def get_document(db: Session, document_id: UUID, current_user: User) -> Document
     if not _is_manager(current_user):
         _ensure_broker_document(document, document_id, current_user)
     return document
+
+
+def get_document_file(
+    db: Session,
+    document_id: UUID,
+    current_user: User,
+) -> tuple[Document, Path]:
+    document = document_repo.get_document(db, document_id)
+    if not _is_manager(current_user) and document.broker_id != current_user.id:
+        raise Unauthorized(f"Forbidden document access: {document_id}")
+    file_path = storage.get_document_path(document_id)
+    if not file_path.exists():
+        raise DocumentNotFound(f"Document not found: {document_id}")
+    return document, file_path
 
 
 def _validate_doc_type(doc_type: str | DocumentType) -> DocumentType:

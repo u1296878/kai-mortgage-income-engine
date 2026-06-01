@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.dependencies import get_current_user, get_db
-from app.exceptions import DocumentNotFound
+from app.exceptions import DocumentNotFound, Unauthorized
 from app.main import app
 from app.services import document_service
 
@@ -92,6 +92,34 @@ def test_get_missing_document_returns_404(client, monkeypatch):
     response = client.get(f"/documents/{document_id}")
 
     assert response.status_code == 404
+
+
+def test_get_document_file_returns_stream(client, monkeypatch, tmp_path):
+    file_path = tmp_path / "doc.pdf"
+    file_path.write_bytes(b"%PDF-1.4\ntest\n")
+    document = make_document(filename="doc.pdf")
+    monkeypatch.setattr(
+        document_service,
+        "get_document_file",
+        lambda db, document_id, current_user: (document, file_path),
+    )
+
+    response = client.get(f"/documents/{document.id}/file")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.content == b"%PDF-1.4\ntest\n"
+
+
+def test_get_document_file_forbidden_returns_403(client, monkeypatch):
+    def raise_forbidden(db, document_id, current_user):
+        raise Unauthorized("forbidden")
+
+    monkeypatch.setattr(document_service, "get_document_file", raise_forbidden)
+
+    response = client.get(f"/documents/{uuid4()}/file")
+
+    assert response.status_code == 403
 
 
 def test_patch_case_link_returns_updated_document(client, monkeypatch):

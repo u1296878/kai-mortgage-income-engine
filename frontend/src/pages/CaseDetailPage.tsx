@@ -9,9 +9,10 @@ import { getDocumentJob, waitForJobCompletion } from "../api/jobs";
 import { getJobResult, getCaseSummary } from "../api/results";
 import { CaseSummaryPanel } from "../components/CaseSummaryPanel";
 import { DocumentUploadForm } from "../components/DocumentUploadForm";
+import { DocumentViewer } from "../components/DocumentViewer";
 import { ResultReview } from "../components/ResultReview";
 import { StateCard } from "../components/StateCard";
-import type { DocumentType, ResultResponse } from "../types/api";
+import type { DocumentType, ExtractedField, ResultResponse } from "../types/api";
 
 interface UploadState {
   stage: "idle" | "uploading" | "processing" | "done" | "error";
@@ -23,6 +24,8 @@ export function CaseDetailPage(): JSX.Element {
   const { caseId } = useParams();
   const queryClient = useQueryClient();
   const [uploadState, setUploadState] = useState<UploadState>({ stage: "idle" });
+  const [selectedSource, setSelectedSource] = useState<ExtractedField | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   const caseQuery = useQuery({
     queryKey: ["case", caseId],
@@ -99,6 +102,8 @@ export function CaseDetailPage(): JSX.Element {
       setUploadState({ stage: "error", message });
     },
   });
+  const openSourceViewer = (field: ExtractedField): void => { setSelectedSource(field); setViewerOpen(true); };
+  const closeSourceViewer = (): void => { setViewerOpen(false); setSelectedSource(null); };
 
   if (!caseId) {
     return <p className="text-sm text-slate-600">Missing case identifier.</p>;
@@ -143,8 +148,8 @@ export function CaseDetailPage(): JSX.Element {
         {summaryQuery.data ? <CaseSummaryPanel summary={summaryQuery.data} /> : null}
       </StateCard>
       <StateCard title="Extracted Results">
-        <ResultReview results={summaryQuery.data?.results ?? []} />
-        {uploadState.result ? <ResultReview results={[uploadState.result]} /> : null}
+        <ResultReview results={summaryQuery.data?.results ?? []} onViewSource={openSourceViewer} />
+        {uploadState.result ? <ResultReview results={[uploadState.result]} onViewSource={openSourceViewer} /> : null}
       </StateCard>
       <StateCard title="Income Streams and Borrowers">
         {streamsQuery.isLoading || borrowersQuery.isLoading ? (
@@ -155,6 +160,12 @@ export function CaseDetailPage(): JSX.Element {
         <p className="text-sm">Income streams: {streamsQuery.data?.length ?? 0}</p>
         <p className="text-sm">Borrowers: {borrowersQuery.data?.length ?? 0}</p>
       </StateCard>
+      <DocumentViewer
+        isOpen={viewerOpen}
+        documentId={selectedSource?.document_id ?? null}
+        onClose={closeSourceViewer}
+        source={selectedSource}
+      />
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import type { ResultResponse } from "../types/api";
 import { formatBoundingBox, toCurrency, toDate } from "./formatters";
+import type { ExtractedField } from "../types/api";
 
 interface ResultReviewProps {
   results: ResultResponse[];
+  onViewSource?: (field: ExtractedField) => void;
 }
 
-export function ResultReview({ results }: ResultReviewProps): JSX.Element {
+export function ResultReview({ results, onViewSource }: ResultReviewProps): JSX.Element {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
   if (results.length === 0) {
@@ -34,6 +36,15 @@ export function ResultReview({ results }: ResultReviewProps): JSX.Element {
                   <p>
                     Source: page {field.page} ({formatBoundingBox(field.bounding_box)})
                   </p>
+                  {onViewSource ? (
+                    <button
+                      className="mr-3 text-blue-700 underline"
+                      onClick={() => onViewSource(field)}
+                      type="button"
+                    >
+                      View in PDF
+                    </button>
+                  ) : null}
                   <a className="text-blue-700 underline" href={sourceUrl} target="_blank" rel="noreferrer">
                     Open source document record
                   </a>
