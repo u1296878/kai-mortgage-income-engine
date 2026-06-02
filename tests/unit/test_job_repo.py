@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.job import Job
@@ -67,3 +68,20 @@ def test_update_job_status_to_failed_sets_error(test_db):
     updated_job = job_repo.update_job_status(test_db, job.id, "failed", "OCR failed")
 
     assert updated_job.error == "OCR failed"
+
+
+def test_reset_processing_jobs_to_pending_clears_started_at(test_db):
+    processing_job = make_job(status="processing")
+    processing_job.started_at = datetime.now(timezone.utc)
+    failed_job = make_job(status="failed")
+    test_db.add_all([processing_job, failed_job])
+    test_db.commit()
+
+    recovered_jobs = job_repo.reset_processing_jobs_to_pending(test_db)
+    test_db.refresh(processing_job)
+    test_db.refresh(failed_job)
+
+    assert [job.id for job in recovered_jobs] == [processing_job.id]
+    assert processing_job.status == "pending"
+    assert processing_job.started_at is None
+    assert failed_job.status == "failed"

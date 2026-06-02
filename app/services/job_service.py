@@ -54,6 +54,15 @@ def retry_job(db: Session, job_id: UUID, current_user: User) -> Job:
     return retried_job
 
 
+def recover_stuck_jobs(db: Session) -> None:
+    recovered_jobs = job_repo.reset_processing_jobs_to_pending(db)
+    for job in recovered_jobs:
+        log_event(
+            "job_recovered",
+            {"job_id": job.id, "reason": "found processing on startup"},
+        )
+
+
 def _ensure_job_document_access(db: Session, job: Job, current_user: User) -> None:
     if _is_manager(current_user):
         return

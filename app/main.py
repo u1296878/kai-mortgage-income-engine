@@ -18,6 +18,7 @@ from app.routers.income_streams import router as income_streams_router
 from app.routers.jobs import router as jobs_router
 from app.routers.results import router as results_router
 from app.seed import seed_manager
+from app.services.job_service import recover_stuck_jobs
 from app.workers.job_worker import run_worker
 
 
@@ -27,6 +28,7 @@ async def lifespan(_app: FastAPI):
     seed_db = SessionLocal()
     try:
         seed_manager(seed_db)
+        recover_stuck_jobs(seed_db)
     finally:
         seed_db.close()
     stop_event = Event()

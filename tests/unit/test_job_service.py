@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -57,3 +58,31 @@ def test_get_missing_job_raises(test_db):
 
     with pytest.raises(JobNotFound):
         job_service.get_job_status(test_db, job_id, make_user())
+
+
+def test_recover_stuck_jobs_resets_processing_jobs_and_logs(test_db, monkeypatch):
+    events = []
+    job = Job(
+        document_id=str(uuid4()),
+        status="processing",
+        started_at=datetime.now(timezone.utc),
+    )
+    test_db.add(job)
+    test_db.commit()
+    monkeypatch.setattr(
+        job_service,
+        "log_event",
+        lambda event, payload: events.append((event, payload)),
+    )
+
+    job_service.recover_stuck_jobs(test_db)
+    test_db.refresh(job)
+
+    assert job.status == "pending"
+    assert job.started_at is None
+    assert events == [
+        (
+            "job_recovered",
+            {"job_id": job.id, "reason": "found processing on startup"},
+        ),
+    ]

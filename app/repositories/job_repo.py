@@ -28,6 +28,24 @@ def get_job_by_document(db: Session, document_id: UUID) -> Job | None:
     return db.scalars(statement).first()
 
 
+def list_jobs_by_status(db: Session, status: str) -> list[Job]:
+    statement = select(Job).where(Job.status == status).order_by(Job.created_at)
+    return list(db.scalars(statement).all())
+
+
+def reset_processing_jobs_to_pending(db: Session) -> list[Job]:
+    jobs = list_jobs_by_status(db, JobStatus.processing.value)
+    if not jobs:
+        return []
+    for job in jobs:
+        job.status = JobStatus.pending.value
+        job.started_at = None
+    db.commit()
+    for job in jobs:
+        db.refresh(job)
+    return jobs
+
+
 def claim_next_pending_job(db: Session) -> Job | None:
     statement = (
         select(Job)
