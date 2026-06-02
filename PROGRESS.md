@@ -1,8 +1,8 @@
 # PROGRESS
 
-Last updated: 2026-06-01
+Last updated: 2026-06-02
 
-Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review with secure document file retrieval, right-drawer PDF viewing, page jump, and bounding-box highlight overlays.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -83,3 +83,9 @@ Phase 5, Step 2 is complete:
 - Added click-to-highlight source navigation from extracted fields
 - Added coordinate transform for PDF bottom-left bounding boxes to top-left viewer overlays
 - Added backend endpoint access tests plus frontend viewer smoke test
+
+Phase 5 management UI pass is complete:
+- Broker self-registration is available at `/register`; self-registration always creates broker users
+- Case list/detail views now support creating cases, advancing status from `open` to `in_review` to `complete`, deleting cases, unlinking documents, deleting documents, and retrying failed jobs
+- Manager-only `/admin/brokers` UI and backend endpoints list brokers and deactivate/reactivate accounts
+- Inactive broker login is rejected with `Account is deactivated`

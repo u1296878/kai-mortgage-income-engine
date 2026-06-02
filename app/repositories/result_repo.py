@@ -78,3 +78,18 @@ def clear_income_stream_assignments(db: Session, stream_id: UUID) -> None:
     for result in list_results_by_income_stream(db, stream_id):
         result.income_stream_id = None
     db.commit()
+
+
+def clear_case_for_document(db: Session, document_id: UUID) -> None:
+    statement = select(Result).where(Result.document_id == str(document_id))
+    for result in db.scalars(statement).all():
+        result.case_id = None
+        result.income_stream_id = None
+    db.commit()
+
+
+def delete_results_by_document(db: Session, document_id: UUID) -> None:
+    statement = select(Result).where(Result.document_id == str(document_id))
+    for result in db.scalars(statement).all():
+        db.delete(result)
+    db.commit()

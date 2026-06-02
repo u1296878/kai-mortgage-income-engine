@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -79,6 +79,31 @@ def link_document_to_case(
         )
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.delete("/{document_id}/case", response_model=DocumentResponse)
+def unlink_document_from_case(
+    document_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> DocumentResponse:
+    try:
+        return document_service.unlink_document_from_case(db, document_id, current_user)
+    except DocumentNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.delete("/{document_id}", status_code=204)
+def delete_document(
+    document_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> Response:
+    try:
+        document_service.delete_document(db, document_id, current_user)
+    except DocumentNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return Response(status_code=204)
 
 
 def _iter_file(file_path: Path):

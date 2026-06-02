@@ -60,3 +60,21 @@ def update_job_status(
     db.commit()
     db.refresh(job)
     return job
+
+
+def reset_job_to_pending(db: Session, job_id: UUID) -> Job:
+    job = get_job(db, job_id)
+    job.status = JobStatus.pending.value
+    job.error = None
+    job.started_at = None
+    job.completed_at = None
+    db.commit()
+    db.refresh(job)
+    return job
+
+
+def delete_job_by_document(db: Session, document_id: UUID) -> None:
+    job = get_job_by_document(db, document_id)
+    if job is not None:
+        db.delete(job)
+        db.commit()

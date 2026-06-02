@@ -11,6 +11,10 @@ export function getJob(jobId: string): Promise<JobStatusResponse> {
   return apiRequest<JobStatusResponse>(`/jobs/${jobId}`);
 }
 
+export function retryJob(jobId: string): Promise<JobStatusResponse> {
+  return apiRequest<JobStatusResponse>(`/jobs/${jobId}/retry`, { method: "POST" });
+}
+
 export async function waitForJobCompletion(
   jobId: string,
   timeoutMs = 120000,

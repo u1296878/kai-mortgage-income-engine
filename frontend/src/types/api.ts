@@ -1,6 +1,6 @@
 export type UserRole = "broker" | "manager";
 
-export type CaseStatus = "open" | "under_review" | "closed";
+export type CaseStatus = "open" | "in_review" | "complete";
 
 export type DocumentType =
   | "pay_stub"
@@ -13,6 +13,8 @@ export interface UserRead {
   id: string;
   email: string;
   role: UserRole;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface TokenResponse {

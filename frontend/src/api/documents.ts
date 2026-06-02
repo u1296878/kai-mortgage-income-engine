@@ -17,3 +17,13 @@ export function uploadDocument(
     body: payload,
   });
 }
+
+export function unlinkDocumentFromCase(documentId: string): Promise<DocumentResponse> {
+  return apiRequest<DocumentResponse>(`/documents/${documentId}/case`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteDocument(documentId: string): Promise<void> {
+  return apiRequest<void>(`/documents/${documentId}`, { method: "DELETE" });
+}

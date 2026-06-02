@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
-from app.exceptions import InvalidCredentials, UserAlreadyExists
+from app.exceptions import AccountDeactivated, InvalidCredentials, UserAlreadyExists
 from app.models.user import User
 from app.schemas.auth import Token, UserCreate, UserLogin, UserRead
 from app.security.jwt import create_access_token
@@ -32,6 +32,8 @@ def login(
 ) -> Token:
     try:
         user = auth_service.authenticate_user(db, credentials.email, credentials.password)
+    except AccountDeactivated as error:
+        raise HTTPException(status_code=401, detail=str(error)) from error
     except InvalidCredentials as error:
         raise HTTPException(status_code=401, detail=str(error)) from error
     token = create_access_token(UUID(user.id), user.role)

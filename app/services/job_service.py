@@ -3,8 +3,9 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.audit.logger import log_event
-from app.exceptions import DocumentNotFound, JobNotFound
+from app.exceptions import DocumentNotFound, JobAlreadyProcessed, JobNotFound
 from app.models.job import Job
+from app.models.job_status import JobStatus
 from app.models.user import User
 from app.models.user_role import UserRole
 from app.repositories import document_repo, job_repo
@@ -41,6 +42,16 @@ def get_job_for_document(
     if job is None:
         raise JobNotFound(f"Job not found for document: {document_id}")
     return job
+
+
+def retry_job(db: Session, job_id: UUID, current_user: User) -> Job:
+    job = job_repo.get_job(db, job_id)
+    _ensure_job_document_access(db, job, current_user)
+    if job.status == JobStatus.complete.value:
+        raise JobAlreadyProcessed(f"Job already processed: {job_id}")
+    retried_job = job_repo.reset_job_to_pending(db, job_id)
+    log_event("job_retried", {"job_id": retried_job.id})
+    return retried_job
 
 
 def _ensure_job_document_access(db: Session, job: Job, current_user: User) -> None:

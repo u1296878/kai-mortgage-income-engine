@@ -13,6 +13,11 @@ export function AppShell(): JSX.Element {
             <Link className="text-sm text-blue-700 hover:underline" to="/cases">
               Cases
             </Link>
+            {user?.role === "manager" ? (
+              <Link className="text-sm text-blue-700 hover:underline" to="/admin/brokers">
+                Brokers
+              </Link>
+            ) : null}
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span>{user?.email}</span>

@@ -30,3 +30,9 @@ def list_documents_by_case(
     if broker_id is not None:
         statement = statement.where(Document.broker_id == str(broker_id))
     return list(db.scalars(statement).all())
+
+
+def delete_document(db: Session, document_id: UUID) -> None:
+    document = get_document(db, document_id)
+    db.delete(document)
+    db.commit()

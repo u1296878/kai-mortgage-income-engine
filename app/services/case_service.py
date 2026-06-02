@@ -8,7 +8,8 @@ from app.exceptions import CaseNotFound, InvalidCaseRequest
 from app.models.case import Case
 from app.models.user import User
 from app.models.user_role import UserRole
-from app.repositories import case_repo, document_repo
+from app.repositories import borrower_repo, case_repo, document_repo, income_stream_repo
+from app.services import document_service
 from app.schemas.case import CaseResponse, CaseWithDocuments
 
 
@@ -80,6 +81,12 @@ def get_case(db: Session, case_id: UUID, current_user: User) -> Case:
 
 def delete_case(db: Session, case_id: UUID, current_user: User) -> None:
     _get_accessible_case(db, case_id, current_user)
+    for document in document_repo.list_documents_by_case(db, case_id):
+        document_service.delete_document(db, UUID(document.id), current_user)
+    for stream in income_stream_repo.list_income_streams_by_case(db, case_id):
+        income_stream_repo.delete_income_stream(db, UUID(stream.id))
+    for borrower in borrower_repo.list_borrowers_by_case(db, case_id):
+        borrower_repo.delete_borrower(db, UUID(borrower.id))
     case_repo.delete_case(db, case_id)
 
 

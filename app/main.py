@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.init_db import init_db
 from app.db.session import SessionLocal
+from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router
 from app.routers.borrowers import router as borrowers_router
 from app.routers.cases import router as cases_router
@@ -53,6 +54,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(admin_router)
 app.include_router(auth_router)
 app.include_router(borrowers_router)
 app.include_router(cases_router)

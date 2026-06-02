@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage(): JSX.Element {
@@ -31,12 +31,14 @@ export function LoginPage(): JSX.Element {
       setSubmitting(false);
     }
   };
+  const registered = Boolean((location.state as { registered?: boolean } | null)?.registered);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <form className="w-full max-w-sm space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm" onSubmit={submit}>
         <h1 className="text-xl font-semibold">Sign in</h1>
         <p className="text-sm text-slate-600">Use your broker or manager credentials.</p>
+        {registered ? <p className="text-sm text-green-700">Account created. You can sign in now.</p> : null}
         <div>
           <label className="mb-1 block text-sm font-medium" htmlFor="email">
             Email
@@ -71,6 +73,9 @@ export function LoginPage(): JSX.Element {
         >
           {submitting ? "Signing in..." : "Sign in"}
         </button>
+        <Link className="block text-center text-sm text-blue-700 underline" to="/register">
+          Create broker account
+        </Link>
       </form>
     </div>
   );

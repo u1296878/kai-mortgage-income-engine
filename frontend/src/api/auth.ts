@@ -13,6 +13,13 @@ export function login(payload: LoginPayload): Promise<TokenResponse> {
   });
 }
 
+export function register(payload: LoginPayload): Promise<UserRead> {
+  return apiRequest<UserRead>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchMe(): Promise<UserRead> {
   return apiRequest<UserRead>("/auth/me");
 }

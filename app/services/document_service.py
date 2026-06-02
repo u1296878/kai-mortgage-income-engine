@@ -10,7 +10,7 @@ from app.models.document import Document
 from app.models.document_type import DocumentType
 from app.models.user import User
 from app.models.user_role import UserRole
-from app.repositories import case_repo, document_repo
+from app.repositories import case_repo, document_repo, job_repo, result_repo
 from app.services import job_service
 from app.storage import storage
 
@@ -63,6 +63,28 @@ def link_document_to_case(
         },
     )
     return saved_document
+
+
+def unlink_document_from_case(
+    db: Session,
+    document_id: UUID,
+    current_user: User,
+) -> Document:
+    document = get_document(db, document_id, current_user)
+    document.case_id = None
+    saved_document = document_repo.save_document(db, document)
+    result_repo.clear_case_for_document(db, document_id)
+    log_event("document_unlinked_from_case", {"document_id": saved_document.id})
+    return saved_document
+
+
+def delete_document(db: Session, document_id: UUID, current_user: User) -> None:
+    document = get_document(db, document_id, current_user)
+    result_repo.delete_results_by_document(db, document_id)
+    job_repo.delete_job_by_document(db, document_id)
+    document_repo.delete_document(db, document_id)
+    storage.delete_document_file(UUID(document.id))
+    log_event("document_deleted", {"document_id": document.id})
 
 
 def get_document(db: Session, document_id: UUID, current_user: User) -> Document:

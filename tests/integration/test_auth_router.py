@@ -64,7 +64,7 @@ def test_login_wrong_password_returns_401(client):
 
 
 def test_auth_me_returns_current_user_with_valid_token(client):
-    payload = {"email": "manager@example.com", "password": "secret-password", "role": "manager"}
+    payload = {"email": "broker@example.com", "password": "secret-password"}
     client.post("/auth/register", json=payload)
     login_response = client.post(
         "/auth/login",
@@ -75,8 +75,18 @@ def test_auth_me_returns_current_user_with_valid_token(client):
     response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
 
     assert response.status_code == 200
-    assert response.json()["email"] == "manager@example.com"
-    assert response.json()["role"] == "manager"
+    assert response.json()["email"] == "broker@example.com"
+    assert response.json()["role"] == "broker"
+
+
+def test_register_ignores_manager_role(client):
+    response = client.post(
+        "/auth/register",
+        json={"email": "manager@example.com", "password": "secret-password", "role": "manager"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == "broker"
 
 
 def test_auth_me_without_token_returns_401(client):

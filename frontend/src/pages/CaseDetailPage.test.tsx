@@ -1,43 +1,29 @@
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDocumentJob } from "../api/jobs";
 import { renderWithQueryClient } from "../test/renderWithQueryClient";
 import { CaseDetailPage } from "./CaseDetailPage";
 
+const caseApi = vi.hoisted(() => ({
+  deleteCase: vi.fn(),
+  getCase: vi.fn(),
+  getCaseDocuments: vi.fn(),
+  updateCaseStatus: vi.fn(),
+}));
+
 vi.mock("../api/cases", () => ({
-  getCase: vi.fn().mockResolvedValue({
-    id: "case-1",
-    broker_id: "broker-1",
-    title: "Taylor Purchase",
-    status: "open",
-    created_at: "2026-05-31T00:00:00Z",
-    updated_at: "2026-05-31T00:00:00Z",
-  }),
-  getCaseDocuments: vi.fn().mockResolvedValue({
-    id: "case-1",
-    broker_id: "broker-1",
-    title: "Taylor Purchase",
-    status: "open",
-    created_at: "2026-05-31T00:00:00Z",
-    updated_at: "2026-05-31T00:00:00Z",
-    documents: [
-      {
-        id: "doc-1",
-        filename: "w2.pdf",
-        doc_type: "w2",
-        case_id: "case-1",
-        uploaded_at: "2026-05-31T00:00:00Z",
-      },
-      {
-        id: "doc-2",
-        filename: "paystub.pdf",
-        doc_type: "pay_stub",
-        case_id: "case-1",
-        uploaded_at: "2026-05-31T00:00:00Z",
-      },
-    ],
-  }),
+  deleteCase: caseApi.deleteCase,
+  getCase: caseApi.getCase,
+  getCaseDocuments: caseApi.getCaseDocuments,
+  updateCaseStatus: caseApi.updateCaseStatus,
+}));
+
+vi.mock("../api/documents", () => ({
+  deleteDocument: vi.fn(),
+  unlinkDocumentFromCase: vi.fn(),
+  uploadDocument: vi.fn(),
 }));
 
 vi.mock("../api/results", () => ({
@@ -91,18 +77,60 @@ vi.mock("../api/jobs", () => ({
     started_at: "2026-05-31T00:00:00Z",
     completed_at: "2026-05-31T00:00:00Z",
   }),
+  retryJob: vi.fn(),
   waitForJobCompletion: vi.fn(),
 }));
 
+function renderPage(): void {
+  renderWithQueryClient(
+    <MemoryRouter initialEntries={["/cases/case-1"]}>
+      <Routes>
+        <Route path="/cases/:caseId" element={<CaseDetailPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe("CaseDetailPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    caseApi.deleteCase.mockResolvedValue(undefined);
+    caseApi.getCase.mockResolvedValue({
+      id: "case-1",
+      broker_id: "broker-1",
+      title: "Taylor Purchase",
+      status: "open",
+      created_at: "2026-05-31T00:00:00Z",
+      updated_at: "2026-05-31T00:00:00Z",
+    });
+    caseApi.getCaseDocuments.mockResolvedValue({
+      id: "case-1",
+      broker_id: "broker-1",
+      title: "Taylor Purchase",
+      status: "open",
+      created_at: "2026-05-31T00:00:00Z",
+      updated_at: "2026-05-31T00:00:00Z",
+      documents: [
+        {
+          id: "doc-1",
+          filename: "w2.pdf",
+          doc_type: "w2",
+          case_id: "case-1",
+          uploaded_at: "2026-05-31T00:00:00Z",
+        },
+        {
+          id: "doc-2",
+          filename: "paystub.pdf",
+          doc_type: "pay_stub",
+          case_id: "case-1",
+          uploaded_at: "2026-05-31T00:00:00Z",
+        },
+      ],
+    });
+  });
+
   it("renders extracted fields and source references", async () => {
-    renderWithQueryClient(
-      <MemoryRouter initialEntries={["/cases/case-1"]}>
-        <Routes>
-          <Route path="/cases/:caseId" element={<CaseDetailPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderPage();
 
     expect(await screen.findByText("Taylor Purchase")).toBeInTheDocument();
     expect(screen.getByText("agi")).toBeInTheDocument();
@@ -110,5 +138,18 @@ describe("CaseDetailPage", () => {
     const calls = vi.mocked(getDocumentJob).mock.calls;
     expect(calls).toHaveLength(1);
     expect(calls[0][0]).toBe("doc-2");
+  });
+
+  it("does not delete a case when confirmation is cancelled", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderPage();
+
+    await screen.findByText("Taylor Purchase");
+    await user.click(screen.getByRole("button", { name: "Delete case" }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(caseApi.deleteCase).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
   });
 });

@@ -24,3 +24,4 @@
 - Storage abstraction cleanup - added `StorageBackend` protocol, wrapped local storage in `LocalStorage`, and switched service usage to package-level `storage` instance for one-line backend swap later.
 - Phase 5, Step 1: React frontend foundation - created the broker/manager UI shell, login flow, protected routes, case list/detail pages, upload flow, job/result review, source reference display, and frontend tests connected to live backend APIs.
 - PDF viewer with click-to-highlight - secure file serving endpoint, react-pdf viewer, bounding box highlight overlay. Brokers can click any extracted field and see it highlighted in the source document.
+- Phase 5 management UI pass - broker self-registration, new/delete case controls, case status advancement, document unlink/delete actions, failed-job retry, manager broker activation controls, and matching backend endpoints/tests.
