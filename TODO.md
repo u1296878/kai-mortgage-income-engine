@@ -12,6 +12,12 @@
 - [x] Phase 4, Step 3: borrower/co-borrower modeling for stream ownership and review workflows
 - [x] Phase 5, Step 1: React frontend foundation (login, protected routes, cases list/detail, upload + result review)
 - [ ] Phase 4, Step 4: richer matching heuristics (employer normalization, stronger tax-year and period linking, tie-break tuning)
+- [x] Income engine, Step 1: employment qualifying-income calc core (`app/income/` — dates, pay frequency, employment blend/rate-of-pay/AY toggle) ties out to the worksheet
+- [ ] Income engine, Step 2: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
+- [ ] Income engine, Step 3: rental engine (`app/income/rental.py`, spec section 4)
+- [ ] Income engine, Step 4: non-taxable + Social Security engine (`app/income/nontaxable.py`, spec section 3)
+- [ ] Income engine, Step 5: self-employment Form 1084 engine (spec section 5, after SAM rows 113–443 transcribed)
+- [ ] Income engine, Step 6: replace `app/services/income_service.py` with calls into `app/income/`
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
 - [ ] Phase 4, Step 6: borrower-specific qualification logic and underwriting outputs
 - [x] Phase 5, Step 2: PDF viewer with page jump/highlight polish for extracted source references

@@ -64,3 +64,7 @@ class InvalidBorrowerAssignment(Exception):
 
 class UserNotFound(Exception):
     pass
+
+
+class InvalidEmploymentInput(Exception):
+    pass
