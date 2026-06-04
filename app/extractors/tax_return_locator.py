@@ -1,6 +1,6 @@
 import re
 
-from app.extractors.block_utils import distance, line_for_block, merge_blocks
+from app.extractors.block_utils import line_for_block, merge_blocks
 from app.extractors.extracted_field_factory import parse_float
 from app.extractors.tax_return_patterns import FILING_STATUSES, LINE_FIELDS
 
@@ -20,18 +20,32 @@ def line_anchors(blocks: list[dict], line_number: str, tokens: tuple[str, ...], 
     return anchors
 
 
-def nearest_money_value(label: dict, blocks: list[dict]) -> dict | None:
+def nearest_money_value(label: dict, blocks: list[dict], line_number: str | None = None) -> dict | None:
     candidates = [block for block in blocks if is_money(block["text"]) and nearby_value(label, block) and value_candidate(label, block)]
     if not candidates:
         return None
     same_line = [block for block in candidates if abs(block["y1"] - label["y1"]) <= 5]
     if same_line:
         return max(same_line, key=lambda block: block["x1"])
-    cutoff = max(400.0, label["x1"] + 150)
-    right_column = [block for block in candidates if block["x1"] >= cutoff]
-    if right_column:
-        return min(right_column, key=lambda block: (abs(block["y1"] - label["y1"]), -block["x1"]))
-    return min(candidates, key=lambda block: distance(label, block))
+    if line_number:
+        return continuation_line_value(label, blocks, line_number)
+    return None
+
+
+def continuation_line_value(label: dict, blocks: list[dict], line_number: str) -> dict | None:
+    lines = [
+        line
+        for line in unique_lines(blocks)
+        if line[0]["page"] == label["page"] and 0 < line[0]["y1"] - label["y1"] <= 90
+    ]
+    for line in sorted(lines, key=lambda items: items[0]["y1"]):
+        line_numbers = [block for block in line if normalize(block["text"]) == line_number]
+        if not any(block["x1"] >= label["x2"] for block in line_numbers):
+            continue
+        values = [block for block in line if is_money(block["text"]) and block["x1"] >= label["x2"]]
+        if values:
+            return max(values, key=lambda block: block["x1"])
+    return None
 
 
 def find_tax_year(blocks: list[dict], federal_pages: set[int]) -> dict | None:
@@ -100,9 +114,9 @@ def federal_page_score(lines: list[list[dict]]) -> int:
 
 
 def schedule_c_page_score(lines: list[list[dict]]) -> int:
-    page_text = " ".join(normalized_line_text(line) for line in lines)
-    score = 3 if "schedule c" in page_text and "profit or loss from business" in page_text else 0
-    if page_has_line_anchor(lines, "31", ("net", "profit")):
+    header_text = " ".join(normalized_line_text(line) for line in lines[:15])
+    score = 3 if "schedule c" in header_text and "profit or loss from business" in header_text else 0
+    if score and page_has_line_anchor(lines, "31", ("net", "profit")):
         score += 4
     return score
 

@@ -48,6 +48,6 @@ def _extract_line_value(
     values = [
         value
         for label in line_anchors(blocks, line_number, tokens, pages)
-        if (value := nearest_money_value(label, blocks)) is not None
+        if (value := nearest_money_value(label, blocks, line_number)) is not None
     ]
     return values[0] if values else None
