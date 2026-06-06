@@ -115,3 +115,53 @@ export interface CaseSummaryResponse {
   results: ResultResponse[];
   sources: ExtractedField[];
 }
+
+export interface EmploymentPeriodInput {
+  date_from: string;
+  date_through: string;
+  total_earnings: number;
+  included: boolean;
+}
+
+export interface VariableBucketInput {
+  periods: EmploymentPeriodInput[];
+  annualize: boolean | null;
+  use_ytd: boolean | null;
+}
+
+export interface BasePayInput {
+  periods: EmploymentPeriodInput[];
+  rate: number | null;
+  pay_frequency: string | null;
+  hours_weekly: number | null;
+  rate_line_included: boolean;
+}
+
+export interface EmploymentIncomeInput {
+  base_pay: BasePayInput;
+  overtime: VariableBucketInput;
+  bonus: VariableBucketInput;
+  commission: VariableBucketInput;
+  other: VariableBucketInput;
+}
+
+export interface PeriodResultResponse {
+  months: number;
+  monthly: number;
+  pct_change: number | null;
+}
+
+export interface BucketResultResponse {
+  qualifying_monthly: number;
+  rate_of_pay_monthly: number;
+  periods: PeriodResultResponse[];
+}
+
+export interface EmploymentResultResponse {
+  base_pay: BucketResultResponse;
+  overtime: BucketResultResponse;
+  bonus: BucketResultResponse;
+  commission: BucketResultResponse;
+  other: BucketResultResponse;
+  total_monthly: number;
+}

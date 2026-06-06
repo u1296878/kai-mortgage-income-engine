@@ -4,6 +4,7 @@ import { AppShell } from "./layout/AppShell";
 import { AdminBrokersPage } from "./pages/AdminBrokersPage";
 import { CaseDetailPage } from "./pages/CaseDetailPage";
 import { CasesPage } from "./pages/CasesPage";
+import { EmploymentIncomePage } from "./pages/EmploymentIncomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -19,6 +20,7 @@ export function App(): JSX.Element {
           <Route path="/admin/brokers" element={<AdminBrokersPage />} />
           <Route path="/cases" element={<CasesPage />} />
           <Route path="/cases/:caseId" element={<CaseDetailPage />} />
+          <Route path="/income/employment" element={<EmploymentIncomePage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />

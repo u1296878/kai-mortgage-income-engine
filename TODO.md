@@ -13,6 +13,8 @@
 - [x] Phase 5, Step 1: React frontend foundation (login, protected routes, cases list/detail, upload + result review)
 - [ ] Phase 4, Step 4: richer matching heuristics (employer normalization, stronger tax-year and period linking, tie-break tuning)
 - [x] Income engine, Step 1: employment qualifying-income calc core (`app/income/` — dates, pay frequency, employment blend/rate-of-pay/AY toggle) ties out to the worksheet
+- [x] Income engine, Step 1b: wire employment engine end-to-end (stateless) — `POST /income/employment/calculate` + worksheet form UI
+- [ ] Income engine, Step 1c: persist the employment result and fold it into the case summary (needs a worksheet-friendly result model; `Result` is job/document-bound)
 - [ ] Income engine, Step 2: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
 - [ ] Income engine, Step 3: rental engine (`app/income/rental.py`, spec section 4)
 - [ ] Income engine, Step 4: non-taxable + Social Security engine (`app/income/nontaxable.py`, spec section 3)
