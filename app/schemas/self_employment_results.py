@@ -1,9 +1,10 @@
 """Unified API schemas for self-employment calculations."""
 
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SelfEmploymentCalculationRequest(BaseModel):
@@ -21,3 +22,17 @@ class SelfEmploymentResult(BaseModel):
     qualifying_monthly: float
     annual_income: float
     breakdown: dict[str, Any]
+
+
+class SelfEmploymentCalculationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    case_id: UUID
+    borrower_id: UUID | None
+    label: str | None
+    kind: str
+    qualifying_monthly: float
+    annual_income: float
+    breakdown: dict[str, Any]
+    created_at: datetime

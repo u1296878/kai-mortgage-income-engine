@@ -21,6 +21,9 @@ from app.routers.jobs import router as jobs_router
 from app.routers.nontaxable_calculations import router as nontaxable_calculations_router
 from app.routers.rental_calculations import router as rental_calculations_router
 from app.routers.results import router as results_router
+from app.routers.self_employment_calculations import (
+    router as self_employment_calculations_router,
+)
 from app.seed import seed_manager
 from app.services.job_service import recover_stuck_jobs
 from app.workers.job_worker import run_worker
@@ -73,3 +76,4 @@ app.include_router(jobs_router)
 app.include_router(nontaxable_calculations_router)
 app.include_router(rental_calculations_router)
 app.include_router(results_router)
+app.include_router(self_employment_calculations_router)

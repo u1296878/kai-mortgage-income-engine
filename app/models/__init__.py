@@ -7,6 +7,7 @@ from app.models.job import Job
 from app.models.nontaxable_calculation import NonTaxableCalculation
 from app.models.rental_calculation import RentalCalculation
 from app.models.result import Result
+from app.models.self_employment_calculation import SelfEmploymentCalculation
 from app.models.user import User
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "NonTaxableCalculation",
     "RentalCalculation",
     "Result",
+    "SelfEmploymentCalculation",
     "User",
 ]

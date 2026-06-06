@@ -8,6 +8,7 @@ from app.schemas.income_results import EmploymentCalculationResponse
 from app.schemas.income_stream import IncomeStreamResponse
 from app.schemas.nontaxable_results import NonTaxableCalculationResponse
 from app.schemas.rental_results import RentalCalculationResponse
+from app.schemas.self_employment_results import SelfEmploymentCalculationResponse
 from app.schemas.extraction import ExtractedField
 
 
@@ -35,5 +36,8 @@ class CaseSummaryResponse(BaseModel):
     employment_calculations: list[EmploymentCalculationResponse] = Field(default_factory=list)
     rental_calculations: list[RentalCalculationResponse] = Field(default_factory=list)
     nontaxable_calculations: list[NonTaxableCalculationResponse] = Field(default_factory=list)
+    self_employment_calculations: list[SelfEmploymentCalculationResponse] = Field(
+        default_factory=list
+    )
     results: list[ResultResponse]
     sources: list[ExtractedField]

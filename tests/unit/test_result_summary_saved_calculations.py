@@ -4,6 +4,7 @@ from app.models.case import Case
 from app.models.employment_calculation import EmploymentCalculation
 from app.models.nontaxable_calculation import NonTaxableCalculation
 from app.models.rental_calculation import RentalCalculation
+from app.models.self_employment_calculation import SelfEmploymentCalculation
 from app.models.user import User
 from app.schemas.extraction import BoundingBox, ExtractedField
 from app.services import result_service
@@ -71,6 +72,17 @@ def test_summary_adds_saved_nontaxable_calculations(test_db):
     assert len(summary.nontaxable_calculations) == 1
 
 
+def test_summary_negative_self_employment_calculation_reduces_total(test_db):
+    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    test_db.add(_self_employment_calc(case_id, broker_id, -12000.00))
+    test_db.commit()
+
+    summary = result_service.get_case_summary(test_db, case_id, manager)
+
+    assert summary.total_annual_income == 73000.00
+    assert len(summary.self_employment_calculations) == 1
+
+
 def _case_with_result(test_db, annual_income):
     case_id = uuid4()
     broker_id = uuid4()
@@ -134,4 +146,18 @@ def _nontaxable_calc(case_id, broker_id, annual_income):
         monthly=monthly,
         annual_income=annual_income,
         breakdown={"monthly": monthly, "method": "adjusted"},
+    )
+
+
+def _self_employment_calc(case_id, broker_id, annual_income):
+    monthly = round(annual_income / 12, 2)
+    return SelfEmploymentCalculation(
+        case_id=str(case_id),
+        broker_id=str(broker_id),
+        label="Schedule E royalty loss",
+        kind="schedule_e_royalty",
+        inputs={},
+        qualifying_monthly=monthly,
+        annual_income=annual_income,
+        breakdown={"kind": "schedule_e_royalty", "qualifying_monthly": monthly},
     )

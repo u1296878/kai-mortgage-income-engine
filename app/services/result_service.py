@@ -17,6 +17,7 @@ from app.repositories import (
     nontaxable_calculation_repo,
     rental_calculation_repo,
     result_repo,
+    self_employment_calculation_repo,
 )
 from app.schemas.extraction import ExtractedField
 from app.schemas.result import CaseSummaryResponse
@@ -71,6 +72,9 @@ def get_case_summary(
     employment_calculations = employment_calculation_repo.list_by_case(db, case_id)
     rental_calculations = rental_calculation_repo.list_by_case(db, case_id)
     nontaxable_calculations = nontaxable_calculation_repo.list_by_case(db, case_id)
+    self_employment_calculations = self_employment_calculation_repo.list_by_case(
+        db, case_id
+    )
     return case_summary_builder.build_case_summary(
         case_id=case_id,
         borrowers=borrowers,
@@ -79,6 +83,7 @@ def get_case_summary(
         employment_calculations=employment_calculations,
         rental_calculations=rental_calculations,
         nontaxable_calculations=nontaxable_calculations,
+        self_employment_calculations=self_employment_calculations,
     )
 
 
