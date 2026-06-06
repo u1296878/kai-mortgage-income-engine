@@ -88,3 +88,7 @@ class InvalidNonTaxableInput(Exception):
 
 class NonTaxableCalculationNotFound(Exception):
     pass
+
+
+class InvalidSelfEmploymentInput(Exception):
+    pass

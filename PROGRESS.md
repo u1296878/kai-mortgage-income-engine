@@ -1,6 +1,6 @@
 # PROGRESS
 
-Last updated: 2026-06-04
+Last updated: 2026-06-06
 
 Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls.
 No document types currently use the extraction stub.
@@ -133,6 +133,12 @@ Income engine, Step 3b (wire + persist non-taxable) is complete:
 - Backend: `POST /income/nontaxable/calculate` previews non-taxable income and Social Security sources, and `/cases/{id}/nontaxable-calculations` supports case-scoped save/list/get/delete with broker/manager scoping.
 - Case summary: saved non-taxable annual income is folded in alongside employment and rental calculations, using the same additive saved-worksheet caveat.
 - Frontend: `/income/nontaxable` supports income vs Social Security methods, previews monthly income, saves to a case, and case detail lists/deletes saved sources.
-- Income-Worksheet and Rental-Worksheet coverage is now complete; next is transcribing SAM rows 113-443 into spec section 5, then building the self-employment Form 1084 engine.
+- Income-Worksheet and Rental-Worksheet coverage is complete; self-employment personal schedules are now the first completed Form 1084 slice.
 
-Remaining for the income engine: transcribe SAM rows 113-443, build self-employment (Form 1084), edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.
+Income engine, Step 4a (self-employment personal schedules B/C/D/E/F calc core) is complete:
+- `app/income/self_employment.py` computes one personal schedule at a time and returns a per-year breakdown plus a months-weighted qualifying monthly figure.
+- `app/income/self_employment_schedules.py` holds the spec 5.2 annual formulas for Schedule B, Schedule C including single-member LLC W-2 income and mileage depreciation, Schedule D, Schedule E royalties, and Schedule F.
+- Losses pass through unclamped, excluded years drop out of subtotal and month counts, zero included months returns 0, and missing required line items or unknown mileage years raise `InvalidSelfEmploymentInput`.
+- This is pure calculation only: no extraction, routes, database, persistence, or case-summary wiring changed.
+
+Remaining for the income engine: build the self-employment entity engine (partnership/S-corp/corp, spec 5.3-5.6), wire + persist self-employment calculations, edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.

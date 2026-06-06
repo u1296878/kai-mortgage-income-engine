@@ -344,14 +344,83 @@ subtotal = net_profit_L34
          + business_use_of_home_if_noted
 ```
 
-**Partnership (1065 + K-1), S-Corp (1120S + K-1), Corporation (1120):** each combines
-K-1 distributions, W-2 wages to the borrower, and the business return's add-backs
-(depreciation, depletion, amortization, meals exclusion, mortgages/notes payable in
-< 1 year, nonrecurring items), then multiplied by ownership %.
+For the three entity types below, the borrower's annual income (per year) is the sum
+of three independently-averaged components: (1) the Schedule K-1 subtotal, (2) W-2
+wages paid to the borrower (Box 5), and (3) the business return's cash-flow share
+**after** multiplying by ownership %. The ownership-% multiplier applies **only** to
+the business-return portion — the K-1 is already the borrower's share and W-2 is the
+borrower's own wages. (Corporations have no K-1 component.)
 
-> **TODO before implementing section 5:** the exact line items for the
-> partnership / S-corp / corporation blocks live in `SAM` rows 113–443 and were not
-> fully transcribed here. Dump and append them to this spec before coding phase 2.
+> Judgment flag (not a calc change): when K-1 ordinary/net-rental income exceeds
+> distributions, investors may require evidence the business can support the
+> withdrawal (liquidity). Surface it; don't alter the number.
+
+### 5.3 Partnership — Form 1065 + Schedule K-1
+```
+k1_subtotal = ordinary_income_K1_L1
+            + net_rental_income_K1_L2_3
+            + guaranteed_payments_K1_L4c
+
+form_1065_subtotal = passthrough_income_loss_other_partnerships_L4
+                   - nonrecurring_income_L5_6_7
+                   + depreciation_L16c
+                   + depreciation_form_8825_L14
+                   + depletion_L17
+                   + amortization_casualty_nonrecurring_loss
+                   - mortgages_notes_payable_lt_1yr        # Sch L, L16, col d
+                   - travel_entertainment_exclusion        # Sch M-1, L4b
+partner_share = form_1065_subtotal * ownership_pct
+
+entity_annual = k1_subtotal + w2_wages_box5 + partner_share
+```
+
+### 5.4 S Corporation — Form 1120S + Schedule K-1
+```
+k1_subtotal = ordinary_income_K1_L1 + net_rental_income_K1_L2_3   # no guaranteed pmts
+
+form_1120s_subtotal = - nonrecurring_income_L4_5
+                      + depreciation_L14
+                      + depreciation_form_8825_L14
+                      + depletion_L15
+                      + amortization_casualty_nonrecurring_loss
+                      - mortgages_notes_payable_lt_1yr       # Sch L, L17, col d
+                      - travel_entertainment_exclusion       # Sch M-1, L3b
+shareholder_share = form_1120s_subtotal * ownership_pct
+
+entity_annual = k1_subtotal + w2_wages_box5 + shareholder_share
+```
+
+### 5.5 Corporation — Form 1120
+```
+form_1120_subtotal = taxable_income_L30
+                   - total_tax_L31
+                   + nonrecurring_gains_losses_L8_9     # deduct gains / add losses
+                   - nonrecurring_income_L10
+                   + depreciation_L20
+                   + depletion_L21
+                   + amortization_casualty_nonrecurring_loss
+                   + nol_and_special_deductions_L29a_b
+                   - mortgages_notes_payable_lt_1yr      # Sch L, L17, col d
+                   - travel_entertainment_exclusion      # Sch M-1, L5c
+corp_share = form_1120_subtotal * ownership_pct - dividends_paid_to_borrower   # 1040 Sch B L5
+
+entity_annual = w2_wages_box5 + corp_share
+```
+
+### 5.6 Entity aggregation (Summary tab)
+Each component line (K-1, W-2, each business return) is independently averaged across
+the two years and divided by its month count (default 12 per year, 24 total), with a
+per-line, per-year exclude toggle, then summed:
+```
+qualifying_monthly(entity)  = sum(component monthly figures, included only)
+total_self_employment       = sum(qualifying_monthly for included entities)
+```
+The worksheet provides up to 4 partnerships, 4 S-corps, 3 corporations, plus the
+personal Schedule B/C/D/E/F. Mirror Excel `IFERROR(...,0)` guards throughout.
+
+> The All-In-One workbook also has Liquidity, Comparative, and P&L analysis tabs.
+> Those are advisory/trend analysis, **not** part of the qualifying-income number —
+> out of scope for the calc engine (revisit only if the company wants them).
 
 ---
 
@@ -377,5 +446,6 @@ Per AGENTS.md (behavioral tests, AAA, cover unhappy paths):
 4. `nontaxable` (gross-up + SS)
 5. `rental` (Schedule E + lease)
 6. Wire extractors → input models for employment (capture period dates/earnings)
-7. `self_employment` (after SAM rows 113–443 are transcribed into section 5)
+7. `self_employment` — Schedule B/C/D/E/F + partnership/S-corp/corp (section 5 now
+   fully transcribed; the largest engine — consider splitting per entity type)
 ```
