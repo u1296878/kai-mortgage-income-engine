@@ -113,3 +113,65 @@ def test_calculate_rejects_malformed_body(client):
     )
 
     assert response.status_code == 422
+
+
+def _rental_schedule_e_body():
+    return {
+        "property_class": "primary_2_4_unit",
+        "method": "schedule_e",
+        "schedule_e_years": [
+            {"months_in_service": 12, "rents_received": 24000, "total_expenses": 10000},
+            {"months_in_service": 12, "rents_received": 24000, "total_expenses": 11000},
+        ],
+    }
+
+
+def test_rental_calculate_requires_authentication(client):
+    response = client.post("/income/rental/calculate", json=_rental_schedule_e_body())
+
+    assert response.status_code == 401
+
+
+def test_rental_calculate_returns_qualifying_and_breakdown(client):
+    headers, _ = auth_user(client)
+
+    response = client.post(
+        "/income/rental/calculate",
+        json=_rental_schedule_e_body(),
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    # (14000 + 13000) / (12 + 12) = 1125.00
+    assert body["qualifying_monthly"] == 1125.00
+    assert body["years"][0]["annual_net"] == 14000.0
+
+
+def test_rental_calculate_rejects_schedule_e_with_no_years(client):
+    headers, _ = auth_user(client)
+    body = _rental_schedule_e_body()
+    body["schedule_e_years"] = []
+
+    response = client.post("/income/rental/calculate", json=body, headers=headers)
+
+    assert response.status_code == 422
+
+
+def test_rental_calculate_rejects_investment_without_pitia(client):
+    headers, _ = auth_user(client)
+    body = _rental_schedule_e_body()
+    body["property_class"] = "investment"
+
+    response = client.post("/income/rental/calculate", json=body, headers=headers)
+
+    assert response.status_code == 422
+
+
+def test_rental_calculate_rejects_lease_without_gross_rent(client):
+    headers, _ = auth_user(client)
+    body = {"property_class": "primary_2_4_unit", "method": "lease"}
+
+    response = client.post("/income/rental/calculate", json=body, headers=headers)
+
+    assert response.status_code == 422
