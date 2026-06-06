@@ -11,6 +11,7 @@ from app.repositories import (
     borrower_repo,
     case_repo,
     document_repo,
+    employment_calculation_repo,
     income_stream_repo,
     job_repo,
     result_repo,
@@ -65,11 +66,13 @@ def get_case_summary(
     results = result_repo.list_results_by_case(db, case_id)
     borrowers = borrower_repo.list_borrowers_by_case(db, case_id)
     income_streams = income_stream_repo.list_income_streams_by_case(db, case_id)
+    employment_calculations = employment_calculation_repo.list_by_case(db, case_id)
     return case_summary_builder.build_case_summary(
         case_id=case_id,
         borrowers=borrowers,
         income_streams=income_streams,
         results=results,
+        employment_calculations=employment_calculations,
     )
 
 

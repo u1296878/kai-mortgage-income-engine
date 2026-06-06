@@ -68,3 +68,7 @@ class UserNotFound(Exception):
 
 class InvalidEmploymentInput(Exception):
     pass
+
+
+class EmploymentCalculationNotFound(Exception):
+    pass

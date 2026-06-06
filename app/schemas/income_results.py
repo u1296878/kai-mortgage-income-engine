@@ -3,7 +3,10 @@
 The engine stays pure (returns dataclasses); these give the API a typed contract.
 """
 
-from pydantic import BaseModel
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class PeriodResult(BaseModel):
@@ -25,3 +28,16 @@ class EmploymentResult(BaseModel):
     commission: BucketResult
     other: BucketResult
     total_monthly: float
+
+
+class EmploymentCalculationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    case_id: UUID
+    borrower_id: UUID | None
+    label: str | None
+    total_monthly: float
+    annual_income: float
+    breakdown: EmploymentResult
+    created_at: datetime

@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.case import Case
+from app.models.employment_calculation import EmploymentCalculation
 from app.models.income_stream import IncomeStream
 from app.models.result import Result
 from app.models.user import User
@@ -154,6 +155,26 @@ def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test
     assert summary.total_annual_income == 87000.0
 
 
+def test_case_summary_adds_saved_employment_calculations_on_top_of_results(test_db):
+    case_id = uuid4()
+    broker_id = uuid4()
+    manager = make_user(role="manager")
+    case = Case(id=str(case_id), broker_id=str(broker_id), title="Manual add-on")
+    test_db.add(case)
+    test_db.commit()
+    result_service.save_extraction_result(
+        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
+    )
+    test_db.add(_employment_calc(case_id, broker_id, 84000.00))
+    test_db.commit()
+
+    summary = result_service.get_case_summary(test_db, case_id, manager)
+
+    # Manually-saved employment income adds on top of document income (additive).
+    assert summary.total_annual_income == 169000.00
+    assert len(summary.employment_calculations) == 1
+
+
 def _manual_result(case_id, annual_income, confidence):
     document_id = uuid4()
     fields = [
@@ -174,4 +195,26 @@ def _manual_result(case_id, annual_income, confidence):
         extracted_fields=fields,
         annual_income=annual_income,
         confidence=confidence,
+    )
+
+
+def _employment_calc(case_id, broker_id, annual_income):
+    monthly = round(annual_income / 12, 2)
+    bucket = {"qualifying_monthly": 0.0, "rate_of_pay_monthly": 0.0, "periods": []}
+    breakdown = {
+        "base_pay": {**bucket, "qualifying_monthly": monthly},
+        "overtime": bucket,
+        "bonus": bucket,
+        "commission": bucket,
+        "other": bucket,
+        "total_monthly": monthly,
+    }
+    return EmploymentCalculation(
+        case_id=str(case_id),
+        broker_id=str(broker_id),
+        label="Acme Corp",
+        inputs={},
+        total_monthly=monthly,
+        annual_income=annual_income,
+        breakdown=breakdown,
     )

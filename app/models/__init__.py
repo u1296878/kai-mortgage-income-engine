@@ -1,9 +1,19 @@
 from app.models.borrower import Borrower
 from app.models.case import Case
 from app.models.document import Document
+from app.models.employment_calculation import EmploymentCalculation
 from app.models.income_stream import IncomeStream
 from app.models.job import Job
 from app.models.result import Result
 from app.models.user import User
 
-__all__ = ["Borrower", "Case", "Document", "IncomeStream", "Job", "Result", "User"]
+__all__ = [
+    "Borrower",
+    "Case",
+    "Document",
+    "EmploymentCalculation",
+    "IncomeStream",
+    "Job",
+    "Result",
+    "User",
+]

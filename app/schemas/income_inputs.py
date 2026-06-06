@@ -6,6 +6,7 @@ Exactly one must be set; the engine raises on both-set / both-unset.
 """
 
 from datetime import date
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -39,3 +40,10 @@ class EmploymentInput(BaseModel):
     bonus: VariableBucket
     commission: VariableBucket
     other: VariableBucket
+
+
+class EmploymentCalculationCreate(EmploymentInput):
+    """Save request: a full EmploymentInput plus optional case-binding metadata."""
+
+    borrower_id: UUID | None = None
+    label: str | None = None
