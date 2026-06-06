@@ -3,6 +3,11 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from app.income.self_employment_common import (
+    SelfEmploymentYearResult,
+    build_year_results,
+    qualifying_monthly,
+)
 from app.schemas.self_employment_inputs import (
     ScheduleBInput,
     ScheduleCInput,
@@ -18,13 +23,6 @@ from app.income.self_employment_schedules import (
     schedule_e_royalty_annual_subtotal,
     schedule_f_annual_subtotal,
 )
-
-
-@dataclass
-class SelfEmploymentYearResult:
-    months: float
-    annual_subtotal: float
-    included: bool
 
 
 @dataclass
@@ -59,25 +57,10 @@ def _compute(
     years: list[SelfEmploymentYear],
     subtotal_fn: Callable[[SelfEmploymentYear], float],
 ) -> SelfEmploymentResult:
-    year_results = [
-        SelfEmploymentYearResult(
-            months=year.months,
-            annual_subtotal=subtotal_fn(year) if year.included else 0.0,
-            included=year.included,
-        )
-        for year in years
-    ]
-    qualifying = _qualifying_monthly(year_results)
+    year_results = build_year_results(years, subtotal_fn)
+    qualifying = qualifying_monthly(year_results)
     return SelfEmploymentResult(
         qualifying_monthly=round(qualifying, 2),
         schedule=schedule,
         years=year_results,
     )
-
-
-def _qualifying_monthly(years: list[SelfEmploymentYearResult]) -> float:
-    included = [year for year in years if year.included]
-    months = sum(year.months for year in included)
-    if months == 0:
-        return 0.0
-    return sum(year.annual_subtotal for year in included) / months

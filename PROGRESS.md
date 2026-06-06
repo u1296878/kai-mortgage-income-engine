@@ -141,4 +141,10 @@ Income engine, Step 4a (self-employment personal schedules B/C/D/E/F calc core) 
 - Losses pass through unclamped, excluded years drop out of subtotal and month counts, zero included months returns 0, and missing required line items or unknown mileage years raise `InvalidSelfEmploymentInput`.
 - This is pure calculation only: no extraction, routes, database, persistence, or case-summary wiring changed.
 
-Remaining for the income engine: build the self-employment entity engine (partnership/S-corp/corp, spec 5.3-5.6), wire + persist self-employment calculations, edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.
+Income engine, Step 4b (self-employment entity calc core) is complete:
+- Partnership, S-corp, and corporation engines now compute component-level monthly income from K-1, W-2, and business-return shares.
+- Ownership percentage applies only to the business-return component; K-1 and W-2 are unscaled, and corporations subtract dividends paid to the borrower from the owned 1120 share.
+- Entity components reuse the same shared months-weighted averaging helper as personal schedules, with excluded years, zero-month guards, missing-field validation, and negative losses covered by tests.
+- All Form 1084 calc logic is now built as pure engines; no extraction, routes, database, persistence, or case-summary wiring changed.
+
+Remaining for the income engine: wire + persist self-employment calculations (personal + entity) into preview/save/case-summary, decide printable worksheet output, edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.

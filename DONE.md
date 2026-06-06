@@ -27,3 +27,4 @@
 - Phase 5 management UI pass - broker self-registration, new/delete case controls, case status advancement, document unlink/delete actions, failed-job retry, manager broker activation controls, and matching backend endpoints/tests.
 - Income engine, Step 3b: non-taxable income wired and persisted - preview endpoint, case-scoped save/list/get/delete, case-summary fold-in, worksheet UI, and case-detail panel added.
 - Income engine, Step 4a: self-employment personal schedules B/C/D/E/F calc core - pure schedule engines, spec 5.2 formulas, mileage depreciation, single-member LLC W-2 income, months-weighted averaging, excluded-year handling, loss pass-through, and validation tests added.
+- Income engine, Step 4b: self-employment entity calc core - partnership, S-corp, and corporation pure engines added with K-1, W-2, business-return ownership share, corporation dividend subtraction, shared averaging, and validation tests.

@@ -23,8 +23,9 @@
 - [x] Income engine, Step 3b: wire + persist non-taxable; Income-Worksheet and Rental-Worksheet are now fully covered
 - [x] Income engine, Step 3c: transcribe SAM rows 113-443 into spec section 5
 - [x] Income engine, Step 4a: self-employment personal schedules B/C/D/E/F calc engine
-- [ ] Income engine, Step 4b: self-employment entity engine (partnership/S-corp/corp, spec 5.3-5.6)
+- [x] Income engine, Step 4b: self-employment entity engine (partnership/S-corp/corp, spec 5.3-5.6)
 - [ ] Income engine, Step 4c: wire + persist self-employment calculations
+- [ ] Income engine, Step 4d: printable self-employment worksheet output decision
 - [ ] Income engine, Step 5: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
 - [ ] Income engine, Step 6: replace `app/services/income_service.py` with calls into `app/income/`
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
