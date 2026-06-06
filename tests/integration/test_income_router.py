@@ -80,11 +80,7 @@ def test_calculate_rejects_both_ay_toggles_set(client):
     body["overtime"]["annualize"] = True
     body["overtime"]["use_ytd"] = True
 
-    response = client.post(
-        "/income/employment/calculate",
-        json=body,
-        headers=headers,
-    )
+    response = client.post("/income/employment/calculate", json=body, headers=headers)
 
     assert response.status_code == 422
 
@@ -94,11 +90,7 @@ def test_calculate_rejects_neither_ay_toggle_set(client):
     body = _valid_body()
     body["overtime"]["use_ytd"] = False
 
-    response = client.post(
-        "/income/employment/calculate",
-        json=body,
-        headers=headers,
-    )
+    response = client.post("/income/employment/calculate", json=body, headers=headers)
 
     assert response.status_code == 422
 

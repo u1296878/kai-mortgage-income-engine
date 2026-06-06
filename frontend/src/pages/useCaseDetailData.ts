@@ -3,7 +3,11 @@ import { useMemo, useState } from "react";
 import { listCaseBorrowers } from "../api/borrowers";
 import { deleteCase, getCase, getCaseDocuments, updateCaseStatus } from "../api/cases";
 import { deleteDocument, unlinkDocumentFromCase, uploadDocument } from "../api/documents";
-import { deleteEmploymentCalculation, deleteRentalCalculation } from "../api/income";
+import {
+  deleteEmploymentCalculation,
+  deleteNontaxableCalculation,
+  deleteRentalCalculation,
+} from "../api/income";
 import { listCaseIncomeStreams } from "../api/incomeStreams";
 import { getDocumentJob, retryJob, waitForJobCompletion } from "../api/jobs";
 import { getCaseSummary, getJobResult } from "../api/results";
@@ -133,6 +137,10 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     mutationFn: (calculationId: string) => deleteRentalCalculation(caseId!, calculationId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
+  const deleteNontaxableCalculationMutation = useMutation({
+    mutationFn: (calculationId: string) => deleteNontaxableCalculation(caseId!, calculationId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
+  });
 
   return {
     borrowersQuery,
@@ -140,6 +148,7 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     caseQuery,
     deleteCalculationMutation,
     deleteRentalCalculationMutation,
+    deleteNontaxableCalculationMutation,
     deleteCaseMutation,
     deleteDocumentMutation,
     documents,

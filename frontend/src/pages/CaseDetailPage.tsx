@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CaseSummaryPanel } from "../components/CaseSummaryPanel";
 import { CaseStatusControls } from "../components/CaseStatusControls";
 import { EmploymentCalculationsPanel } from "../components/EmploymentCalculationsPanel";
+import { NontaxableCalculationsPanel } from "../components/NontaxableCalculationsPanel";
 import { RentalCalculationsPanel } from "../components/RentalCalculationsPanel";
 import { DocumentUploadForm } from "../components/DocumentUploadForm";
 import { DocumentViewer } from "../components/DocumentViewer";
@@ -104,6 +105,20 @@ export function CaseDetailPage(): JSX.Element {
               : null
           }
           onDelete={(calculationId) => data.deleteRentalCalculationMutation.mutate(calculationId)}
+        />
+      </StateCard>
+      <StateCard title="Non-taxable Income">
+        <NontaxableCalculationsPanel
+          calculations={data.summaryQuery.data?.nontaxable_calculations ?? []}
+          caseId={caseId}
+          deletingId={
+            data.deleteNontaxableCalculationMutation.isPending
+              ? (data.deleteNontaxableCalculationMutation.variables ?? null)
+              : null
+          }
+          onDelete={(calculationId) => {
+            data.deleteNontaxableCalculationMutation.mutate(calculationId);
+          }}
         />
       </StateCard>
       <StateCard title="Extracted Results">

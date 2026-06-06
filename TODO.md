@@ -20,8 +20,9 @@
 - [x] Income engine, Step 2b: wire + persist rental — `POST /income/rental/calculate`, case-scoped save/list/delete, folded into case summary (loss reduces total), worksheet + case-detail panel UI
 - [ ] Income engine, Step 2c: edit a saved rental calculation (create + delete only today)
 - [x] Income engine, Step 3: non-taxable + Social Security calc engine (`app/income/nontaxable.py` — 3 non-taxable methods + 2 SS methods, 25% gross-up) ties out to the worksheet
-- [ ] Income engine, Step 3b: wire + persist non-taxable (mirror rental 2b)
-- [ ] Income engine, Step 4: self-employment Form 1084 engine (spec section 5, after SAM rows 113–443 transcribed)
+- [x] Income engine, Step 3b: wire + persist non-taxable; Income-Worksheet and Rental-Worksheet are now fully covered
+- [ ] Income engine, Step 3c: transcribe SAM rows 113-443 into spec section 5
+- [ ] Income engine, Step 4: self-employment Form 1084 engine (spec section 5, after SAM rows 113-443 transcribed)
 - [ ] Income engine, Step 5: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
 - [ ] Income engine, Step 6: replace `app/services/income_service.py` with calls into `app/income/`
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower

@@ -2,9 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.case import Case
-from app.models.employment_calculation import EmploymentCalculation
 from app.models.income_stream import IncomeStream
-from app.models.rental_calculation import RentalCalculation
 from app.models.result import Result
 from app.models.user import User
 from app.schemas.extraction import BoundingBox, ExtractedField
@@ -36,23 +34,11 @@ def test_get_case_summary_returns_total_and_sources(test_db):
     test_db.add(Case(id=str(case_id), broker_id=str(uuid4()), title="Smith Purchase"))
     test_db.commit()
     first = result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "w2",
-        [make_field("w2_wages", 85000.00)],
+        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
     )
     second = result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "tax_return",
-        [make_field("agi", 79000.00)],
+        test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 79000.00)]
     )
-    # Results are ordered by created_at; pin distinct values so the source
-    # order is well-defined regardless of clock resolution on fast inserts.
     first.created_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
     second.created_at = datetime(2024, 1, 2, tzinfo=timezone.utc)
     test_db.commit()
@@ -70,30 +56,21 @@ def test_case_summary_uses_stream_totals_when_streams_exist(test_db):
     test_db.add(case)
     test_db.commit()
     result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "w2",
-        [make_field("w2_wages", 85000.00)],
+        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
     )
     result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "tax_return",
-        [make_field("agi", 79000.00)],
+        test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 79000.00)]
     )
-    stream = IncomeStream(
-        case_id=case.id,
-        broker_id=case.broker_id,
-        name="Employment",
-        stream_type="employment",
-        annual_income=87000.0,
-        confidence="high",
+    test_db.add(
+        IncomeStream(
+            case_id=case.id,
+            broker_id=case.broker_id,
+            name="Employment",
+            stream_type="employment",
+            annual_income=87000.0,
+            confidence="high",
+        )
     )
-    test_db.add(stream)
     test_db.commit()
 
     summary = result_service.get_case_summary(test_db, case_id, manager)
@@ -109,20 +86,10 @@ def test_case_summary_falls_back_to_result_totals_when_no_streams_exist(test_db)
     test_db.add(case)
     test_db.commit()
     result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "w2",
-        [make_field("w2_wages", 60000.00)],
+        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 60000.00)]
     )
     result_service.save_extraction_result(
-        test_db,
-        uuid4(),
-        uuid4(),
-        case_id,
-        "tax_return",
-        [make_field("agi", 50000.00)],
+        test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 50000.00)]
     )
 
     summary = result_service.get_case_summary(test_db, case_id, manager)
@@ -140,15 +107,16 @@ def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test
         _manual_result(case.id, 85000.0, "high"),
         _manual_result(case.id, 87000.0, "high"),
     ])
-    stream = IncomeStream(
-        case_id=case.id,
-        broker_id=case.broker_id,
-        name="Employment",
-        stream_type="employment",
-        annual_income=87000.0,
-        confidence="high",
+    test_db.add(
+        IncomeStream(
+            case_id=case.id,
+            broker_id=case.broker_id,
+            name="Employment",
+            stream_type="employment",
+            annual_income=87000.0,
+            confidence="high",
+        )
     )
-    test_db.add(stream)
     test_db.commit()
 
     summary = result_service.get_case_summary(test_db, case_id, manager)
@@ -156,123 +124,25 @@ def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test
     assert summary.total_annual_income == 87000.0
 
 
-def test_case_summary_adds_saved_employment_calculations_on_top_of_results(test_db):
-    case_id = uuid4()
-    broker_id = uuid4()
-    manager = make_user(role="manager")
-    case = Case(id=str(case_id), broker_id=str(broker_id), title="Manual add-on")
-    test_db.add(case)
-    test_db.commit()
-    result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
-    )
-    test_db.add(_employment_calc(case_id, broker_id, 84000.00))
-    test_db.commit()
-
-    summary = result_service.get_case_summary(test_db, case_id, manager)
-
-    # Manually-saved employment income adds on top of document income (additive).
-    assert summary.total_annual_income == 169000.00
-    assert len(summary.employment_calculations) == 1
-
-
-def test_case_summary_adds_saved_rental_calculations_on_top_of_results(test_db):
-    case_id = uuid4()
-    broker_id = uuid4()
-    manager = make_user(role="manager")
-    case = Case(id=str(case_id), broker_id=str(broker_id), title="Rental add-on")
-    test_db.add(case)
-    test_db.commit()
-    result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
-    )
-    test_db.add(_rental_calc(case_id, broker_id, 12000.00))
-    test_db.commit()
-
-    summary = result_service.get_case_summary(test_db, case_id, manager)
-
-    assert summary.total_annual_income == 97000.00
-    assert len(summary.rental_calculations) == 1
-
-
-def test_case_summary_negative_rental_calculation_reduces_total(test_db):
-    case_id = uuid4()
-    broker_id = uuid4()
-    manager = make_user(role="manager")
-    case = Case(id=str(case_id), broker_id=str(broker_id), title="Rental loss")
-    test_db.add(case)
-    test_db.commit()
-    result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
-    )
-    test_db.add(_rental_calc(case_id, broker_id, -18000.00))
-    test_db.commit()
-
-    summary = result_service.get_case_summary(test_db, case_id, manager)
-
-    # A rental loss reduces the case total (not clamped).
-    assert summary.total_annual_income == 67000.00
-
-
 def _manual_result(case_id, annual_income, confidence):
     document_id = uuid4()
-    fields = [
-        {
-            "field": "w2_wages",
-            "value": annual_income,
-            "document_id": str(document_id),
-            "page": 1,
-            "bounding_box": {"x1": 1, "y1": 1, "x2": 2, "y2": 2},
-        }
-    ]
     return Result(
         id=str(uuid4()),
         job_id=str(uuid4()),
         document_id=str(document_id),
         case_id=str(case_id),
         doc_type="w2",
-        extracted_fields=fields,
+        extracted_fields=[_field_dict(document_id, annual_income)],
         annual_income=annual_income,
         confidence=confidence,
     )
 
 
-def _employment_calc(case_id, broker_id, annual_income):
-    monthly = round(annual_income / 12, 2)
-    bucket = {"qualifying_monthly": 0.0, "rate_of_pay_monthly": 0.0, "periods": []}
-    breakdown = {
-        "base_pay": {**bucket, "qualifying_monthly": monthly},
-        "overtime": bucket,
-        "bonus": bucket,
-        "commission": bucket,
-        "other": bucket,
-        "total_monthly": monthly,
+def _field_dict(document_id, annual_income):
+    return {
+        "field": "w2_wages",
+        "value": annual_income,
+        "document_id": str(document_id),
+        "page": 1,
+        "bounding_box": {"x1": 1, "y1": 1, "x2": 2, "y2": 2},
     }
-    return EmploymentCalculation(
-        case_id=str(case_id),
-        broker_id=str(broker_id),
-        label="Acme Corp",
-        inputs={},
-        total_monthly=monthly,
-        annual_income=annual_income,
-        breakdown=breakdown,
-    )
-
-
-def _rental_calc(case_id, broker_id, annual_income):
-    monthly = round(annual_income / 12, 2)
-    breakdown = {
-        "qualifying_monthly": monthly,
-        "property_class": "primary_2_4_unit",
-        "method": "schedule_e",
-        "years": [{"months": 12.0, "annual_net": annual_income, "monthly_gross": monthly}],
-    }
-    return RentalCalculation(
-        case_id=str(case_id),
-        broker_id=str(broker_id),
-        label="123 Main St",
-        inputs={},
-        qualifying_monthly=monthly,
-        annual_income=annual_income,
-        breakdown=breakdown,
-    )

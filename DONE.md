@@ -25,3 +25,4 @@
 - Phase 5, Step 1: React frontend foundation - created the broker/manager UI shell, login flow, protected routes, case list/detail pages, upload flow, job/result review, source reference display, and frontend tests connected to live backend APIs.
 - PDF viewer with click-to-highlight - secure file serving endpoint, react-pdf viewer, bounding box highlight overlay. Brokers can click any extracted field and see it highlighted in the source document.
 - Phase 5 management UI pass - broker self-registration, new/delete case controls, case status advancement, document unlink/delete actions, failed-job retry, manager broker activation controls, and matching backend endpoints/tests.
+- Income engine, Step 3b: non-taxable income wired and persisted - preview endpoint, case-scoped save/list/get/delete, case-summary fold-in, worksheet UI, and case-detail panel added.

@@ -129,4 +129,10 @@ Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - Three non-taxable methods (spec 3): `gross_100` (`gross/12`), `total_adjusted` (taxable not grossed up + non-taxable slice grossed up 25%, each term rounded then summed), `current_monthly` (the return's taxable ratio applied to the current monthly amount, then the eligible slice grossed up). Two Social Security methods: `gross_100` and `adjusted` (`(gross + gross*0.15*0.25)/12`). Gross-up rate is a parameter defaulting to 0.25 (spec 1.3).
 - Divide-by-zero on the taxable ratio (zero gross) is guarded to 0 (Excel IFERROR); `InvalidNonTaxableInput` covers any method missing its required fields. All three non-taxable methods, both SS methods, a custom gross-up rate, the zero-gross guard, and the missing-field unhappy paths are tested; full suite green (377 passing).
 
-Remaining for the income engine: wire + persist non-taxable (mirroring rental 2b), edit saved calcs (+ optional dedupe vs streams), build self-employment (Form 1084), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.
+Income engine, Step 3b (wire + persist non-taxable) is complete:
+- Backend: `POST /income/nontaxable/calculate` previews non-taxable income and Social Security sources, and `/cases/{id}/nontaxable-calculations` supports case-scoped save/list/get/delete with broker/manager scoping.
+- Case summary: saved non-taxable annual income is folded in alongside employment and rental calculations, using the same additive saved-worksheet caveat.
+- Frontend: `/income/nontaxable` supports income vs Social Security methods, previews monthly income, saves to a case, and case detail lists/deletes saved sources.
+- Income-Worksheet and Rental-Worksheet coverage is now complete; next is transcribing SAM rows 113-443 into spec section 5, then building the self-employment Form 1084 engine.
+
+Remaining for the income engine: transcribe SAM rows 113-443, build self-employment (Form 1084), edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.
