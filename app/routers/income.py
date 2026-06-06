@@ -7,6 +7,7 @@ from app.exceptions import (
     InvalidEmploymentInput,
     InvalidNonTaxableInput,
     InvalidRentalInput,
+    InvalidSelfEmploymentInput,
 )
 from app.models.user import User
 from app.schemas.income_inputs import EmploymentInput
@@ -15,10 +16,15 @@ from app.schemas.nontaxable_inputs import NonTaxableCalculationRequest
 from app.schemas.nontaxable_results import NonTaxableResult
 from app.schemas.rental_inputs import RentalProperty
 from app.schemas.rental_results import RentalResult
+from app.schemas.self_employment_results import (
+    SelfEmploymentCalculationRequest,
+    SelfEmploymentResult,
+)
 from app.services import (
     employment_income_service,
     nontaxable_income_service,
     rental_income_service,
+    self_employment_income_service,
 )
 
 router = APIRouter(prefix="/income", tags=["income"])
@@ -54,4 +60,15 @@ def calculate_nontaxable_income(
     try:
         return nontaxable_income_service.calculate_nontaxable_income(request)
     except InvalidNonTaxableInput as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.post("/self-employment/calculate", response_model=SelfEmploymentResult)
+def calculate_self_employment_income(
+    request: SelfEmploymentCalculationRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> SelfEmploymentResult:
+    try:
+        return self_employment_income_service.calculate_self_employment_income(request)
+    except InvalidSelfEmploymentInput as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
