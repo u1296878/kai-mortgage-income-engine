@@ -1,6 +1,7 @@
 """Pydantic input models for the rental calc engine (spec section 4)."""
 
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -36,3 +37,10 @@ class RentalProperty(BaseModel):
     monthly_pitia: float | None = None  # required for investment net
     gross_monthly_rent: float | None = None  # lease: lesser of lease vs market rent
     vacancy_factor: float = 0.25  # lease
+
+
+class RentalCalculationCreate(RentalProperty):
+    """Save request: a full RentalProperty plus optional case-binding metadata."""
+
+    borrower_id: UUID | None = None
+    label: str | None = None

@@ -14,6 +14,7 @@ from app.repositories import (
     employment_calculation_repo,
     income_stream_repo,
     job_repo,
+    rental_calculation_repo,
     result_repo,
 )
 from app.schemas.extraction import ExtractedField
@@ -67,12 +68,14 @@ def get_case_summary(
     borrowers = borrower_repo.list_borrowers_by_case(db, case_id)
     income_streams = income_stream_repo.list_income_streams_by_case(db, case_id)
     employment_calculations = employment_calculation_repo.list_by_case(db, case_id)
+    rental_calculations = rental_calculation_repo.list_by_case(db, case_id)
     return case_summary_builder.build_case_summary(
         case_id=case_id,
         borrowers=borrowers,
         income_streams=income_streams,
         results=results,
         employment_calculations=employment_calculations,
+        rental_calculations=rental_calculations,
     )
 
 

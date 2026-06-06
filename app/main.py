@@ -18,6 +18,7 @@ from app.routers.income import router as income_router
 from app.routers.income_stream_matching import router as income_stream_matching_router
 from app.routers.income_streams import router as income_streams_router
 from app.routers.jobs import router as jobs_router
+from app.routers.rental_calculations import router as rental_calculations_router
 from app.routers.results import router as results_router
 from app.seed import seed_manager
 from app.services.job_service import recover_stuck_jobs
@@ -68,4 +69,5 @@ app.include_router(income_router)
 app.include_router(income_streams_router)
 app.include_router(income_stream_matching_router)
 app.include_router(jobs_router)
+app.include_router(rental_calculations_router)
 app.include_router(results_router)

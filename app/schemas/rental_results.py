@@ -3,7 +3,10 @@
 The engine stays pure (returns dataclasses); these give the API a typed contract.
 """
 
-from pydantic import BaseModel
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class RentalYearResult(BaseModel):
@@ -17,3 +20,16 @@ class RentalResult(BaseModel):
     property_class: str
     method: str
     years: list[RentalYearResult]
+
+
+class RentalCalculationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    case_id: UUID
+    borrower_id: UUID | None
+    label: str | None
+    qualifying_monthly: float
+    annual_income: float
+    breakdown: RentalResult
+    created_at: datetime
