@@ -80,3 +80,7 @@ class InvalidRentalInput(Exception):
 
 class RentalCalculationNotFound(Exception):
     pass
+
+
+class InvalidNonTaxableInput(Exception):
+    pass
