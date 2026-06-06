@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.borrower import BorrowerResponse
 from app.schemas.income_results import EmploymentCalculationResponse
 from app.schemas.income_stream import IncomeStreamResponse
+from app.schemas.nontaxable_results import NonTaxableCalculationResponse
 from app.schemas.rental_results import RentalCalculationResponse
 from app.schemas.extraction import ExtractedField
 
@@ -33,5 +34,6 @@ class CaseSummaryResponse(BaseModel):
     income_streams: list[IncomeStreamResponse] = Field(default_factory=list)
     employment_calculations: list[EmploymentCalculationResponse] = Field(default_factory=list)
     rental_calculations: list[RentalCalculationResponse] = Field(default_factory=list)
+    nontaxable_calculations: list[NonTaxableCalculationResponse] = Field(default_factory=list)
     results: list[ResultResponse]
     sources: list[ExtractedField]

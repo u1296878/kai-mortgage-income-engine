@@ -14,6 +14,7 @@ from app.repositories import (
     employment_calculation_repo,
     income_stream_repo,
     job_repo,
+    nontaxable_calculation_repo,
     rental_calculation_repo,
     result_repo,
 )
@@ -69,6 +70,7 @@ def get_case_summary(
     income_streams = income_stream_repo.list_income_streams_by_case(db, case_id)
     employment_calculations = employment_calculation_repo.list_by_case(db, case_id)
     rental_calculations = rental_calculation_repo.list_by_case(db, case_id)
+    nontaxable_calculations = nontaxable_calculation_repo.list_by_case(db, case_id)
     return case_summary_builder.build_case_summary(
         case_id=case_id,
         borrowers=borrowers,
@@ -76,6 +78,7 @@ def get_case_summary(
         results=results,
         employment_calculations=employment_calculations,
         rental_calculations=rental_calculations,
+        nontaxable_calculations=nontaxable_calculations,
     )
 
 

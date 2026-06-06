@@ -84,3 +84,7 @@ class RentalCalculationNotFound(Exception):
 
 class InvalidNonTaxableInput(Exception):
     pass
+
+
+class NonTaxableCalculationNotFound(Exception):
+    pass

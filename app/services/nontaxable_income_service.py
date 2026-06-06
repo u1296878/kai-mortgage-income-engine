@@ -4,7 +4,11 @@ from dataclasses import asdict
 
 from app.audit.logger import log_event
 from app.exceptions import InvalidNonTaxableInput
-from app.income.nontaxable import compute_nontaxable_income, compute_social_security
+from app.income.nontaxable import (
+    NonTaxableResult as EngineNonTaxableResult,
+    compute_nontaxable_income,
+    compute_social_security,
+)
 from app.schemas.nontaxable_inputs import (
     NonTaxableCalculationRequest,
     NonTaxableKind,
@@ -17,7 +21,7 @@ from app.schemas.nontaxable_results import NonTaxableResult
 def calculate_nontaxable_income(
     request: NonTaxableCalculationRequest,
 ) -> NonTaxableResult:
-    result = _dispatch(request)
+    result = run_nontaxable_engine(request)
     log_event(
         "nontaxable_income_calculated",
         {"kind": request.kind.value, "monthly": result.monthly},
@@ -25,7 +29,9 @@ def calculate_nontaxable_income(
     return NonTaxableResult.model_validate(asdict(result))
 
 
-def _dispatch(request: NonTaxableCalculationRequest):
+def run_nontaxable_engine(
+    request: NonTaxableCalculationRequest,
+) -> EngineNonTaxableResult:
     if request.kind == NonTaxableKind.income:
         return compute_nontaxable_income(_require_income(request.income))
     return compute_social_security(_require_social_security(request.social_security))
