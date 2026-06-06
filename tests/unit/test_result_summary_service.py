@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.case import Case
@@ -32,7 +33,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
     manager = make_user(role="manager")
     test_db.add(Case(id=str(case_id), broker_id=str(uuid4()), title="Smith Purchase"))
     test_db.commit()
-    result_service.save_extraction_result(
+    first = result_service.save_extraction_result(
         test_db,
         uuid4(),
         uuid4(),
@@ -40,7 +41,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
         "w2",
         [make_field("w2_wages", 85000.00)],
     )
-    result_service.save_extraction_result(
+    second = result_service.save_extraction_result(
         test_db,
         uuid4(),
         uuid4(),
@@ -48,6 +49,11 @@ def test_get_case_summary_returns_total_and_sources(test_db):
         "tax_return",
         [make_field("agi", 79000.00)],
     )
+    # Results are ordered by created_at; pin distinct values so the source
+    # order is well-defined regardless of clock resolution on fast inserts.
+    first.created_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    second.created_at = datetime(2024, 1, 2, tzinfo=timezone.utc)
+    test_db.commit()
 
     summary = result_service.get_case_summary(test_db, case_id, manager)
 
