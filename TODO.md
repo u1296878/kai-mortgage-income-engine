@@ -14,11 +14,12 @@
 - [ ] Phase 4, Step 4: richer matching heuristics (employer normalization, stronger tax-year and period linking, tie-break tuning)
 - [x] Income engine, Step 1: employment qualifying-income calc core (`app/income/` — dates, pay frequency, employment blend/rate-of-pay/AY toggle) ties out to the worksheet
 - [x] Income engine, Step 1b: wire employment engine end-to-end (stateless) — `POST /income/employment/calculate` + worksheet form UI
-- [ ] Income engine, Step 1c: persist the employment result and fold it into the case summary (needs a worksheet-friendly result model; `Result` is job/document-bound)
-- [ ] Income engine, Step 2: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
-- [ ] Income engine, Step 3: rental engine (`app/income/rental.py`, spec section 4)
-- [ ] Income engine, Step 4: non-taxable + Social Security engine (`app/income/nontaxable.py`, spec section 3)
-- [ ] Income engine, Step 5: self-employment Form 1084 engine (spec section 5, after SAM rows 113–443 transcribed)
+- [x] Income engine, Step 1c: persist employment calculations to a case and fold into the case-summary total; case-detail panel to list/delete saved calcs
+- [ ] Income engine, Step 1d: edit a saved employment calculation; dedupe saved calc vs income stream representing the same income (currently additive by design)
+- [ ] Income engine, Step 2: rental engine (`app/income/rental.py`, spec section 4)
+- [ ] Income engine, Step 3: non-taxable + Social Security engine (`app/income/nontaxable.py`, spec section 3)
+- [ ] Income engine, Step 4: self-employment Form 1084 engine (spec section 5, after SAM rows 113–443 transcribed)
+- [ ] Income engine, Step 5: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
 - [ ] Income engine, Step 6: replace `app/services/income_service.py` with calls into `app/income/`
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
 - [ ] Phase 4, Step 6: borrower-specific qualification logic and underwriting outputs

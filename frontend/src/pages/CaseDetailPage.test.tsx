@@ -26,12 +26,30 @@ vi.mock("../api/documents", () => ({
   uploadDocument: vi.fn(),
 }));
 
+const incomeApi = vi.hoisted(() => ({ deleteEmploymentCalculation: vi.fn() }));
+
+vi.mock("../api/income", () => ({
+  deleteEmploymentCalculation: incomeApi.deleteEmploymentCalculation,
+}));
+
 vi.mock("../api/results", () => ({
   getCaseSummary: vi.fn().mockResolvedValue({
     case_id: "case-1",
     total_annual_income: 87638,
     borrowers: [],
     income_streams: [],
+    employment_calculations: [
+      {
+        id: "calc-1",
+        case_id: "case-1",
+        borrower_id: null,
+        label: "Acme Corp",
+        total_monthly: 7000,
+        annual_income: 84000,
+        breakdown: {},
+        created_at: "2026-05-31T00:00:00Z",
+      },
+    ],
     results: [
       {
         id: "result-1",
@@ -138,6 +156,18 @@ describe("CaseDetailPage", () => {
     const calls = vi.mocked(getDocumentJob).mock.calls;
     expect(calls).toHaveLength(1);
     expect(calls[0][0]).toBe("doc-2");
+  });
+
+  it("lists and deletes a saved employment calculation", async () => {
+    const user = userEvent.setup();
+    incomeApi.deleteEmploymentCalculation.mockResolvedValue(undefined);
+    renderPage();
+
+    expect(await screen.findByText("Acme Corp")).toBeInTheDocument();
+    expect(screen.getByText("$7,000.00/mo · $84,000.00/yr")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(incomeApi.deleteEmploymentCalculation).toHaveBeenCalledWith("case-1", "calc-1");
   });
 
   it("does not delete a case when confirmation is cancelled", async () => {

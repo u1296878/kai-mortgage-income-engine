@@ -1,8 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { calculateEmploymentIncome } from "../api/income";
 import { EmploymentBasePay } from "../components/EmploymentBasePay";
 import { EmploymentResultView } from "../components/EmploymentResultView";
+import { EmploymentSaveToCase } from "../components/EmploymentSaveToCase";
 import { EmploymentVariableBucket } from "../components/EmploymentVariableBucket";
 import {
   initialEmploymentForm,
@@ -12,6 +14,8 @@ import {
 
 export function EmploymentIncomePage(): JSX.Element {
   const [form, setForm] = useState<EmploymentForm>(initialEmploymentForm);
+  const [searchParams] = useSearchParams();
+  const caseId = searchParams.get("caseId");
   const mutation = useMutation({
     mutationFn: () => calculateEmploymentIncome(toEmploymentPayload(form)),
   });
@@ -19,6 +23,9 @@ export function EmploymentIncomePage(): JSX.Element {
   return (
     <div className="space-y-6">
       <h1 className="text-lg font-semibold text-slate-900">Employment income worksheet</h1>
+      {caseId ? (
+        <p className="text-sm text-slate-600">Saving to case {caseId}</p>
+      ) : null}
       <form
         className="space-y-5"
         onSubmit={(event) => {
@@ -60,6 +67,7 @@ export function EmploymentIncomePage(): JSX.Element {
         </p>
       ) : null}
       {mutation.data ? <EmploymentResultView result={mutation.data} /> : null}
+      {caseId ? <EmploymentSaveToCase caseId={caseId} form={form} /> : null}
     </div>
   );
 }

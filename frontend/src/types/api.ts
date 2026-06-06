@@ -112,6 +112,7 @@ export interface CaseSummaryResponse {
   total_annual_income: number;
   borrowers: BorrowerResponse[];
   income_streams: IncomeStreamResponse[];
+  employment_calculations: EmploymentCalculationResponse[];
   results: ResultResponse[];
   sources: ExtractedField[];
 }
@@ -164,4 +165,20 @@ export interface EmploymentResultResponse {
   commission: BucketResultResponse;
   other: BucketResultResponse;
   total_monthly: number;
+}
+
+export interface EmploymentCalculationCreate extends EmploymentIncomeInput {
+  borrower_id?: string | null;
+  label?: string | null;
+}
+
+export interface EmploymentCalculationResponse {
+  id: string;
+  case_id: string;
+  borrower_id: string | null;
+  label: string | null;
+  total_monthly: number;
+  annual_income: number;
+  breakdown: EmploymentResultResponse;
+  created_at: string;
 }

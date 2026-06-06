@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CaseSummaryPanel } from "../components/CaseSummaryPanel";
 import { CaseStatusControls } from "../components/CaseStatusControls";
+import { EmploymentCalculationsPanel } from "../components/EmploymentCalculationsPanel";
 import { DocumentUploadForm } from "../components/DocumentUploadForm";
 import { DocumentViewer } from "../components/DocumentViewer";
 import { DocumentsPanel } from "../components/DocumentsPanel";
@@ -79,6 +80,18 @@ export function CaseDetailPage(): JSX.Element {
       </StateCard>
       <StateCard title="Case Summary">
         {data.summaryQuery.data ? <CaseSummaryPanel summary={data.summaryQuery.data} /> : null}
+      </StateCard>
+      <StateCard title="Employment Income">
+        <EmploymentCalculationsPanel
+          calculations={data.summaryQuery.data?.employment_calculations ?? []}
+          caseId={caseId}
+          deletingId={
+            data.deleteCalculationMutation.isPending
+              ? (data.deleteCalculationMutation.variables ?? null)
+              : null
+          }
+          onDelete={(calculationId) => data.deleteCalculationMutation.mutate(calculationId)}
+        />
       </StateCard>
       <StateCard title="Extracted Results">
         <ResultReview results={data.summaryQuery.data?.results ?? []} onViewSource={openSourceViewer} />

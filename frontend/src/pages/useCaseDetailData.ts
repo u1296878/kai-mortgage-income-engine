@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { listCaseBorrowers } from "../api/borrowers";
 import { deleteCase, getCase, getCaseDocuments, updateCaseStatus } from "../api/cases";
 import { deleteDocument, unlinkDocumentFromCase, uploadDocument } from "../api/documents";
+import { deleteEmploymentCalculation } from "../api/income";
 import { listCaseIncomeStreams } from "../api/incomeStreams";
 import { getDocumentJob, retryJob, waitForJobCompletion } from "../api/jobs";
 import { getCaseSummary, getJobResult } from "../api/results";
@@ -124,11 +125,16 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     onSettled: () => setBusyDocumentId(null),
   });
   const retryMutation = useMutation({ mutationFn: retryJob, onSuccess: refreshCaseData });
+  const deleteCalculationMutation = useMutation({
+    mutationFn: (calculationId: string) => deleteEmploymentCalculation(caseId!, calculationId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
+  });
 
   return {
     borrowersQuery,
     busyDocumentId,
     caseQuery,
+    deleteCalculationMutation,
     deleteCaseMutation,
     deleteDocumentMutation,
     documents,
