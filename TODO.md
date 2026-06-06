@@ -16,7 +16,8 @@
 - [x] Income engine, Step 1b: wire employment engine end-to-end (stateless) — `POST /income/employment/calculate` + worksheet form UI
 - [x] Income engine, Step 1c: persist employment calculations to a case and fold into the case-summary total; case-detail panel to list/delete saved calcs
 - [ ] Income engine, Step 1d: edit a saved employment calculation; dedupe saved calc vs income stream representing the same income (currently additive by design)
-- [ ] Income engine, Step 2: rental engine (`app/income/rental.py`, spec section 4)
+- [x] Income engine, Step 2: rental calc engine (`app/income/rental.py` — Schedule E primary/investment averaging + lease vacancy method) ties out to the worksheet
+- [ ] Income engine, Step 2b: wire + persist rental (mirror employment 1b/1c)
 - [ ] Income engine, Step 3: non-taxable + Social Security engine (`app/income/nontaxable.py`, spec section 3)
 - [ ] Income engine, Step 4: self-employment Form 1084 engine (spec section 5, after SAM rows 113–443 transcribed)
 - [ ] Income engine, Step 5: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)

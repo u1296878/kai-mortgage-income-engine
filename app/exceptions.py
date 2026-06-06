@@ -72,3 +72,7 @@ class InvalidEmploymentInput(Exception):
 
 class EmploymentCalculationNotFound(Exception):
     pass
+
+
+class InvalidRentalInput(Exception):
+    pass
