@@ -1,8 +1,14 @@
 """Pydantic input models for the non-taxable income engine (spec section 3)."""
 
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel
+
+
+class NonTaxableKind(str, Enum):
+    income = "income"
+    social_security = "social_security"
 
 
 class NonTaxableMethod(str, Enum):
@@ -27,3 +33,14 @@ class NonTaxableSource(BaseModel):
 class SocialSecuritySource(BaseModel):
     method: SocialSecurityMethod
     annual_gross: float | None = None
+
+
+class NonTaxableCalculationRequest(BaseModel):
+    kind: NonTaxableKind
+    income: NonTaxableSource | None = None
+    social_security: SocialSecuritySource | None = None
+
+
+class NonTaxableCalculationCreate(NonTaxableCalculationRequest):
+    borrower_id: UUID | None = None
+    label: str | None = None
