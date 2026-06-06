@@ -5,6 +5,7 @@ import { AdminBrokersPage } from "./pages/AdminBrokersPage";
 import { CaseDetailPage } from "./pages/CaseDetailPage";
 import { CasesPage } from "./pages/CasesPage";
 import { EmploymentIncomePage } from "./pages/EmploymentIncomePage";
+import { RentalIncomePage } from "./pages/RentalIncomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -21,6 +22,7 @@ export function App(): JSX.Element {
           <Route path="/cases" element={<CasesPage />} />
           <Route path="/cases/:caseId" element={<CaseDetailPage />} />
           <Route path="/income/employment" element={<EmploymentIncomePage />} />
+          <Route path="/income/rental" element={<RentalIncomePage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />

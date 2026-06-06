@@ -22,6 +22,10 @@ export function CaseSummaryPanel({ summary }: CaseSummaryPanelProps): JSX.Elemen
         {summary.employment_calculations?.length ?? 0}
       </p>
       <p>
+        <span className="font-medium">Rental calculations:</span>{" "}
+        {summary.rental_calculations?.length ?? 0}
+      </p>
+      <p>
         <span className="font-medium">Borrowers:</span> {summary.borrowers.length}
       </p>
       <p>

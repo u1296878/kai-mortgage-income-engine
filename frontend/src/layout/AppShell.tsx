@@ -16,6 +16,9 @@ export function AppShell(): JSX.Element {
             <Link className="text-sm text-blue-700 hover:underline" to="/income/employment">
               Employment income
             </Link>
+            <Link className="text-sm text-blue-700 hover:underline" to="/income/rental">
+              Rental income
+            </Link>
             {user?.role === "manager" ? (
               <Link className="text-sm text-blue-700 hover:underline" to="/admin/brokers">
                 Brokers

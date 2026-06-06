@@ -113,6 +113,7 @@ export interface CaseSummaryResponse {
   borrowers: BorrowerResponse[];
   income_streams: IncomeStreamResponse[];
   employment_calculations: EmploymentCalculationResponse[];
+  rental_calculations: RentalCalculationResponse[];
   results: ResultResponse[];
   sources: ExtractedField[];
 }
@@ -180,5 +181,59 @@ export interface EmploymentCalculationResponse {
   total_monthly: number;
   annual_income: number;
   breakdown: EmploymentResultResponse;
+  created_at: string;
+}
+
+export type RentalPropertyClass = "primary_2_4_unit" | "investment";
+
+export type RentalMethod = "schedule_e" | "lease";
+
+export interface ScheduleEYearInput {
+  months_in_service: number;
+  rents_received: number;
+  total_expenses: number;
+  insurance: number;
+  mortgage_interest: number;
+  taxes: number;
+  depreciation_depletion: number;
+  hoa_addback: number;
+  casualty_one_time: number;
+}
+
+export interface RentalPropertyInput {
+  property_class: RentalPropertyClass;
+  method: RentalMethod;
+  schedule_e_years: ScheduleEYearInput[];
+  monthly_pitia?: number | null;
+  gross_monthly_rent?: number | null;
+  vacancy_factor: number;
+}
+
+export interface RentalCalculationCreate extends RentalPropertyInput {
+  borrower_id?: string | null;
+  label?: string | null;
+}
+
+export interface RentalYearResultResponse {
+  months: number;
+  annual_net: number;
+  monthly_gross: number;
+}
+
+export interface RentalResultResponse {
+  qualifying_monthly: number;
+  property_class: string;
+  method: string;
+  years: RentalYearResultResponse[];
+}
+
+export interface RentalCalculationResponse {
+  id: string;
+  case_id: string;
+  borrower_id: string | null;
+  label: string | null;
+  qualifying_monthly: number;
+  annual_income: number;
+  breakdown: RentalResultResponse;
   created_at: string;
 }

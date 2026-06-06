@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,10 +26,14 @@ vi.mock("../api/documents", () => ({
   uploadDocument: vi.fn(),
 }));
 
-const incomeApi = vi.hoisted(() => ({ deleteEmploymentCalculation: vi.fn() }));
+const incomeApi = vi.hoisted(() => ({
+  deleteEmploymentCalculation: vi.fn(),
+  deleteRentalCalculation: vi.fn(),
+}));
 
 vi.mock("../api/income", () => ({
   deleteEmploymentCalculation: incomeApi.deleteEmploymentCalculation,
+  deleteRentalCalculation: incomeApi.deleteRentalCalculation,
 }));
 
 vi.mock("../api/results", () => ({
@@ -46,6 +50,18 @@ vi.mock("../api/results", () => ({
         label: "Acme Corp",
         total_monthly: 7000,
         annual_income: 84000,
+        breakdown: {},
+        created_at: "2026-05-31T00:00:00Z",
+      },
+    ],
+    rental_calculations: [
+      {
+        id: "rcalc-1",
+        case_id: "case-1",
+        borrower_id: null,
+        label: "123 Main St",
+        qualifying_monthly: 1125,
+        annual_income: 13500,
         breakdown: {},
         created_at: "2026-05-31T00:00:00Z",
       },
@@ -165,9 +181,23 @@ describe("CaseDetailPage", () => {
 
     expect(await screen.findByText("Acme Corp")).toBeInTheDocument();
     expect(screen.getByText("$7,000.00/mo · $84,000.00/yr")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    const panel = screen.getByText("Employment Income").closest("section") as HTMLElement;
+    await user.click(within(panel).getByRole("button", { name: "Delete" }));
 
     expect(incomeApi.deleteEmploymentCalculation).toHaveBeenCalledWith("case-1", "calc-1");
+  });
+
+  it("lists and deletes a saved rental calculation", async () => {
+    const user = userEvent.setup();
+    incomeApi.deleteRentalCalculation.mockResolvedValue(undefined);
+    renderPage();
+
+    expect(await screen.findByText("123 Main St")).toBeInTheDocument();
+    expect(screen.getByText("$1,125.00/mo · $13,500.00/yr")).toBeInTheDocument();
+    const panel = screen.getByText("Rental Income").closest("section") as HTMLElement;
+    await user.click(within(panel).getByRole("button", { name: "Delete" }));
+
+    expect(incomeApi.deleteRentalCalculation).toHaveBeenCalledWith("case-1", "rcalc-1");
   });
 
   it("does not delete a case when confirmation is cancelled", async () => {
