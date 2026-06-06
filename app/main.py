@@ -13,6 +13,7 @@ from app.routers.auth import router as auth_router
 from app.routers.borrowers import router as borrowers_router
 from app.routers.cases import router as cases_router
 from app.routers.documents import router as documents_router
+from app.routers.income import router as income_router
 from app.routers.income_stream_matching import router as income_stream_matching_router
 from app.routers.income_streams import router as income_streams_router
 from app.routers.jobs import router as jobs_router
@@ -61,6 +62,7 @@ app.include_router(auth_router)
 app.include_router(borrowers_router)
 app.include_router(cases_router)
 app.include_router(documents_router)
+app.include_router(income_router)
 app.include_router(income_streams_router)
 app.include_router(income_stream_matching_router)
 app.include_router(jobs_router)
