@@ -4,9 +4,11 @@ Discrepancies between the engine and the real Excel worksheets, found by recalcu
 the actual files under LibreOffice and comparing to the engine. See
 `docs/verification/tie-out-plan.md` for method and `tests/tieout/fixtures/` for data.
 
-## F1 - Employment: per-period months must be rounded to 2 dp before blending (engine fix)
+## F1 - Employment: per-period months must be rounded to 2 dp before blending (resolved)
 
 **Severity:** real mismatch on any fractional-month period.
+
+**Status:** resolved by the F1 employment rounding fix.
 
 Excel's "# of months" column is `I{n} = ROUND(J{n}, 2)`, and the qualifying blend
 divides by `SUMIF(... I{n})`, so it sums the **rounded** month counts. The engine's
@@ -17,10 +19,10 @@ Example (`partial_month_fractional` fixture): YTD 2026-01-01 to 01-15 ($2,500) p
 2025 full ($60,000). Months = 15/31 = 0.483871. Excel uses 0.48 and returns
 **$5,008.01**; the engine uses 0.483871 and returns **$5,006.46**.
 
-**Fix:** in `app/income/employment.py`, round each period's months to 2 dp before the
-weighted blend, matching `I{n} = ROUND(months, 2)`. Whole-month periods are unaffected,
-so the 8 other employment scenarios still tie out. Add the `partial_month_fractional`
-case as a regression test.
+**Resolution:** `app/income/employment.py` now rounds each period's months to 2 dp
+before the weighted blend, matching `I{n} = ROUND(months, 2)`. Whole-month periods are
+unaffected, so the 8 other employment scenarios still tie out. The
+`partial_month_fractional` fixture now runs as a normal passing regression.
 
 ## F2 - Employment: base rate-of-pay and base period rows are mutually exclusive (enforce/UI)
 
@@ -83,11 +85,10 @@ honest without broadening the F1 fix.
 
 | Worksheet | Scenarios | Tie out | Discrepancy |
 |---|---|---|---|
-| Employment | 9 | 8 | **F1** (partial-month rounding) - real engine fix |
+| Employment | 9 | 9 | F1 resolved |
 | Rental | 4 | 4 | none |
 | Self-employment | 5 | 4 | **F5** (entity component rounding); F3 is a denominator convention handled in fixtures |
 
-Only **F1** is in scope for the next engine code change. F2/F3/F4 are
-conventions/usability notes; F5 should be reviewed in a separate self-employment
-rounding pass. Per instructions, no production code was changed in the harness commit;
-discrepancies are recorded here for later, deliberate fix passes.
+F1 is resolved. F2/F3/F4 are conventions/usability notes; F5 should be reviewed in a
+separate self-employment rounding pass. Per instructions, the harness keeps remaining
+discrepancies recorded for later, deliberate fix passes.

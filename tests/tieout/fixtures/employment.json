@@ -33,7 +33,7 @@
      "engine_input": {"base_pay": {"periods": [
        {"date_from": "2025-01-01", "date_through": "2025-12-31", "total_earnings": 60000},
        {"date_from": "2024-01-01", "date_through": "2024-12-31", "total_earnings": 72000}]}}},
-    {"id": "partial_month_fractional", "excel_expected": 5008.01, "known_mismatch": "F1",
+    {"id": "partial_month_fractional", "excel_expected": 5008.01,
      "engine_input": {"base_pay": {"periods": [
        {"date_from": "2026-01-01", "date_through": "2026-01-15", "total_earnings": 2500},
        {"date_from": "2025-01-01", "date_through": "2025-12-31", "total_earnings": 60000}]}}}

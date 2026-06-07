@@ -74,7 +74,7 @@ def _period_results(periods) -> list[PeriodResult]:
     """Per-period monthly earnings and trend (spec 2.1), in input order."""
     monthlies = []
     for period in periods:
-        months = months_between(period.date_from, period.date_through)
+        months = round(months_between(period.date_from, period.date_through), 2)
         monthlies.append((months, round(_safe_div(period.total_earnings, months), 2)))
     results = []
     for index, (months, monthly) in enumerate(monthlies):
@@ -100,7 +100,7 @@ def _blend(periods, annualize_ytd: bool) -> float:
         if index == 0 and annualize_ytd:
             months = 12.0
         else:
-            months = months_between(period.date_from, period.date_through)
+            months = round(months_between(period.date_from, period.date_through), 2)
         total_earnings += period.total_earnings
         total_months += months
     return round(_safe_div(total_earnings, total_months), 2)
