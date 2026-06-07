@@ -10,6 +10,9 @@ pytesseract = SimpleNamespace(
     image_to_data=None,
 )
 
+DPI = 150
+POINTS_PER_PIXEL = 72 / DPI
+
 
 def parse_with_ocr(file_path: Path) -> list[dict]:
     try:
@@ -37,21 +40,25 @@ def _ocr_data_to_blocks(data: dict, page_number: int) -> list[dict]:
         clean_text = text.strip()
         if not clean_text:
             continue
-        left = float(data["left"][index])
-        top = float(data["top"][index])
-        width = float(data["width"][index])
-        height = float(data["height"][index])
+        left = _to_pdf_points(data["left"][index])
+        top = _to_pdf_points(data["top"][index])
+        width = _to_pdf_points(data["width"][index])
+        height = _to_pdf_points(data["height"][index])
         blocks.append(
             {
                 "text": clean_text,
                 "page": page_number,
                 "x1": left,
                 "y1": top,
-                "x2": left + width,
-                "y2": top + height,
+                "x2": round(left + width, 2),
+                "y2": round(top + height, 2),
             }
         )
     return blocks
+
+
+def _to_pdf_points(value) -> float:
+    return round(float(value) * POINTS_PER_PIXEL, 2)
 
 
 def _load_ocr_dependencies():
@@ -76,7 +83,7 @@ def _convert_single_page(ocr_convert_from_path, file_path: Path, page_number: in
     try:
         return ocr_convert_from_path(
             file_path,
-            dpi=150,
+            dpi=DPI,
             first_page=page_number,
             last_page=page_number,
         )

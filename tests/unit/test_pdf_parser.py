@@ -54,7 +54,7 @@ def test_parse_with_ocr_returns_text_blocks(monkeypatch):
 
     blocks = ocr_parser.parse_with_ocr(Path("scan.pdf"))
 
-    assert blocks == [{"text": "85000.00", "page": 1, "x1": 10.0, "y1": 20.0, "x2": 40.0, "y2": 60.0}]
+    assert blocks == [{"text": "85000.00", "page": 1, "x1": 4.8, "y1": 9.6, "x2": 19.2, "y2": 28.8}]
 
 
 def test_parse_with_ocr_raises_when_tesseract_missing(monkeypatch):

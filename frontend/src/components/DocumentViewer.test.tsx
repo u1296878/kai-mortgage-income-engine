@@ -23,7 +23,7 @@ vi.mock("react-pdf", async () => {
   }) => {
     React.useEffect(() => {
       onLoadSuccess?.({
-        getViewport: () => ({ width: 600, height: 800 }),
+        getViewport: () => ({ width: 600, height: 792 }),
       });
     }, [onLoadSuccess]);
     return <div>Mock Page {pageNumber}</div>;
@@ -61,5 +61,29 @@ describe("DocumentViewer", () => {
 
     expect(screen.getByText("Document Viewer")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Mock Page 1")).toBeInTheDocument());
+  });
+
+  it("places highlights using top-left PDF coordinates", async () => {
+    render(
+      <DocumentViewer
+        isOpen
+        documentId="doc-1"
+        onClose={() => undefined}
+        source={{
+          field: "total_income",
+          value: 94380,
+          document_id: "doc-1",
+          page: 1,
+          bounding_box: { x1: 480, y1: 619, x2: 560, y2: 631 },
+        }}
+      />,
+    );
+
+    const highlight = await screen.findByTestId("source-highlight");
+    const scale = 520 / 600;
+    const oldFlippedTop = (792 - 631) * scale + 8;
+
+    expect(parseFloat(highlight.style.top)).toBeCloseTo(619 * scale + 8, 2);
+    expect(parseFloat(highlight.style.top)).not.toBeCloseTo(oldFlippedTop, 2);
   });
 });

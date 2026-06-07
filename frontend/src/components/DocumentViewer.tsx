@@ -17,7 +17,6 @@ interface DocumentViewerProps {
 }
 
 interface PageMetrics {
-  heightPoints: number;
   scale: number;
 }
 export function DocumentViewer({ isOpen, documentId, source, onClose }: DocumentViewerProps): JSX.Element {
@@ -136,6 +135,7 @@ export function DocumentViewer({ isOpen, documentId, source, onClose }: Document
                 />
                 {highlight && source?.page === pageNumber ? (
                   <div
+                    data-testid="source-highlight"
                     className="pointer-events-none absolute border-2 border-yellow-500 bg-yellow-300/40"
                     style={highlight}
                   />
@@ -158,7 +158,7 @@ function setMetrics(
   const scale = PAGE_WIDTH_PX / viewport.width;
   setPageMetrics((existing) => ({
     ...existing,
-    [pageNumber]: { heightPoints: viewport.height, scale },
+    [pageNumber]: { scale },
   }));
 }
 
@@ -168,7 +168,7 @@ function buildHighlight(source: ExtractedField, metrics?: PageMetrics): CSSPrope
   }
   return {
     left: source.bounding_box.x1 * metrics.scale + 8,
-    top: (metrics.heightPoints - source.bounding_box.y2) * metrics.scale + 8,
+    top: source.bounding_box.y1 * metrics.scale + 8,
     width: (source.bounding_box.x2 - source.bounding_box.x1) * metrics.scale,
     height: (source.bounding_box.y2 - source.bounding_box.y1) * metrics.scale,
   };

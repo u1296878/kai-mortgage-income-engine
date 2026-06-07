@@ -81,7 +81,7 @@ Phase 5, Step 2 is complete:
 - Added authenticated `GET /documents/{document_id}/file` endpoint with broker/manager authorization checks
 - Added right-side `react-pdf` document viewer drawer in case detail
 - Added click-to-highlight source navigation from extracted fields
-- Added coordinate transform for PDF bottom-left bounding boxes to top-left viewer overlays
+- Source highlights now use the parser convention directly: top-left PDF point coordinates. OCR coordinates are converted from pixels to PDF points before extraction results are saved.
 - Added backend endpoint access tests plus frontend viewer smoke test
 
 Phase 5 management UI pass is complete:
