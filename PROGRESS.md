@@ -1,6 +1,6 @@
 # PROGRESS
 
-Last updated: 2026-06-06
+Last updated: 2026-06-07
 
 Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls.
 No document types currently use the extraction stub.
@@ -89,6 +89,11 @@ Phase 5 management UI pass is complete:
 - Case list/detail views now support creating cases, advancing status from `open` to `in_review` to `complete`, deleting cases, unlinking documents, deleting documents, and retrying failed jobs
 - Manager-only `/admin/brokers` UI and backend endpoints list brokers and deactivate/reactivate accounts
 - Inactive broker login is rejected with `Account is deactivated`
+
+Deployment hardening pass is complete:
+- Startup recovery now auto-fails jobs left in `processing` during a restart instead of re-queueing them into a crash loop; users can retry manually from the existing failed-job retry path.
+- The web process no longer starts the job worker in FastAPI lifespan. Railway should run a separate worker service with `python -m app.worker_main`, sharing `DATABASE_URL` and `STORAGE_PATH`.
+- Worker service env vars to set before production OCR load: `OMP_THREAD_LIMIT=1` and `MALLOC_ARENA_MAX=2`; give the worker more memory headroom than the web service.
 
 ## Income engine in progress
 

@@ -13,7 +13,7 @@ class FakeSession:
 
 
 @pytest.mark.asyncio
-async def test_lifespan_recovers_stuck_jobs_after_seed(monkeypatch):
+async def test_lifespan_seeds_manager_without_starting_worker(monkeypatch):
     calls = []
     db = FakeSession()
     monkeypatch.setattr(main_module, "init_db", lambda: calls.append("init_db"))
@@ -23,19 +23,12 @@ async def test_lifespan_recovers_stuck_jobs_after_seed(monkeypatch):
         "seed_manager",
         lambda session: calls.append(("seed_manager", session)),
     )
-    monkeypatch.setattr(
-        main_module,
-        "recover_stuck_jobs",
-        lambda session: calls.append(("recover_stuck_jobs", session)),
-    )
-    monkeypatch.setattr(main_module, "run_worker", lambda *args: None)
 
     async with main_module.lifespan(FastAPI()):
         pass
 
-    assert calls[:3] == [
+    assert calls == [
         "init_db",
         ("seed_manager", db),
-        ("recover_stuck_jobs", db),
     ]
     assert db.closed is True
