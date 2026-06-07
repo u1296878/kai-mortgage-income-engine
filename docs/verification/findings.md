@@ -64,9 +64,11 @@ This is fine for correctness but means the API/UI must send full payloads.
 **Decision to make (not in this pass):** default the line-item fields to `0.0` so
 blanks behave like the spreadsheet, or keep them required and have the UI send zeros.
 
-## F5 - Self-employment: entity component rounding differs by one cent (engine review)
+## F5 - Self-employment: entity component rounding differs by one cent (resolved)
 
 **Severity:** low; one-cent mismatch in a two-year corporation scenario.
+
+**Status:** resolved by the F5 entity component rounding fix.
 
 The `corporation_dividends_2yr` fixture recalculates to **$6,916.67** in Excel and
 the engine returns **$6,916.66**. The likely root cause is rounding order: the engine
@@ -74,10 +76,10 @@ rounds each component monthly figure before summing the entity total, while the
 worksheet appears to carry fractional component monthlies into the final total and
 then round the sum.
 
-**Fix (not in the F1 pass):** review self-employment entity aggregation rounding
-against the Summary sheet and decide whether to sum unrounded component monthly values
-before the final entity round. This is recorded as a strict xfail so the harness stays
-honest without broadening the F1 fix.
+**Resolution:** entity totals now sum unrounded component monthly values and round the
+final entity total once. Component `qualifying_monthly` values remain rounded for
+display. The `corporation_dividends_2yr` fixture now runs as a normal passing
+regression.
 
 ---
 
@@ -87,8 +89,7 @@ honest without broadening the F1 fix.
 |---|---|---|---|
 | Employment | 9 | 9 | F1 resolved |
 | Rental | 4 | 4 | none |
-| Self-employment | 5 | 4 | **F5** (entity component rounding); F3 is a denominator convention handled in fixtures |
+| Self-employment | 5 | 5 | F5 resolved; F3 is a denominator convention handled in fixtures |
 
-F1 is resolved. F2/F3/F4 are conventions/usability notes; F5 should be reviewed in a
-separate self-employment rounding pass. Per instructions, the harness keeps remaining
-discrepancies recorded for later, deliberate fix passes.
+F1 and F5 are resolved. All 18 tie-out scenarios now match Excel to the cent. F2/F3/F4
+remain documented conventions/usability notes, not engine bugs.

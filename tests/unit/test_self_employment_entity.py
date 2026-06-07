@@ -112,6 +112,36 @@ def test_corporation_combines_w2_and_owned_1120_share_minus_dividends():
     assert result.qualifying_monthly == 6500.00
 
 
+def test_entity_total_sums_unrounded_component_monthlies_before_rounding():
+    source = CorporationInput(
+        w2_years=[W2WagesYear(wages=40000, months=12)],
+        form_1120_years=[
+            Form1120Year(
+                taxable_income=43000,
+                total_tax=0,
+                nonrecurring_gains_losses=0,
+                nonrecurring_income=0,
+                depreciation=0,
+                depletion=0,
+                amortization_casualty_nonrecurring_loss=0,
+                nol_and_special_deductions=0,
+                mortgages_notes_payable_lt_1yr=0,
+                travel_entertainment_exclusion=0,
+                ownership_pct=1,
+                dividends_paid_to_borrower=0,
+                months=12,
+            )
+        ],
+    )
+
+    result = compute_corporation(source)
+
+    components = components_by_name(result)
+    assert components["w2_wages"].qualifying_monthly == 3333.33
+    assert components["form_1120_share"].qualifying_monthly == 3583.33
+    assert result.qualifying_monthly == 6916.67
+
+
 def test_ownership_pct_applies_only_to_business_return_component():
     source = PartnershipInput(
         k1_years=[

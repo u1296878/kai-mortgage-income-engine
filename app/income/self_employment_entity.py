@@ -38,6 +38,12 @@ class SelfEmploymentEntityResult:
     components: list[SelfEmploymentComponentResult]
 
 
+@dataclass
+class _ComponentMonthly:
+    result: SelfEmploymentComponentResult
+    exact_monthly: float
+
+
 def compute_partnership(source: PartnershipInput) -> SelfEmploymentEntityResult:
     components = [
         _component("partnership_k1", source.k1_years, k1_partnership_subtotal),
@@ -68,25 +74,26 @@ def _component(
     name: str,
     years: Sequence[SelfEmploymentYearLike],
     subtotal_fn: Callable[[SelfEmploymentYearLike], float],
-) -> SelfEmploymentComponentResult:
+) -> _ComponentMonthly:
     year_results = build_year_results(years, subtotal_fn)
     monthly = qualifying_monthly(year_results)
-    return SelfEmploymentComponentResult(
+    result = SelfEmploymentComponentResult(
         component=name,
         qualifying_monthly=round(monthly, 2),
         years=year_results,
     )
+    return _ComponentMonthly(result=result, exact_monthly=monthly)
 
 
 def _entity(
     entity_type: str,
-    components: list[SelfEmploymentComponentResult],
+    components: list[_ComponentMonthly],
 ) -> SelfEmploymentEntityResult:
     return SelfEmploymentEntityResult(
         qualifying_monthly=round(
-            sum(component.qualifying_monthly for component in components),
+            sum(component.exact_monthly for component in components),
             2,
         ),
         entity_type=entity_type,
-        components=components,
+        components=[component.result for component in components],
     )

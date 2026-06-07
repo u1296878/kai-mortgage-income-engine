@@ -23,7 +23,7 @@
        "form_1065_years": [
          {"passthrough_other_partnerships": 0, "nonrecurring_income": 0, "depreciation": 5000, "depreciation_8825": 0, "depletion": 0, "amortization_casualty_nonrecurring_loss": 0, "mortgages_notes_payable_lt_1yr": 2000, "travel_entertainment_exclusion": 1000, "ownership_pct": 0.5, "months": 12},
          {"passthrough_other_partnerships": 0, "nonrecurring_income": 0, "depreciation": 4000, "depreciation_8825": 0, "depletion": 0, "amortization_casualty_nonrecurring_loss": 0, "mortgages_notes_payable_lt_1yr": 2000, "travel_entertainment_exclusion": 1000, "ownership_pct": 0.5, "months": 12}]}}},
-    {"id": "corporation_dividends_2yr", "excel_expected": 6916.67, "known_mismatch": "F5",
+    {"id": "corporation_dividends_2yr", "excel_expected": 6916.67,
      "engine_input": {"kind": "corporation", "payload": {
        "w2_years": [{"wages": 40000, "months": 12}, {"wages": 40000, "months": 12}],
        "form_1120_years": [
