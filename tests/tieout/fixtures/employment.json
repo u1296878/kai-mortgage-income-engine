@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "worksheet": "Income-Worksheet-Macro-Free.xlsx / Primary Employment",
+    "output_cell": "K59",
+    "oracle": "LibreOffice headless recalculation of the real worksheet",
+    "tolerance": "exact to the cent ($0.00)",
+    "note": "excel_expected is authoritative. The harness computes the engine value and asserts equality; scenarios with known_mismatch are xfail (see docs/verification/findings.md)."
+  },
+  "scenarios": [
+    {"id": "base_blend_2yr", "excel_expected": 5000.00,
+     "engine_input": {"base_pay": {"periods": [
+       {"date_from": "2026-01-01", "date_through": "2026-04-15", "total_earnings": 17500},
+       {"date_from": "2025-01-01", "date_through": "2025-12-31", "total_earnings": 60000}]}}},
+    {"id": "base_3period", "excel_expected": 4777.78,
+     "engine_input": {"base_pay": {"periods": [
+       {"date_from": "2026-01-01", "date_through": "2026-03-31", "total_earnings": 15000},
+       {"date_from": "2025-01-01", "date_through": "2025-12-31", "total_earnings": 60000},
+       {"date_from": "2024-01-01", "date_through": "2024-12-31", "total_earnings": 54000}]}}},
+    {"id": "rate_hourly_only", "excel_expected": 5200.00,
+     "engine_input": {"base_pay": {"periods": [], "rate": 30, "pay_frequency": "hourly", "hours_weekly": 40, "rate_line_included": true}}},
+    {"id": "rate_semimonthly_only", "excel_expected": 6000.00,
+     "engine_input": {"base_pay": {"periods": [], "rate": 3000, "pay_frequency": "semimonthly", "rate_line_included": true}}},
+    {"id": "overtime_ytd_Y", "excel_expected": 2000.00,
+     "engine_input": {"base_pay": {"periods": []}, "overtime": {"periods": [
+       {"date_from": "2026-01-01", "date_through": "2026-03-31", "total_earnings": 6000}], "use_ytd": true}}},
+    {"id": "overtime_annualize_A", "excel_expected": 500.00,
+     "engine_input": {"base_pay": {"periods": []}, "overtime": {"periods": [
+       {"date_from": "2026-01-01", "date_through": "2026-03-31", "total_earnings": 6000}], "annualize": true}}},
+    {"id": "bonus_Y_6mo", "excel_expected": 2000.00,
+     "engine_input": {"base_pay": {"periods": []}, "bonus": {"periods": [
+       {"date_from": "2026-01-01", "date_through": "2026-06-30", "total_earnings": 12000}], "use_ytd": true}}},
+    {"id": "declining_2yr", "excel_expected": 5500.00,
+     "engine_input": {"base_pay": {"periods": [
+       {"date_from": "2025-01-01", "date_through": "2025-12-31", "total_earnings": 60000},
+       {"date_from": "2024-01-01", "date_through": "2024-12-31", "total_earnings": 72000}]}}},
+    {"id": "partial_month_fractional", "excel_expected": 5008.01, "known_mismatch": "F1",
+     "engine_input": {"base_pay": {"periods": [
+       {"date_from": "2026-01-01", "date_through": "2026-01-15", "total_earnings": 2500},
+       {"date_from": "2025-01-01", "date_through": "2025-12-31", "total_earnings": 60000}]}}}
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "worksheet": "Rental-Worksheet-Macro-Free.xlsx",
+    "output_cell": "primary: 'Principal Residence (2-4 Unit)'!J24 ; investment: 'Investment Property'!J26 ; lease: 'Principal Residence (2-4 Unit)'!J66",
+    "oracle": "LibreOffice headless recalculation of the real worksheet",
+    "tolerance": "exact to the cent ($0.00)",
+    "note": "No rounding discrepancy: rental months are entered directly and the formulas have no intermediate ROUND, so the engine (rounds only the final figure) matches Excel."
+  },
+  "scenarios": [
+    {"id": "primary_2_4_unit_2yr", "excel_expected": 2254.17,
+     "engine_input": {"property_class": "primary_2_4_unit", "method": "schedule_e", "schedule_e_years": [
+       {"months_in_service": 12, "rents_received": 24000, "total_expenses": 10000, "insurance": 1000, "mortgage_interest": 6000, "taxes": 3000, "depreciation_depletion": 4000, "hoa_addback": 0, "casualty_one_time": 0},
+       {"months_in_service": 12, "rents_received": 22000, "total_expenses": 9000, "insurance": 1000, "mortgage_interest": 5500, "taxes": 2800, "depreciation_depletion": 3800, "hoa_addback": 0, "casualty_one_time": 0}]}},
+    {"id": "investment_pitia_2yr", "excel_expected": 454.17,
+     "engine_input": {"property_class": "investment", "method": "schedule_e", "monthly_pitia": 1800, "schedule_e_years": [
+       {"months_in_service": 12, "rents_received": 24000, "total_expenses": 10000, "insurance": 1000, "mortgage_interest": 6000, "taxes": 3000, "depreciation_depletion": 4000, "hoa_addback": 0, "casualty_one_time": 0},
+       {"months_in_service": 12, "rents_received": 22000, "total_expenses": 9000, "insurance": 1000, "mortgage_interest": 5500, "taxes": 2800, "depreciation_depletion": 3800, "hoa_addback": 0, "casualty_one_time": 0}]}},
+    {"id": "lease_primary_vacancy", "excel_expected": 1500.00,
+     "engine_input": {"property_class": "primary_2_4_unit", "method": "lease", "gross_monthly_rent": 2000, "vacancy_factor": 0.25}},
+    {"id": "loss_single_year", "excel_expected": -500.00,
+     "engine_input": {"property_class": "primary_2_4_unit", "method": "schedule_e", "schedule_e_years": [
+       {"months_in_service": 12, "rents_received": 12000, "total_expenses": 20000, "insurance": 0, "mortgage_interest": 0, "taxes": 0, "depreciation_depletion": 2000, "hoa_addback": 0, "casualty_one_time": 0}]}}
+  ]
+}

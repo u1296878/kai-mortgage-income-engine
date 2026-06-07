@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "worksheet": "All-In-One-Worksheet-Macro-Free.xlsx / SAM + Summary",
+    "output_cell": "Summary: Schedule C K8 ; Partnership subtotal K19 ; Corporation subtotal K51",
+    "oracle": "LibreOffice headless recalculation of the real worksheet",
+    "tolerance": "exact to the cent ($0.00)",
+    "note": "engine_input is {kind, payload}. Months denominator must agree: the Summary defaults each year to 12 (24 total); for single-year scenarios the empty year is excluded in the Summary so it divides by 12 (engine uses the included year's months). See finding F3. All line items supplied explicitly (engine requires them; see F4)."
+  },
+  "scenarios": [
+    {"id": "schedule_c_2yr", "excel_expected": 8437.50,
+     "engine_input": {"kind": "schedule_c", "payload": {"years": [
+       {"tax_year": 2025, "net_profit": 100000, "nonrecurring_income": 5000, "depletion": 0, "depreciation": 8000, "meals_entertainment_exclusion": 2000, "business_use_of_home": 3000, "business_miles": 0, "amortization_casualty": 0, "months": 12},
+       {"tax_year": 2024, "net_profit": 90000, "nonrecurring_income": 0, "depletion": 0, "depreciation": 7000, "meals_entertainment_exclusion": 1500, "business_use_of_home": 3000, "business_miles": 0, "amortization_casualty": 0, "months": 12}]}}},
+    {"id": "schedule_c_mileage_1yr", "excel_expected": 4441.67,
+     "engine_input": {"kind": "schedule_c", "payload": {"years": [
+       {"tax_year": 2025, "net_profit": 50000, "nonrecurring_income": 0, "depletion": 0, "depreciation": 0, "meals_entertainment_exclusion": 0, "business_use_of_home": 0, "business_miles": 10000, "amortization_casualty": 0, "months": 12}]}}},
+    {"id": "partnership_2yr", "excel_expected": 8187.50,
+     "engine_input": {"kind": "partnership", "payload": {
+       "k1_years": [
+         {"ordinary_income": 60000, "net_rental_income": 0, "guaranteed_payments": 10000, "months": 12},
+         {"ordinary_income": 55000, "net_rental_income": 0, "guaranteed_payments": 10000, "months": 12}],
+       "w2_years": [{"wages": 30000, "months": 12}, {"wages": 30000, "months": 12}],
+       "form_1065_years": [
+         {"passthrough_other_partnerships": 0, "nonrecurring_income": 0, "depreciation": 5000, "depreciation_8825": 0, "depletion": 0, "amortization_casualty_nonrecurring_loss": 0, "mortgages_notes_payable_lt_1yr": 2000, "travel_entertainment_exclusion": 1000, "ownership_pct": 0.5, "months": 12},
+         {"passthrough_other_partnerships": 0, "nonrecurring_income": 0, "depreciation": 4000, "depreciation_8825": 0, "depletion": 0, "amortization_casualty_nonrecurring_loss": 0, "mortgages_notes_payable_lt_1yr": 2000, "travel_entertainment_exclusion": 1000, "ownership_pct": 0.5, "months": 12}]}}},
+    {"id": "corporation_dividends_2yr", "excel_expected": 6916.67, "known_mismatch": "F5",
+     "engine_input": {"kind": "corporation", "payload": {
+       "w2_years": [{"wages": 40000, "months": 12}, {"wages": 40000, "months": 12}],
+       "form_1120_years": [
+         {"taxable_income": 200000, "total_tax": 42000, "nonrecurring_gains_losses": 0, "nonrecurring_income": 0, "depreciation": 15000, "depletion": 0, "amortization_casualty_nonrecurring_loss": 0, "nol_and_special_deductions": 0, "mortgages_notes_payable_lt_1yr": 5000, "travel_entertainment_exclusion": 2000, "ownership_pct": 0.4, "dividends_paid_to_borrower": 20000, "months": 12},
+         {"taxable_income": 180000, "total_tax": 38000, "nonrecurring_gains_losses": 0, "nonrecurring_income": 0, "depreciation": 14000, "depletion": 0, "amortization_casualty_nonrecurring_loss": 0, "nol_and_special_deductions": 0, "mortgages_notes_payable_lt_1yr": 5000, "travel_entertainment_exclusion": 2000, "ownership_pct": 0.4, "dividends_paid_to_borrower": 20000, "months": 12}]}}},
+    {"id": "schedule_c_loss_2yr", "excel_expected": -1000.00,
+     "engine_input": {"kind": "schedule_c", "payload": {"years": [
+       {"tax_year": 2025, "net_profit": -10000, "nonrecurring_income": 0, "depletion": 0, "depreciation": 0, "meals_entertainment_exclusion": 0, "business_use_of_home": 0, "business_miles": 0, "amortization_casualty": 0, "months": 12},
+       {"tax_year": 2024, "net_profit": -14000, "nonrecurring_income": 0, "depletion": 0, "depreciation": 0, "meals_entertainment_exclusion": 0, "business_use_of_home": 0, "business_miles": 0, "amortization_casualty": 0, "months": 12}]}}}
+  ]
+}
