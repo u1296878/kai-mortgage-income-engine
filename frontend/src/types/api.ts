@@ -3,6 +3,7 @@ import type {
   RentalCalculationResponse,
 } from "./income";
 import type { NonTaxableCalculationResponse } from "./nontaxable";
+import type { SelfEmploymentCalculationResponse } from "./selfEmployment";
 
 export type {
   BasePayInput,
@@ -23,6 +24,13 @@ export type {
   ScheduleEYearInput,
   VariableBucketInput,
 } from "./income";
+export type {
+  SelfEmploymentCalculationCreate,
+  SelfEmploymentCalculationRequest,
+  SelfEmploymentCalculationResponse,
+  SelfEmploymentKind,
+  SelfEmploymentResultResponse,
+} from "./selfEmployment";
 
 export type UserRole = "broker" | "manager";
 
@@ -141,6 +149,7 @@ export interface CaseSummaryResponse {
   employment_calculations: EmploymentCalculationResponse[];
   rental_calculations: RentalCalculationResponse[];
   nontaxable_calculations: NonTaxableCalculationResponse[];
+  self_employment_calculations: SelfEmploymentCalculationResponse[];
   results: ResultResponse[];
   sources: ExtractedField[];
 }

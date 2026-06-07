@@ -147,4 +147,10 @@ Income engine, Step 4b (self-employment entity calc core) is complete:
 - Entity components reuse the same shared months-weighted averaging helper as personal schedules, with excluded years, zero-month guards, missing-field validation, and negative losses covered by tests.
 - All Form 1084 calc logic is now built as pure engines; no extraction, routes, database, persistence, or case-summary wiring changed.
 
-Remaining for the income engine: wire + persist self-employment calculations (personal + entity) into preview/save/case-summary, decide printable worksheet output, edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.
+Income engine, Step 4c (wire + persist self-employment) is complete:
+- Backend: `POST /income/self-employment/calculate` previews all eight kinds through one registry-dispatched endpoint, and `/cases/{id}/self-employment-calculations` supports case-scoped save/list/get/delete with broker/manager scoping.
+- Case summary: saved self-employment `annual_income` is folded into the total alongside employment, rental, and non-taxable calculations; negative self-employment losses reduce the total.
+- Frontend: `/income/self-employment` renders a config-driven worksheet for personal schedules and business entities, normalizes blank numeric cells to 0 before API calls, saves to a case, and case detail lists/deletes saved self-employment calculations.
+- All three Excel workbooks are now replicated and surfaced end-to-end through preview/save/case-summary workflows.
+
+Remaining for the income engine: decide printable worksheet output, revisit blank line-item defaults across self-employment API/form inputs, edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.

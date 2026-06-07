@@ -15,6 +15,7 @@ const incomeApi = vi.hoisted(() => ({
   deleteEmploymentCalculation: vi.fn(),
   deleteNontaxableCalculation: vi.fn(),
   deleteRentalCalculation: vi.fn(),
+  deleteSelfEmploymentCalculation: vi.fn(),
 }));
 
 vi.mock("../api/cases", () => caseApi);
@@ -62,6 +63,19 @@ vi.mock("../api/results", () => ({
       },
     ],
     nontaxable_calculations: [],
+    self_employment_calculations: [
+      {
+        id: "secalc-1",
+        case_id: "case-1",
+        borrower_id: null,
+        label: "Design LLC",
+        kind: "schedule_c",
+        qualifying_monthly: 4166.67,
+        annual_income: 50000.04,
+        breakdown: {},
+        created_at: "2026-05-31T00:00:00Z",
+      },
+    ],
     results: [],
     sources: [],
   }),
@@ -117,5 +131,21 @@ describe("CaseDetailPage calculation panels", () => {
     await user.click(within(panel).getByRole("button", { name: "Delete" }));
 
     expect(incomeApi.deleteRentalCalculation).toHaveBeenCalledWith("case-1", "rcalc-1");
+  });
+
+  it("lists and deletes a saved self-employment calculation", async () => {
+    const user = userEvent.setup();
+    incomeApi.deleteSelfEmploymentCalculation.mockResolvedValue(undefined);
+    renderPage();
+
+    expect(await screen.findByText("Design LLC")).toBeInTheDocument();
+    expect(screen.getByText(/\$50,000\.04\/yr/)).toBeInTheDocument();
+    const panel = screen.getByText("Self-employment Income").closest("section") as HTMLElement;
+    await user.click(within(panel).getByRole("button", { name: "Delete" }));
+
+    expect(incomeApi.deleteSelfEmploymentCalculation).toHaveBeenCalledWith(
+      "case-1",
+      "secalc-1",
+    );
   });
 });

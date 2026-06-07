@@ -10,6 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { NontaxableIncomePage } from "./pages/NontaxableIncomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { SelfEmploymentIncomePage } from "./pages/SelfEmploymentIncomePage";
 
 export function App(): JSX.Element {
   return (
@@ -25,6 +26,7 @@ export function App(): JSX.Element {
           <Route path="/income/employment" element={<EmploymentIncomePage />} />
           <Route path="/income/rental" element={<RentalIncomePage />} />
           <Route path="/income/nontaxable" element={<NontaxableIncomePage />} />
+          <Route path="/income/self-employment" element={<SelfEmploymentIncomePage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />

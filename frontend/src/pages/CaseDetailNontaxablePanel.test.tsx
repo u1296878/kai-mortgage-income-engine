@@ -16,6 +16,7 @@ const incomeApi = vi.hoisted(() => ({
   deleteEmploymentCalculation: vi.fn(),
   deleteNontaxableCalculation: vi.fn(),
   deleteRentalCalculation: vi.fn(),
+  deleteSelfEmploymentCalculation: vi.fn(),
 }));
 
 vi.mock("../api/cases", () => caseApi);
@@ -53,6 +54,7 @@ vi.mock("../api/results", () => ({
         created_at: "2026-05-31T00:00:00Z",
       },
     ],
+    self_employment_calculations: [],
     results: [],
     sources: [],
   }),

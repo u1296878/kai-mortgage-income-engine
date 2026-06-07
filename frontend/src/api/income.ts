@@ -15,6 +15,12 @@ import type {
   NonTaxableCalculationResponse,
   NonTaxableResultResponse,
 } from "../types/nontaxable";
+import type {
+  SelfEmploymentCalculationCreate,
+  SelfEmploymentCalculationRequest,
+  SelfEmploymentCalculationResponse,
+  SelfEmploymentResultResponse,
+} from "../types/selfEmployment";
 
 export function calculateEmploymentIncome(
   input: EmploymentIncomeInput,
@@ -111,6 +117,42 @@ export function listNontaxableCalculations(
 
 export function deleteNontaxableCalculation(caseId: string, id: string): Promise<void> {
   return apiRequest<void>(`/cases/${caseId}/nontaxable-calculations/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function calculateSelfEmployment(
+  input: SelfEmploymentCalculationRequest,
+): Promise<SelfEmploymentResultResponse> {
+  return apiRequest<SelfEmploymentResultResponse>("/income/self-employment/calculate", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function saveSelfEmploymentCalculation(
+  caseId: string,
+  payload: SelfEmploymentCalculationCreate,
+): Promise<SelfEmploymentCalculationResponse> {
+  return apiRequest<SelfEmploymentCalculationResponse>(
+    `/cases/${caseId}/self-employment-calculations`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
+}
+
+export function listSelfEmploymentCalculations(
+  caseId: string,
+): Promise<SelfEmploymentCalculationResponse[]> {
+  return apiRequest<SelfEmploymentCalculationResponse[]>(
+    `/cases/${caseId}/self-employment-calculations`,
+  );
+}
+
+export function deleteSelfEmploymentCalculation(
+  caseId: string,
+  id: string,
+): Promise<void> {
+  return apiRequest<void>(`/cases/${caseId}/self-employment-calculations/${id}`, {
     method: "DELETE",
   });
 }

@@ -5,6 +5,7 @@ import { CaseStatusControls } from "../components/CaseStatusControls";
 import { EmploymentCalculationsPanel } from "../components/EmploymentCalculationsPanel";
 import { NontaxableCalculationsPanel } from "../components/NontaxableCalculationsPanel";
 import { RentalCalculationsPanel } from "../components/RentalCalculationsPanel";
+import { SelfEmploymentCalculationsPanel } from "../components/SelfEmploymentCalculationsPanel";
 import { DocumentUploadForm } from "../components/DocumentUploadForm";
 import { DocumentViewer } from "../components/DocumentViewer";
 import { DocumentsPanel } from "../components/DocumentsPanel";
@@ -118,6 +119,20 @@ export function CaseDetailPage(): JSX.Element {
           }
           onDelete={(calculationId) => {
             data.deleteNontaxableCalculationMutation.mutate(calculationId);
+          }}
+        />
+      </StateCard>
+      <StateCard title="Self-employment Income">
+        <SelfEmploymentCalculationsPanel
+          calculations={data.summaryQuery.data?.self_employment_calculations ?? []}
+          caseId={caseId}
+          deletingId={
+            data.deleteSelfEmploymentCalculationMutation.isPending
+              ? (data.deleteSelfEmploymentCalculationMutation.variables ?? null)
+              : null
+          }
+          onDelete={(calculationId) => {
+            data.deleteSelfEmploymentCalculationMutation.mutate(calculationId);
           }}
         />
       </StateCard>

@@ -23,6 +23,7 @@ vi.mock("../api/income", () => ({
   deleteEmploymentCalculation: vi.fn(),
   deleteNontaxableCalculation: vi.fn(),
   deleteRentalCalculation: vi.fn(),
+  deleteSelfEmploymentCalculation: vi.fn(),
 }));
 vi.mock("../api/incomeStreams", () => ({ listCaseIncomeStreams: vi.fn().mockResolvedValue([]) }));
 vi.mock("../api/borrowers", () => ({ listCaseBorrowers: vi.fn().mockResolvedValue([]) }));
@@ -35,6 +36,7 @@ vi.mock("../api/results", () => ({
     employment_calculations: [],
     rental_calculations: [],
     nontaxable_calculations: [],
+    self_employment_calculations: [],
     results: [
       {
         id: "result-1",

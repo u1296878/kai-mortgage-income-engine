@@ -30,6 +30,10 @@ export function CaseSummaryPanel({ summary }: CaseSummaryPanelProps): JSX.Elemen
         {summary.nontaxable_calculations?.length ?? 0}
       </p>
       <p>
+        <span className="font-medium">Self-employment calculations:</span>{" "}
+        {summary.self_employment_calculations?.length ?? 0}
+      </p>
+      <p>
         <span className="font-medium">Borrowers:</span> {summary.borrowers.length}
       </p>
       <p>
