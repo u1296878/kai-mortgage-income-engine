@@ -70,18 +70,25 @@ def test_update_job_status_to_failed_sets_error(test_db):
     assert updated_job.error == "OCR failed"
 
 
-def test_reset_processing_jobs_to_pending_clears_started_at(test_db):
+def test_fail_stuck_processing_jobs_marks_processing_jobs_failed(test_db):
     processing_job = make_job(status="processing")
     processing_job.started_at = datetime.now(timezone.utc)
+    pending_job = make_job(status="pending")
+    complete_job = make_job(status="complete")
     failed_job = make_job(status="failed")
-    test_db.add_all([processing_job, failed_job])
+    test_db.add_all([processing_job, pending_job, complete_job, failed_job])
     test_db.commit()
 
-    recovered_jobs = job_repo.reset_processing_jobs_to_pending(test_db)
+    failed_jobs = job_repo.fail_stuck_processing_jobs(test_db)
     test_db.refresh(processing_job)
+    test_db.refresh(pending_job)
+    test_db.refresh(complete_job)
     test_db.refresh(failed_job)
 
-    assert [job.id for job in recovered_jobs] == [processing_job.id]
-    assert processing_job.status == "pending"
-    assert processing_job.started_at is None
+    assert [job.id for job in failed_jobs] == [processing_job.id]
+    assert processing_job.status == "failed"
+    assert processing_job.error == job_repo.STUCK_PROCESSING_ERROR
+    assert processing_job.completed_at is not None
+    assert pending_job.status == "pending"
+    assert complete_job.status == "complete"
     assert failed_job.status == "failed"

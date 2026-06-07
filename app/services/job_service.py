@@ -55,10 +55,10 @@ def retry_job(db: Session, job_id: UUID, current_user: User) -> Job:
 
 
 def recover_stuck_jobs(db: Session) -> None:
-    recovered_jobs = job_repo.reset_processing_jobs_to_pending(db)
-    for job in recovered_jobs:
+    failed_jobs = job_repo.fail_stuck_processing_jobs(db)
+    for job in failed_jobs:
         log_event(
-            "job_recovered",
+            "job_failed_on_startup",
             {"job_id": job.id, "reason": "found processing on startup"},
         )
 

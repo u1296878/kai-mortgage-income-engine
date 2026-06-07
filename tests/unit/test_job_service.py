@@ -60,7 +60,7 @@ def test_get_missing_job_raises(test_db):
         job_service.get_job_status(test_db, job_id, make_user())
 
 
-def test_recover_stuck_jobs_resets_processing_jobs_and_logs(test_db, monkeypatch):
+def test_recover_stuck_jobs_fails_processing_jobs_and_logs(test_db, monkeypatch):
     events = []
     job = Job(
         document_id=str(uuid4()),
@@ -78,11 +78,12 @@ def test_recover_stuck_jobs_resets_processing_jobs_and_logs(test_db, monkeypatch
     job_service.recover_stuck_jobs(test_db)
     test_db.refresh(job)
 
-    assert job.status == "pending"
-    assert job.started_at is None
+    assert job.status == "failed"
+    assert job.error == "auto-failed on startup: was processing during a restart; retry manually"
+    assert job.completed_at is not None
     assert events == [
         (
-            "job_recovered",
+            "job_failed_on_startup",
             {"job_id": job.id, "reason": "found processing on startup"},
         ),
     ]

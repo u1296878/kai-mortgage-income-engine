@@ -33,13 +33,20 @@ def list_jobs_by_status(db: Session, status: str) -> list[Job]:
     return list(db.scalars(statement).all())
 
 
-def reset_processing_jobs_to_pending(db: Session) -> list[Job]:
+STUCK_PROCESSING_ERROR = (
+    "auto-failed on startup: was processing during a restart; retry manually"
+)
+
+
+def fail_stuck_processing_jobs(db: Session) -> list[Job]:
     jobs = list_jobs_by_status(db, JobStatus.processing.value)
     if not jobs:
         return []
+    completed_at = datetime.now(timezone.utc)
     for job in jobs:
-        job.status = JobStatus.pending.value
-        job.started_at = None
+        job.status = JobStatus.failed.value
+        job.error = STUCK_PROCESSING_ERROR
+        job.completed_at = completed_at
     db.commit()
     for job in jobs:
         db.refresh(job)
