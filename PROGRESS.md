@@ -92,8 +92,8 @@ Phase 5 management UI pass is complete:
 
 Deployment hardening pass is complete:
 - Startup recovery now auto-fails jobs left in `processing` during a restart instead of re-queueing them into a crash loop; users can retry manually from the existing failed-job retry path.
-- The web process no longer starts the job worker in FastAPI lifespan. Railway should run a separate worker service with `python -m app.worker_main`, sharing `DATABASE_URL` and `STORAGE_PATH`.
-- Worker service env vars to set before production OCR load: `OMP_THREAD_LIMIT=1` and `MALLOC_ARENA_MAX=2`; give the worker more memory headroom than the web service.
+- The job worker runs in-process again while storage is local, so uploads and processing share the same container filesystem. Split the worker only after storage moves to S3/R2.
+- Railway should run a single service for now with `OMP_THREAD_LIMIT=1` and `MALLOC_ARENA_MAX=2`, plus more memory headroom for OCR.
 
 ## Income engine in progress
 

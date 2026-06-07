@@ -39,8 +39,8 @@
 - [ ] Phase 5, Step 5: manager dashboard and cross-broker case review enhancements
 - [ ] Railway deployment: set `JWT_SECRET_KEY`, `DATABASE_URL` (Postgres), `MANAGER_EMAIL`, `MANAGER_PASSWORD` as environment variables
 - [ ] Railway deployment: test startup without `.env` and validate required secret handling
-- [ ] Railway deployment: create a separate worker service from the same repo with start command `python -m app.worker_main`, sharing `DATABASE_URL` and `STORAGE_PATH`
-- [ ] Railway deployment: set worker-only `OMP_THREAD_LIMIT=1` and `MALLOC_ARENA_MAX=2`, and give the worker more memory than the web service
+- [ ] Railway deployment: set `OMP_THREAD_LIMIT=1` and `MALLOC_ARENA_MAX=2` on the single web/worker service while storage is local
+- [ ] After S3/R2 storage swap: split the worker into a separate Railway service with start command `python -m app.worker_main`
 - [ ] OCR hardening follow-up: consider lower OCR DPI, close page images after OCR, and add upload size/page-count caps for very large scans
 - [ ] Parser hardening follow-up: make malformed empty numeric text fail with a clearer field-level message
 - [ ] Harden manager/admin provisioning beyond first-run seed (invite flow or deployment-controlled rotation)
