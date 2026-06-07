@@ -18,26 +18,7 @@ export function CaseSummaryPanel({ summary }: CaseSummaryPanelProps): JSX.Elemen
         <span className="font-medium">Income streams:</span> {summary.income_streams.length}
       </p>
       <p>
-        <span className="font-medium">Employment calculations:</span>{" "}
-        {summary.employment_calculations?.length ?? 0}
-      </p>
-      <p>
-        <span className="font-medium">Rental calculations:</span>{" "}
-        {summary.rental_calculations?.length ?? 0}
-      </p>
-      <p>
-        <span className="font-medium">Non-taxable calculations:</span>{" "}
-        {summary.nontaxable_calculations?.length ?? 0}
-      </p>
-      <p>
-        <span className="font-medium">Self-employment calculations:</span>{" "}
-        {summary.self_employment_calculations?.length ?? 0}
-      </p>
-      <p>
         <span className="font-medium">Borrowers:</span> {summary.borrowers.length}
-      </p>
-      <p>
-        <span className="font-medium">Source references:</span> {summary.sources.length}
       </p>
     </div>
   );

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CaseSummaryPanel } from "../components/CaseSummaryPanel";
 import { CaseStatusControls } from "../components/CaseStatusControls";
 import { EmploymentCalculationsPanel } from "../components/EmploymentCalculationsPanel";
+import { IncomeWorksheetActions } from "../components/IncomeWorksheetActions";
 import { NontaxableCalculationsPanel } from "../components/NontaxableCalculationsPanel";
 import { RentalCalculationsPanel } from "../components/RentalCalculationsPanel";
 import { SelfEmploymentCalculationsPanel } from "../components/SelfEmploymentCalculationsPanel";
@@ -39,6 +40,11 @@ export function CaseDetailPage(): JSX.Element {
     setViewerOpen(false);
     setSelectedSource(null);
   };
+  const summary = data.summaryQuery.data;
+  const employmentCalculations = summary?.employment_calculations ?? [];
+  const rentalCalculations = summary?.rental_calculations ?? [];
+  const nontaxableCalculations = summary?.nontaxable_calculations ?? [];
+  const selfEmploymentCalculations = summary?.self_employment_calculations ?? [];
 
   return (
     <div className="space-y-4">
@@ -82,62 +88,69 @@ export function CaseDetailPage(): JSX.Element {
         />
       </StateCard>
       <StateCard title="Case Summary">
-        {data.summaryQuery.data ? <CaseSummaryPanel summary={data.summaryQuery.data} /> : null}
+        {summary ? <CaseSummaryPanel summary={summary} /> : null}
       </StateCard>
-      <StateCard title="Employment Income">
-        <EmploymentCalculationsPanel
-          calculations={data.summaryQuery.data?.employment_calculations ?? []}
-          caseId={caseId}
-          deletingId={
-            data.deleteCalculationMutation.isPending
-              ? (data.deleteCalculationMutation.variables ?? null)
-              : null
-          }
-          onDelete={(calculationId) => data.deleteCalculationMutation.mutate(calculationId)}
-        />
+      <StateCard title="Income Worksheets">
+        <IncomeWorksheetActions caseId={caseId} />
       </StateCard>
-      <StateCard title="Rental Income">
-        <RentalCalculationsPanel
-          calculations={data.summaryQuery.data?.rental_calculations ?? []}
-          caseId={caseId}
-          deletingId={
-            data.deleteRentalCalculationMutation.isPending
-              ? (data.deleteRentalCalculationMutation.variables ?? null)
-              : null
-          }
-          onDelete={(calculationId) => data.deleteRentalCalculationMutation.mutate(calculationId)}
-        />
-      </StateCard>
-      <StateCard title="Non-taxable Income">
-        <NontaxableCalculationsPanel
-          calculations={data.summaryQuery.data?.nontaxable_calculations ?? []}
-          caseId={caseId}
-          deletingId={
-            data.deleteNontaxableCalculationMutation.isPending
-              ? (data.deleteNontaxableCalculationMutation.variables ?? null)
-              : null
-          }
-          onDelete={(calculationId) => {
-            data.deleteNontaxableCalculationMutation.mutate(calculationId);
-          }}
-        />
-      </StateCard>
-      <StateCard title="Self-employment Income">
-        <SelfEmploymentCalculationsPanel
-          calculations={data.summaryQuery.data?.self_employment_calculations ?? []}
-          caseId={caseId}
-          deletingId={
-            data.deleteSelfEmploymentCalculationMutation.isPending
-              ? (data.deleteSelfEmploymentCalculationMutation.variables ?? null)
-              : null
-          }
-          onDelete={(calculationId) => {
-            data.deleteSelfEmploymentCalculationMutation.mutate(calculationId);
-          }}
-        />
-      </StateCard>
+      {employmentCalculations.length > 0 ? (
+        <StateCard title="Employment Income">
+          <EmploymentCalculationsPanel
+            calculations={employmentCalculations}
+            deletingId={
+              data.deleteCalculationMutation.isPending
+                ? (data.deleteCalculationMutation.variables ?? null)
+                : null
+            }
+            onDelete={(calculationId) => data.deleteCalculationMutation.mutate(calculationId)}
+          />
+        </StateCard>
+      ) : null}
+      {rentalCalculations.length > 0 ? (
+        <StateCard title="Rental Income">
+          <RentalCalculationsPanel
+            calculations={rentalCalculations}
+            deletingId={
+              data.deleteRentalCalculationMutation.isPending
+                ? (data.deleteRentalCalculationMutation.variables ?? null)
+                : null
+            }
+            onDelete={(calculationId) => data.deleteRentalCalculationMutation.mutate(calculationId)}
+          />
+        </StateCard>
+      ) : null}
+      {nontaxableCalculations.length > 0 ? (
+        <StateCard title="Non-taxable Income">
+          <NontaxableCalculationsPanel
+            calculations={nontaxableCalculations}
+            deletingId={
+              data.deleteNontaxableCalculationMutation.isPending
+                ? (data.deleteNontaxableCalculationMutation.variables ?? null)
+                : null
+            }
+            onDelete={(calculationId) => {
+              data.deleteNontaxableCalculationMutation.mutate(calculationId);
+            }}
+          />
+        </StateCard>
+      ) : null}
+      {selfEmploymentCalculations.length > 0 ? (
+        <StateCard title="Self-employment Income">
+          <SelfEmploymentCalculationsPanel
+            calculations={selfEmploymentCalculations}
+            deletingId={
+              data.deleteSelfEmploymentCalculationMutation.isPending
+                ? (data.deleteSelfEmploymentCalculationMutation.variables ?? null)
+                : null
+            }
+            onDelete={(calculationId) => {
+              data.deleteSelfEmploymentCalculationMutation.mutate(calculationId);
+            }}
+          />
+        </StateCard>
+      ) : null}
       <StateCard title="Extracted Results">
-        <ResultReview results={data.summaryQuery.data?.results ?? []} onViewSource={openSourceViewer} />
+        <ResultReview results={summary?.results ?? []} onViewSource={openSourceViewer} />
         {data.uploadState.result ? <ResultReview results={[data.uploadState.result]} onViewSource={openSourceViewer} /> : null}
       </StateCard>
       <StateCard title="Income Streams and Borrowers">

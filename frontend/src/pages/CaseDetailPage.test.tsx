@@ -130,6 +130,26 @@ describe("CaseDetailPage", () => {
     expect(calls[0][0]).toBe("doc-2");
   });
 
+  it("shows compact worksheet actions without empty calculation panels", async () => {
+    renderPage();
+
+    expect(await screen.findByText("Taylor Purchase")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Income Worksheets" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Employment" })).toHaveAttribute(
+      "href",
+      "/income/employment?caseId=case-1",
+    );
+    expect(screen.getByRole("link", { name: "Rental" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Non-taxable" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Self-employment" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Employment Income" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Rental Income" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Non-taxable Income" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Self-employment Income" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/No saved/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Source references/)).not.toBeInTheDocument();
+  });
+
   it("does not delete a case when confirmation is cancelled", async () => {
     const user = userEvent.setup();
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
