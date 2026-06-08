@@ -16,6 +16,7 @@ const incomeApi = vi.hoisted(() => ({
   deleteNontaxableCalculation: vi.fn(),
   deleteRentalCalculation: vi.fn(),
   deleteSelfEmploymentCalculation: vi.fn(),
+  updateRentalCalculation: vi.fn(),
 }));
 
 vi.mock("../api/cases", () => caseApi);
@@ -56,8 +57,19 @@ vi.mock("../api/results", () => ({
         case_id: "case-1",
         borrower_id: null,
         label: "123 Main St",
+        inputs: {
+          property_class: "primary_2_4_unit",
+          method: "schedule_e",
+          schedule_e_years: [],
+          monthly_pitia: null,
+          gross_monthly_rent: null,
+          vacancy_factor: 0.25,
+        },
         qualifying_monthly: 1125,
         annual_income: 13500,
+        included: true,
+        source_document_id: "doc-1",
+        source_property_key: "a",
         breakdown: {},
         created_at: "2026-05-31T00:00:00Z",
       },
@@ -131,6 +143,17 @@ describe("CaseDetailPage calculation panels", () => {
     await user.click(within(panel).getByRole("button", { name: "Delete" }));
 
     expect(incomeApi.deleteRentalCalculation).toHaveBeenCalledWith("case-1", "rcalc-1");
+  });
+
+  it("updates rental calculation inclusion", async () => {
+    const user = userEvent.setup();
+    incomeApi.updateRentalCalculation.mockResolvedValue(undefined);
+    renderPage();
+
+    const panel = (await screen.findByText("Rental Income")).closest("section") as HTMLElement;
+    await user.click(within(panel).getByRole("checkbox", { name: "Included" }));
+
+    expect(incomeApi.updateRentalCalculation).toHaveBeenCalledWith("case-1", "rcalc-1", { included: false });
   });
 
   it("lists and deletes a saved self-employment calculation", async () => {

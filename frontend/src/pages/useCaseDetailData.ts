@@ -8,6 +8,7 @@ import {
   deleteNontaxableCalculation,
   deleteRentalCalculation,
   deleteSelfEmploymentCalculation,
+  updateRentalCalculation,
 } from "../api/income";
 import { listCaseIncomeStreams } from "../api/incomeStreams";
 import { getDocumentJob, retryJob, waitForJobCompletion } from "../api/jobs";
@@ -138,6 +139,11 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     mutationFn: (calculationId: string) => deleteRentalCalculation(caseId!, calculationId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
+  const updateRentalCalculationMutation = useMutation({
+    mutationFn: ({ id, included }: { id: string; included: boolean }) =>
+      updateRentalCalculation(caseId!, id, { included }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
+  });
   const deleteNontaxableCalculationMutation = useMutation({
     mutationFn: (calculationId: string) => deleteNontaxableCalculation(caseId!, calculationId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
@@ -153,6 +159,7 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     caseQuery,
     deleteCalculationMutation,
     deleteRentalCalculationMutation,
+    updateRentalCalculationMutation,
     deleteNontaxableCalculationMutation,
     deleteSelfEmploymentCalculationMutation,
     deleteCaseMutation,

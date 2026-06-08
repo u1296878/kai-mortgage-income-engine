@@ -45,6 +45,11 @@ export function CaseDetailPage(): JSX.Element {
   const rentalCalculations = summary?.rental_calculations ?? [];
   const nontaxableCalculations = summary?.nontaxable_calculations ?? [];
   const selfEmploymentCalculations = summary?.self_employment_calculations ?? [];
+  const employmentDeletingId = data.deleteCalculationMutation.isPending ? (data.deleteCalculationMutation.variables ?? null) : null;
+  const rentalDeletingId = data.deleteRentalCalculationMutation.isPending ? (data.deleteRentalCalculationMutation.variables ?? null) : null;
+  const rentalUpdatingId = data.updateRentalCalculationMutation.isPending ? (data.updateRentalCalculationMutation.variables?.id ?? null) : null;
+  const nontaxableDeletingId = data.deleteNontaxableCalculationMutation.isPending ? (data.deleteNontaxableCalculationMutation.variables ?? null) : null;
+  const selfEmploymentDeletingId = data.deleteSelfEmploymentCalculationMutation.isPending ? (data.deleteSelfEmploymentCalculationMutation.variables ?? null) : null;
 
   return (
     <div className="space-y-4">
@@ -97,11 +102,7 @@ export function CaseDetailPage(): JSX.Element {
         <StateCard title="Employment Income">
           <EmploymentCalculationsPanel
             calculations={employmentCalculations}
-            deletingId={
-              data.deleteCalculationMutation.isPending
-                ? (data.deleteCalculationMutation.variables ?? null)
-                : null
-            }
+            deletingId={employmentDeletingId}
             onDelete={(calculationId) => data.deleteCalculationMutation.mutate(calculationId)}
           />
         </StateCard>
@@ -109,13 +110,14 @@ export function CaseDetailPage(): JSX.Element {
       {rentalCalculations.length > 0 ? (
         <StateCard title="Rental Income">
           <RentalCalculationsPanel
+            caseId={caseId}
             calculations={rentalCalculations}
-            deletingId={
-              data.deleteRentalCalculationMutation.isPending
-                ? (data.deleteRentalCalculationMutation.variables ?? null)
-                : null
-            }
+            deletingId={rentalDeletingId}
             onDelete={(calculationId) => data.deleteRentalCalculationMutation.mutate(calculationId)}
+            onIncludedChange={(calculationId, included) => {
+              data.updateRentalCalculationMutation.mutate({ id: calculationId, included });
+            }}
+            updatingId={rentalUpdatingId}
           />
         </StateCard>
       ) : null}
@@ -123,11 +125,7 @@ export function CaseDetailPage(): JSX.Element {
         <StateCard title="Non-taxable Income">
           <NontaxableCalculationsPanel
             calculations={nontaxableCalculations}
-            deletingId={
-              data.deleteNontaxableCalculationMutation.isPending
-                ? (data.deleteNontaxableCalculationMutation.variables ?? null)
-                : null
-            }
+            deletingId={nontaxableDeletingId}
             onDelete={(calculationId) => {
               data.deleteNontaxableCalculationMutation.mutate(calculationId);
             }}
@@ -138,11 +136,7 @@ export function CaseDetailPage(): JSX.Element {
         <StateCard title="Self-employment Income">
           <SelfEmploymentCalculationsPanel
             calculations={selfEmploymentCalculations}
-            deletingId={
-              data.deleteSelfEmploymentCalculationMutation.isPending
-                ? (data.deleteSelfEmploymentCalculationMutation.variables ?? null)
-                : null
-            }
+            deletingId={selfEmploymentDeletingId}
             onDelete={(calculationId) => {
               data.deleteSelfEmploymentCalculationMutation.mutate(calculationId);
             }}

@@ -83,6 +83,24 @@ function toYear(year: ScheduleEYearForm): ScheduleEYearInput {
   };
 }
 
+function fromYear(year: ScheduleEYearInput): ScheduleEYearForm {
+  return {
+    months_in_service: stringify(year.months_in_service),
+    rents_received: stringify(year.rents_received),
+    total_expenses: stringify(year.total_expenses),
+    insurance: stringify(year.insurance),
+    mortgage_interest: stringify(year.mortgage_interest),
+    taxes: stringify(year.taxes),
+    depreciation_depletion: stringify(year.depreciation_depletion),
+    hoa_addback: stringify(year.hoa_addback),
+    casualty_one_time: stringify(year.casualty_one_time),
+  };
+}
+
+function stringify(value: number | null | undefined): string {
+  return value === null || value === undefined ? "" : String(value);
+}
+
 function optionalNumber(value: string): number | null {
   // Empty stays null so the backend's required-field guards can fire (422).
   return value === "" ? null : Number(value);
@@ -98,5 +116,20 @@ export function toRentalPayload(form: RentalForm): RentalPropertyInput {
     monthly_pitia: isInvestment ? optionalNumber(form.monthly_pitia) : null,
     gross_monthly_rent: isLease ? optionalNumber(form.gross_monthly_rent) : null,
     vacancy_factor: Number(form.vacancy_factor || 0.25),
+  };
+}
+
+export function fromRentalPayload(input: RentalPropertyInput): RentalForm {
+  const years = input.schedule_e_years.map(fromYear);
+  while (years.length < YEAR_LABELS.length) {
+    years.push(emptyYear());
+  }
+  return {
+    property_class: input.property_class,
+    method: input.method,
+    years: years.slice(0, YEAR_LABELS.length),
+    monthly_pitia: stringify(input.monthly_pitia),
+    gross_monthly_rent: stringify(input.gross_monthly_rent),
+    vacancy_factor: stringify(input.vacancy_factor || 0.25),
   };
 }

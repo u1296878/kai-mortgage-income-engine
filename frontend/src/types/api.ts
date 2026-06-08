@@ -16,6 +16,7 @@ export type {
   PeriodResultResponse,
   RentalCalculationCreate,
   RentalCalculationResponse,
+  RentalCalculationUpdate,
   RentalMethod,
   RentalPropertyClass,
   RentalPropertyInput,

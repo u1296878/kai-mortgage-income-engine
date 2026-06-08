@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-07
 
-Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Schedule E tax-return rental extraction now creates per-property rental-engine drafts with broker include/exclude review; the old line-26 net-only rental document path is retired.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -128,6 +128,11 @@ Income engine, Step 2b (wire + persist rental) is complete — mirrors the emplo
 - Case summary: rental `annual_income` is folded into the total **alongside** employment, additively; a rental loss reduces the total. Surfaced as `rental_calculations` on `CaseSummaryResponse`.
 - Frontend: a rental worksheet (`/income/rental`, linked in nav) with conditional fields — property class / method selects, Schedule-E year blocks, lease (gross rent + vacancy) and investment (PITIA) inputs shown as relevant; Calculate previews, "Save to case" persists; the case-detail page gains a Rental Income panel (list + delete) and the summary total reflects saved rentals.
 - Tests: backend (stateless 200/422, service persist/compute incl. negative loss + scoping + list/get/delete, summary adds + negative reduces, integration), frontend (preview, lease payload, save, list + delete on the case page).
+
+Income engine, Phase 10 (Schedule E extraction to rental engine) is complete:
+- Tax-return Schedule E pages now extract per-property line items with add-backs and months in service, then create editable rental calculation drafts through the validated rental engine.
+- Brokers can include/exclude extracted rental drafts from the case summary and open them in the rental worksheet for review/edit before relying on them.
+- The old document path that treated Schedule E line 26 net rental as the qualifying figure is retired.
 
 Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - `app/income/nontaxable.py` is a pure engine: one source in (`NonTaxableSource` / `SocialSecuritySource` in `app/schemas/nontaxable_inputs.py`), one qualifying monthly figure out, plus a small taxable/eligible breakdown where the method splits the amount — mirroring the rental engine's shape.

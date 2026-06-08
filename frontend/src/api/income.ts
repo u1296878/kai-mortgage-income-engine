@@ -6,6 +6,7 @@ import type {
   EmploymentResultResponse,
   RentalCalculationCreate,
   RentalCalculationResponse,
+  RentalCalculationUpdate,
   RentalPropertyInput,
   RentalResultResponse,
 } from "../types/api";
@@ -79,6 +80,26 @@ export function listRentalCalculations(
 ): Promise<RentalCalculationResponse[]> {
   return apiRequest<RentalCalculationResponse[]>(
     `/cases/${caseId}/rental-calculations`,
+  );
+}
+
+export function getRentalCalculation(
+  caseId: string,
+  id: string,
+): Promise<RentalCalculationResponse> {
+  return apiRequest<RentalCalculationResponse>(
+    `/cases/${caseId}/rental-calculations/${id}`,
+  );
+}
+
+export function updateRentalCalculation(
+  caseId: string,
+  id: string,
+  payload: RentalCalculationUpdate,
+): Promise<RentalCalculationResponse> {
+  return apiRequest<RentalCalculationResponse>(
+    `/cases/${caseId}/rental-calculations/${id}`,
+    { method: "PATCH", body: JSON.stringify(payload) },
   );
 }
 

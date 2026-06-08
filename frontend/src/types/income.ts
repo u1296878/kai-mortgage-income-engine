@@ -92,6 +92,13 @@ export interface RentalPropertyInput {
 export interface RentalCalculationCreate extends RentalPropertyInput {
   borrower_id?: string | null;
   label?: string | null;
+  included?: boolean;
+}
+
+export interface RentalCalculationUpdate extends Partial<RentalPropertyInput> {
+  borrower_id?: string | null;
+  label?: string | null;
+  included?: boolean;
 }
 
 export interface RentalYearResultResponse {
@@ -112,8 +119,12 @@ export interface RentalCalculationResponse {
   case_id: string;
   borrower_id: string | null;
   label: string | null;
+  inputs: RentalPropertyInput;
   qualifying_monthly: number;
   annual_income: number;
+  included: boolean;
+  source_document_id: string | null;
+  source_property_key: string | null;
   breakdown: RentalResultResponse;
   created_at: string;
 }

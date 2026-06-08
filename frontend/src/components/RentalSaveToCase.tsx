@@ -1,23 +1,43 @@
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { saveRentalCalculation } from "../api/income";
+import { saveRentalCalculation, updateRentalCalculation } from "../api/income";
 import { toRentalPayload, type RentalForm } from "../forms/rentalForm";
 
 interface Props {
   caseId: string;
+  calculationId?: string | null;
   form: RentalForm;
+  initialIncluded?: boolean;
+  initialLabel?: string | null;
 }
 
-export function RentalSaveToCase({ caseId, form }: Props): JSX.Element {
-  const [label, setLabel] = useState("");
+export function RentalSaveToCase({
+  caseId,
+  calculationId,
+  form,
+  initialIncluded = true,
+  initialLabel = null,
+}: Props): JSX.Element {
+  const [included, setIncluded] = useState(initialIncluded);
+  const [label, setLabel] = useState(initialLabel ?? "");
   const navigate = useNavigate();
+  useEffect(() => {
+    setIncluded(initialIncluded);
+    setLabel(initialLabel ?? "");
+  }, [initialIncluded, initialLabel]);
   const mutation = useMutation({
-    mutationFn: () =>
-      saveRentalCalculation(caseId, {
+    mutationFn: () => {
+      const payload = {
         ...toRentalPayload(form),
+        included,
         label: label.trim() || null,
-      }),
+      };
+      return calculationId
+        ? updateRentalCalculation(caseId, calculationId, payload)
+        : saveRentalCalculation(caseId, payload);
+    },
     onSuccess: () => navigate(`/cases/${caseId}`),
   });
 
@@ -32,13 +52,21 @@ export function RentalSaveToCase({ caseId, form }: Props): JSX.Element {
           placeholder="Label (e.g. property address)"
           value={label}
         />
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            checked={included}
+            onChange={(event) => setIncluded(event.target.checked)}
+            type="checkbox"
+          />
+          Included
+        </label>
         <button
           className="rounded-md bg-blue-700 px-4 py-2 text-sm text-white"
           disabled={mutation.isPending}
           onClick={() => mutation.mutate()}
           type="button"
         >
-          Save to case
+          {calculationId ? "Update case" : "Save to case"}
         </button>
       </div>
       {mutation.isError ? (
