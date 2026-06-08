@@ -4,6 +4,7 @@ from app.exceptions import ExtractionFailed
 from app.models.document import Document
 from app.models.job import Job
 from app.repositories import job_repo, result_repo
+from app.repositories import rental_calculation_repo
 from app.services import extraction_service, job_processing_service
 from app.schemas.extraction import BoundingBox, ExtractedField
 
@@ -14,6 +15,7 @@ def make_document(doc_type="other"):
         filename="other.pdf",
         doc_type=doc_type,
         storage_path="storage/path/other.pdf",
+        broker_id=str(uuid4()),
     )
 
 
@@ -73,3 +75,31 @@ def test_process_next_job_marks_job_failed_on_extraction_error(test_db, monkeypa
 
     assert updated_job.status == "failed"
     assert updated_job.error == "extraction exploded"
+
+
+def test_process_next_job_creates_schedule_e_rental_drafts(test_db, monkeypatch):
+    case_id = uuid4()
+    document = make_document("tax_return")
+    document.case_id = str(case_id)
+    job = make_pending_job(document.id)
+    test_db.add_all([document, job])
+    test_db.commit()
+    fields = [
+        make_field("total_income", 75150.0),
+        make_field("schedule_e_present", 1.0),
+        make_field("schedule_e_net_rental_income", -1303.0),
+        make_field("schedule_e_property_a_gross_rents", 22480.0),
+        make_field("schedule_e_property_a_total_expenses", 19943.0),
+        make_field("schedule_e_property_a_depreciation_depletion", 8116.0),
+    ]
+    monkeypatch.setattr(
+        extraction_service,
+        "extract_fields",
+        lambda document_id, file_path, doc_type: fields,
+    )
+
+    processed = job_processing_service.process_next_job(test_db)
+    calculations = rental_calculation_repo.list_by_case(test_db, case_id)
+
+    assert processed is True
+    assert len(calculations) == 1

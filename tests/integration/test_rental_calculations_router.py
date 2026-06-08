@@ -122,3 +122,48 @@ def test_delete_removes_calculation(client):
 
     assert delete.status_code == 204
     assert fetch.status_code == 404
+
+
+def test_update_included_removes_calculation_from_summary_total(client):
+    headers, _ = auth_user(client)
+    case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
+    created = client.post(
+        f"/cases/{case['id']}/rental-calculations",
+        json=_payload(),
+        headers=headers,
+    ).json()
+
+    update = client.patch(
+        f"/cases/{case['id']}/rental-calculations/{created['id']}",
+        json={"included": False},
+        headers=headers,
+    )
+    summary = client.get(f"/cases/{case['id']}/summary", headers=headers)
+
+    assert update.status_code == 200
+    assert update.json()["included"] is False
+    assert summary.json()["total_annual_income"] == 0
+
+
+def test_update_recalculates_rental_calculation(client):
+    headers, _ = auth_user(client)
+    case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
+    created = client.post(
+        f"/cases/{case['id']}/rental-calculations",
+        json=_payload(),
+        headers=headers,
+    ).json()
+    payload = _payload("Updated")
+    payload["schedule_e_years"] = [
+        {"months_in_service": 12, "rents_received": 36000, "total_expenses": 12000},
+    ]
+
+    update = client.patch(
+        f"/cases/{case['id']}/rental-calculations/{created['id']}",
+        json=payload,
+        headers=headers,
+    )
+
+    assert update.status_code == 200
+    assert update.json()["label"] == "Updated"
+    assert update.json()["annual_income"] == 24000.0

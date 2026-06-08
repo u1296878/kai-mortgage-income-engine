@@ -44,7 +44,7 @@ def test_compute_annual_income_tax_return_uses_agi():
     assert notes is None
 
 
-def test_compute_annual_income_tax_return_with_schedule_e_uses_total_income():
+def test_compute_annual_income_tax_return_with_schedule_e_excludes_net_rental_from_base():
     fields = [
         make_field("agi", 73168.00),
         make_field("total_income", 75150.00),
@@ -54,7 +54,7 @@ def test_compute_annual_income_tax_return_with_schedule_e_uses_total_income():
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
 
-    assert annual_income == 75150.00
+    assert annual_income == 76453.00
     assert confidence == "high"
     assert "Net rental option: $75,150.00" in notes
 
@@ -70,7 +70,7 @@ def test_compute_annual_income_tax_return_notes_gross_rental_receipts_option():
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
 
-    assert annual_income == 75466.00
+    assert annual_income == 76769.00
     assert "gross rental receipts option: $112,749.00" in notes
 
 

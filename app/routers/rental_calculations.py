@@ -11,7 +11,11 @@ from app.exceptions import (
     RentalCalculationNotFound,
 )
 from app.models.user import User
-from app.schemas.rental_inputs import RentalCalculationCreate, RentalProperty
+from app.schemas.rental_inputs import (
+    RentalCalculationCreate,
+    RentalCalculationUpdate,
+    RentalProperty,
+)
 from app.schemas.rental_results import RentalCalculationResponse
 from app.services import rental_calculation_service
 
@@ -39,8 +43,49 @@ def create_rental_calculation(
             payload.borrower_id,
             payload.label,
             current_user,
+            payload.included,
         )
     except CaseNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except InvalidRentalInput as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@router.patch(
+    "/cases/{case_id}/rental-calculations/{calc_id}",
+    response_model=RentalCalculationResponse,
+)
+def update_rental_calculation(
+    case_id: UUID,
+    calc_id: UUID,
+    payload: RentalCalculationUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> RentalCalculationResponse:
+    try:
+        if not _has_property_update(payload):
+            if payload.included is None:
+                raise HTTPException(status_code=422, detail="No rental calculation updates provided")
+            return rental_calculation_service.update_calculation_included(
+                db, case_id, calc_id, payload.included, current_user
+            )
+        property_input = RentalProperty.model_validate(
+            payload.model_dump(
+                exclude={"borrower_id", "label", "included"},
+                exclude_none=True,
+            ),
+        )
+        return rental_calculation_service.update_calculation(
+            db,
+            case_id,
+            calc_id,
+            property_input,
+            payload.borrower_id,
+            payload.label,
+            payload.included,
+            current_user,
+        )
+    except (CaseNotFound, RentalCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except InvalidRentalInput as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
@@ -106,3 +151,16 @@ def delete_rental_calculation(
     except (CaseNotFound, RentalCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return Response(status_code=204)
+
+
+def _has_property_update(payload: RentalCalculationUpdate) -> bool:
+    property_fields = {
+        "property_class",
+        "method",
+        "schedule_e_years",
+        "monthly_pitia",
+        "gross_monthly_rent",
+        "vacancy_factor",
+    }
+    updates = payload.model_dump(exclude_none=True)
+    return any(field in updates for field in property_fields)

@@ -30,6 +30,28 @@ def list_by_case(db: Session, case_id: UUID) -> list[RentalCalculation]:
     return list(db.scalars(statement).all())
 
 
+def get_by_source(
+    db: Session,
+    document_id: UUID,
+    property_key: str,
+) -> RentalCalculation | None:
+    statement = (
+        select(RentalCalculation)
+        .where(RentalCalculation.source_document_id == str(document_id))
+        .where(RentalCalculation.source_property_key == property_key)
+    )
+    return db.scalars(statement).first()
+
+
+def update(db: Session, calc_id: UUID, updates: dict) -> RentalCalculation:
+    calculation = get(db, calc_id)
+    for field, value in updates.items():
+        setattr(calculation, field, value)
+    db.commit()
+    db.refresh(calculation)
+    return calculation
+
+
 def delete(db: Session, calc_id: UUID) -> None:
     calculation = get(db, calc_id)
     db.delete(calculation)

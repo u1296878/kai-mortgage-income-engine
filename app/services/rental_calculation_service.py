@@ -23,6 +23,7 @@ def create_calculation(
     borrower_id: UUID | None,
     label: str | None,
     current_user: User,
+    included: bool = True,
 ) -> RentalCalculation:
     case = _get_accessible_case(db, case_id, current_user)
     result = compute_rental_income(property_input)
@@ -35,6 +36,7 @@ def create_calculation(
         qualifying_monthly=result.qualifying_monthly,
         # annual_income may be negative for a rental loss; never clamped.
         annual_income=round(result.qualifying_monthly * 12, 2),
+        included=included,
         breakdown=asdict(result),
     )
     saved = rental_calculation_repo.create(db, calculation)
@@ -48,6 +50,48 @@ def create_calculation(
         },
     )
     return saved
+
+
+def update_calculation(
+    db: Session,
+    case_id: UUID,
+    calc_id: UUID,
+    property_input: RentalProperty,
+    borrower_id: UUID | None,
+    label: str | None,
+    included: bool | None,
+    current_user: User,
+) -> RentalCalculation:
+    calculation = get_calculation(db, case_id, calc_id, current_user)
+    result = compute_rental_income(property_input)
+    updated = rental_calculation_repo.update(
+        db,
+        UUID(calculation.id),
+        {
+            "borrower_id": str(borrower_id) if borrower_id else None,
+            "label": label,
+            "inputs": property_input.model_dump(mode="json"),
+            "qualifying_monthly": result.qualifying_monthly,
+            "annual_income": round(result.qualifying_monthly * 12, 2),
+            "included": calculation.included if included is None else included,
+            "breakdown": asdict(result),
+        },
+    )
+    log_event("rental_calculation_updated", {"calculation_id": updated.id})
+    return updated
+
+
+def update_calculation_included(
+    db: Session,
+    case_id: UUID,
+    calc_id: UUID,
+    included: bool,
+    current_user: User,
+) -> RentalCalculation:
+    get_calculation(db, case_id, calc_id, current_user)
+    updated = rental_calculation_repo.update(db, calc_id, {"included": included})
+    log_event("rental_calculation_inclusion_updated", {"calculation_id": updated.id})
+    return updated
 
 
 def list_calculations_by_case(

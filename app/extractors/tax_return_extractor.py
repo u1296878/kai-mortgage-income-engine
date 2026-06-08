@@ -11,7 +11,7 @@ from app.extractors.tax_return_locator import (
     schedule_c_pages,
 )
 from app.extractors.tax_return_patterns import LINE_FIELDS
-from app.extractors.tax_return_schedule_e import extract_schedule_e_fields
+from app.extractors.schedule_e_extractor import extract_schedule_e_fields
 from app.schemas.extraction import ExtractedField
 
 

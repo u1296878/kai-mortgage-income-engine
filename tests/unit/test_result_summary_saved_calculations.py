@@ -61,6 +61,18 @@ def test_summary_negative_rental_calculation_reduces_total(test_db):
     assert summary.total_annual_income == 67000.00
 
 
+def test_summary_excludes_rental_calculations_marked_not_included(test_db):
+    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    rental = _rental_calc(case_id, broker_id, 12000.00)
+    rental.included = False
+    test_db.add(rental)
+    test_db.commit()
+
+    summary = result_service.get_case_summary(test_db, case_id, manager)
+
+    assert summary.total_annual_income == 85000.00
+    assert summary.rental_calculations[0].included is False
+
 def test_summary_adds_saved_nontaxable_calculations(test_db):
     case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
     test_db.add(_nontaxable_calc(case_id, broker_id, 12450.00))

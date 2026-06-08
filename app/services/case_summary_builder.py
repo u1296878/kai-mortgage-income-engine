@@ -28,7 +28,11 @@ def build_case_summary(
     result_total, sources = income_service.summarize_case_income(results)
     stream_total = sum(stream.annual_income or 0.0 for stream in income_streams)
     employment_total = sum(calc.annual_income or 0.0 for calc in employment_calculations)
-    rental_total = sum(calc.annual_income or 0.0 for calc in rental_calculations)
+    rental_total = sum(
+        calc.annual_income or 0.0
+        for calc in rental_calculations
+        if calc.included
+    )
     nontaxable_total = sum(calc.annual_income or 0.0 for calc in nontaxable_calculations)
     self_employment_total = sum(
         calc.annual_income or 0.0 for calc in self_employment_calculations

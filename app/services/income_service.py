@@ -68,7 +68,8 @@ def _compute_pay_stub_income(
 
 def _compute_tax_return_income(values: dict[str, float]) -> tuple[float, str, str | None]:
     if "schedule_e_present" in values and "total_income" in values:
-        return values["total_income"], "high", _schedule_e_notes(values)
+        net_rental = values.get("schedule_e_net_rental_income", 0.0)
+        return values["total_income"] - net_rental, "high", _schedule_e_notes(values)
     if "agi" in values:
         return values["agi"], "high", None
     return values["total_income"], "medium", "AGI not found; using Form 1040 total income"

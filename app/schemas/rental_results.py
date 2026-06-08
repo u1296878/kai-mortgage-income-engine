@@ -29,7 +29,11 @@ class RentalCalculationResponse(BaseModel):
     case_id: UUID
     borrower_id: UUID | None
     label: str | None
+    inputs: dict
     qualifying_monthly: float
     annual_income: float
+    included: bool
+    source_document_id: UUID | None
+    source_property_key: str | None
     breakdown: RentalResult
     created_at: datetime

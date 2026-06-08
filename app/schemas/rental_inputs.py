@@ -44,3 +44,16 @@ class RentalCalculationCreate(RentalProperty):
 
     borrower_id: UUID | None = None
     label: str | None = None
+    included: bool = True
+
+
+class RentalCalculationUpdate(BaseModel):
+    property_class: PropertyClass | None = None
+    method: RentalMethod | None = None
+    schedule_e_years: list[ScheduleEYear] | None = None
+    monthly_pitia: float | None = None
+    gross_monthly_rent: float | None = None
+    vacancy_factor: float | None = None
+    borrower_id: UUID | None = None
+    label: str | None = None
+    included: bool | None = None
