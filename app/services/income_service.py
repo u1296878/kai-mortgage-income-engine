@@ -14,7 +14,7 @@ def compute_annual_income(
     if doc_type == "pay_stub":
         return _compute_pay_stub_income(fields, values)
     if doc_type == "tax_return":
-        return values["agi"], "high", None
+        return _compute_tax_return_income(values)
     if doc_type == "bank_statement":
         return values["average_monthly_deposit"] * 12, "low", None
     if "rental_net_income" in values:
@@ -64,6 +64,38 @@ def _compute_pay_stub_income(
     if period_income is not None:
         return period_income, "low", None
     return 0.0, "low", "No gross income fields found"
+
+
+def _compute_tax_return_income(values: dict[str, float]) -> tuple[float, str, str | None]:
+    if "schedule_e_present" in values and "total_income" in values:
+        return values["total_income"], "high", _schedule_e_notes(values)
+    if "agi" in values:
+        return values["agi"], "high", None
+    return values["total_income"], "medium", "AGI not found; using Form 1040 total income"
+
+
+def _schedule_e_notes(values: dict[str, float]) -> str:
+    net_option = values["total_income"]
+    gross_rents = _schedule_e_gross_rents(values)
+    net_rental = values.get("schedule_e_net_rental_income")
+    if gross_rents is None or net_rental is None:
+        return f"Schedule E detected. Net rental option: ${net_option:,.2f}."
+    gross_option = round(net_option - net_rental + gross_rents, 2)
+    return (
+        f"Schedule E detected. Net rental option: ${net_option:,.2f}; "
+        f"gross rental receipts option: ${gross_option:,.2f}."
+    )
+
+
+def _schedule_e_gross_rents(values: dict[str, float]) -> float | None:
+    if "schedule_e_gross_rents_total" in values:
+        return values["schedule_e_gross_rents_total"]
+    property_rents = [
+        value
+        for field, value in values.items()
+        if field.startswith("schedule_e_property_") and field.endswith("_gross_rents")
+    ]
+    return sum(property_rents) if property_rents else None
 
 
 def _period_based_income(

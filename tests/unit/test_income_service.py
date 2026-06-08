@@ -44,6 +44,36 @@ def test_compute_annual_income_tax_return_uses_agi():
     assert notes is None
 
 
+def test_compute_annual_income_tax_return_with_schedule_e_uses_total_income():
+    fields = [
+        make_field("agi", 73168.00),
+        make_field("total_income", 75150.00),
+        make_field("schedule_e_present", 1.0),
+        make_field("schedule_e_net_rental_income", -1303.00),
+    ]
+
+    annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
+
+    assert annual_income == 75150.00
+    assert confidence == "high"
+    assert "Net rental option: $75,150.00" in notes
+
+
+def test_compute_annual_income_tax_return_notes_gross_rental_receipts_option():
+    fields = [
+        make_field("agi", 73168.00),
+        make_field("total_income", 75466.00),
+        make_field("schedule_e_present", 1.0),
+        make_field("schedule_e_gross_rents_total", 35980.00),
+        make_field("schedule_e_net_rental_income", -1303.00),
+    ]
+
+    annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
+
+    assert annual_income == 75466.00
+    assert "gross rental receipts option: $112,749.00" in notes
+
+
 def test_compute_annual_income_w2_confidence_is_high():
     fields = [make_field("w2_wages", 85000.00)]
 

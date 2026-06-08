@@ -3,7 +3,13 @@ from uuid import uuid4
 
 from app.exceptions import ExtractionFailed
 from app.extractors.tax_return_extractor import extract_tax_return_fields
-from tests.unit.tax_return_test_helpers import block, field_map, schedule_c_blocks, tax_return_blocks
+from tests.unit.tax_return_test_helpers import (
+    block,
+    field_map,
+    schedule_c_blocks,
+    schedule_e_blocks,
+    tax_return_blocks,
+)
 
 
 def test_extract_agi_from_blocks():
@@ -75,3 +81,32 @@ def test_numeric_parsing_handles_parentheses_as_negative():
     fields = field_map(tax_return_blocks() + schedule_c_blocks("(5,000.00)"))
 
     assert fields["schedule_c_net"].value == -5000.0
+
+
+def test_extract_schedule_e_presence_when_attached():
+    fields = field_map(tax_return_blocks() + schedule_e_blocks())
+
+    assert fields["schedule_e_present"].value == 1.0
+    assert fields["schedule_e_present"].raw_text == "Schedule E"
+
+
+def test_extract_schedule_e_property_gross_rents_by_column():
+    fields = field_map(tax_return_blocks() + schedule_e_blocks())
+
+    assert fields["schedule_e_property_a_gross_rents"].value == 22480.0
+    assert fields["schedule_e_property_b_gross_rents"].value == 13500.0
+    assert fields["schedule_e_gross_rents_total"].value == 35980.0
+
+
+def test_extract_schedule_e_property_addresses():
+    fields = field_map(tax_return_blocks() + schedule_e_blocks())
+
+    assert fields["schedule_e_property_a_address"].raw_text == "131 E 500 S Provo UT 84606"
+    assert fields["schedule_e_property_b_address"].raw_text == "2221 Corby Blvd South Bend IN 46615"
+
+
+def test_extract_schedule_e_line_26_net_rental_income():
+    fields = field_map(tax_return_blocks() + schedule_e_blocks(net="(1,303.00)"))
+
+    assert fields["schedule_e_net_rental_income"].value == -1303.0
+    assert fields["schedule_e_net_rental_income"].bounding_box.x1 == 540.0
