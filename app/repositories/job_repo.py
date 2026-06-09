@@ -65,6 +65,7 @@ def claim_next_pending_job(db: Session) -> Job | None:
     if job is None:
         return None
     job.status = JobStatus.processing.value
+    job.current_stage = "processing"
     job.started_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(job)
@@ -82,6 +83,31 @@ def update_job_status(
     job.error = error
     if status in {JobStatus.complete.value, JobStatus.failed.value}:
         job.completed_at = datetime.now(timezone.utc)
+    if status == JobStatus.complete.value:
+        job.current_stage = "complete"
+        if job.pages_total > 0:
+            job.pages_done = job.pages_total
+    if status == JobStatus.failed.value:
+        job.current_stage = "failed"
+    db.commit()
+    db.refresh(job)
+    return job
+
+
+def update_job_progress(
+    db: Session,
+    job_id: UUID,
+    pages_total: int | None = None,
+    pages_done: int | None = None,
+    current_stage: str | None = None,
+) -> Job:
+    job = get_job(db, job_id)
+    if pages_total is not None:
+        job.pages_total = pages_total
+    if pages_done is not None:
+        job.pages_done = pages_done
+    if current_stage is not None:
+        job.current_stage = current_stage
     db.commit()
     db.refresh(job)
     return job
@@ -91,6 +117,9 @@ def reset_job_to_pending(db: Session, job_id: UUID) -> Job:
     job = get_job(db, job_id)
     job.status = JobStatus.pending.value
     job.error = None
+    job.pages_total = 0
+    job.pages_done = 0
+    job.current_stage = None
     job.started_at = None
     job.completed_at = None
     db.commit()

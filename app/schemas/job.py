@@ -13,6 +13,10 @@ class JobResponse(BaseModel):
     document_id: UUID
     status: JobStatus
     error: str | None
+    pages_total: int = 0
+    pages_done: int = 0
+    current_stage: str | None = None
+    percent: float = 0.0
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None
@@ -24,6 +28,10 @@ class JobStatusResponse(BaseModel):
     id: UUID
     status: JobStatus
     error: str | None
+    pages_total: int = 0
+    pages_done: int = 0
+    current_stage: str | None = None
+    percent: float = 0.0
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None

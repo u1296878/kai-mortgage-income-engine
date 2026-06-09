@@ -60,6 +60,19 @@ def test_update_job_status_to_complete_sets_completed_at(test_db):
     assert updated_job.completed_at is not None
 
 
+def test_update_job_status_to_complete_sets_done_pages(test_db):
+    job = make_job()
+    job.pages_total = 4
+    job.pages_done = 2
+    test_db.add(job)
+    test_db.commit()
+
+    updated_job = job_repo.update_job_status(test_db, job.id, "complete")
+
+    assert updated_job.pages_done == 4
+    assert updated_job.current_stage == "complete"
+
+
 def test_update_job_status_to_failed_sets_error(test_db):
     job = make_job()
     test_db.add(job)
@@ -68,6 +81,40 @@ def test_update_job_status_to_failed_sets_error(test_db):
     updated_job = job_repo.update_job_status(test_db, job.id, "failed", "OCR failed")
 
     assert updated_job.error == "OCR failed"
+
+
+def test_update_job_progress_sets_page_counts_and_stage(test_db):
+    job = make_job()
+    test_db.add(job)
+    test_db.commit()
+
+    updated_job = job_repo.update_job_progress(
+        test_db,
+        job.id,
+        pages_total=10,
+        pages_done=3,
+        current_stage="ocr",
+    )
+
+    assert updated_job.pages_total == 10
+    assert updated_job.pages_done == 3
+    assert updated_job.current_stage == "ocr"
+    assert updated_job.percent == 30.0
+
+
+def test_reset_job_to_pending_clears_progress(test_db):
+    job = make_job(status="failed", error="OCR failed")
+    job.pages_total = 10
+    job.pages_done = 4
+    job.current_stage = "failed"
+    test_db.add(job)
+    test_db.commit()
+
+    reset_job = job_repo.reset_job_to_pending(test_db, job.id)
+
+    assert reset_job.pages_total == 0
+    assert reset_job.pages_done == 0
+    assert reset_job.current_stage is None
 
 
 def test_fail_stuck_processing_jobs_marks_processing_jobs_failed(test_db):

@@ -105,7 +105,7 @@ npm run build
 pytest
 ```
 
-Expected test count after this step: 502.
+Expected test count after this step: 511.
 
 ## Authentication
 

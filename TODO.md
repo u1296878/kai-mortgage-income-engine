@@ -40,7 +40,7 @@
 - [x] Phase 5 management UI pass: broker self-registration, case lifecycle controls, document management, job retry, and manager broker activation
 - [x] Responsive processing, Step 1: index tax-return/Schedule C/Schedule E block lookups so repeated line-anchor scans reuse per-page line grouping
 - [x] Responsive processing, Step 2: parallelize OCR per page with bounded worker count, `OMP_THREAD_LIMIT=1`, configured DPI/page settings, and named per-page timeout errors
-- [ ] Responsive processing, Step 3: add job progress fields and expose derived percent through the job status service/route
+- [x] Responsive processing, Step 3: add job progress fields and expose derived percent through the job status service/route
 - [ ] Responsive processing, Step 4: make document jobs idempotent and resumable per page with persisted partial work
 - [ ] Responsive processing, Step 5: interleave queued document work so large OCR jobs do not starve short jobs
 - [ ] Responsive processing, Step 6: show live job progress in the frontend instead of a blocking spinner

@@ -53,6 +53,24 @@ def test_get_job_status_returns_job(test_db):
     assert result.id == job.id
 
 
+def test_get_job_status_returns_progress_percent(test_db):
+    broker_id = uuid4()
+    document = Document(
+        id=str(uuid4()),
+        filename="scan.pdf",
+        doc_type="tax_return",
+        storage_path="storage/path/scan.pdf",
+        broker_id=str(broker_id),
+    )
+    job = Job(document_id=document.id, pages_total=8, pages_done=2)
+    test_db.add_all([document, job])
+    test_db.commit()
+
+    result = job_service.get_job_status(test_db, job.id, make_user(broker_id))
+
+    assert result.percent == 25.0
+
+
 def test_get_missing_job_raises(test_db):
     job_id = uuid4()
 

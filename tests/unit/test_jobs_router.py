@@ -31,6 +31,10 @@ def make_job(**overrides):
         "document_id": str(uuid4()),
         "status": "pending",
         "error": None,
+        "pages_total": 0,
+        "pages_done": 0,
+        "current_stage": None,
+        "percent": 0.0,
         "created_at": datetime(2026, 5, 21, 12, 0, 0),
         "started_at": None,
         "completed_at": None,
@@ -48,6 +52,19 @@ def test_get_job_returns_status_response(client, monkeypatch):
     assert response.status_code == 200
     assert response.json()["status"] == "pending"
     assert "document_id" not in response.json()
+
+
+def test_get_job_returns_progress_fields(client, monkeypatch):
+    job = make_job(pages_total=10, pages_done=4, current_stage="ocr", percent=40.0)
+    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id, user: job)
+
+    response = client.get(f"/jobs/{job.id}")
+
+    assert response.status_code == 200
+    assert response.json()["pages_total"] == 10
+    assert response.json()["pages_done"] == 4
+    assert response.json()["current_stage"] == "ocr"
+    assert response.json()["percent"] == 40.0
 
 
 def test_get_missing_job_returns_404(client, monkeypatch):

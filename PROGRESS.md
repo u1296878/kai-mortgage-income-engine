@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-09
 
-Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly. Responsive document processing is in progress; the tax-return extractor hot path now reuses indexed per-page line grouping, and multi-page OCR is bounded per page.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly. Responsive document processing is in progress; the tax-return extractor hot path now reuses indexed per-page line grouping, multi-page OCR is bounded per page, and job status responses expose persisted progress.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -108,8 +108,13 @@ Step 2 is complete:
 - Page workers set `OMP_THREAD_LIMIT` before invoking Tesseract, and page timeouts raise the named `PageOcrTimeout` exception.
 - Parser tests cover configured DPI, worker capping, and timeout failure behavior.
 
+Step 3 is complete:
+- Jobs persist `pages_total`, `pages_done`, and `current_stage`, with backward-compatible startup column creation for existing databases.
+- Status responses include the progress fields plus a derived `percent`; routers still call the service without doing progress math.
+- The job repository can update progress, marks completed jobs as 100%, and clears stale progress when a failed job is retried.
+- Repository, service, router, retry, document-job creation, and schema compatibility tests cover the behavior.
+
 Remaining responsive-processing work:
-- Add persisted job progress fields and status-route percent reporting.
 - Persist partial page work so worker restarts resume instead of starting over.
 - Interleave page work across queued jobs so large scans do not starve small documents.
 - Poll/render frontend progress while jobs run.
