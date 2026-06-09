@@ -34,17 +34,17 @@ def test_compute_annual_income_bank_statement_annualizes():
     assert annual_income == 86400.00
 
 
-def test_compute_annual_income_tax_return_uses_agi():
+def test_compute_annual_income_tax_return_is_reference_only():
     fields = [make_field("agi", 79000.00)]
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
 
-    assert annual_income == 79000.00
-    assert confidence == "high"
-    assert notes is None
+    assert annual_income is None
+    assert confidence == "medium"
+    assert notes == "Income derived from per-schedule drafts; AGI shown for reference only."
 
 
-def test_compute_annual_income_tax_return_with_schedule_e_excludes_net_rental_from_base():
+def test_compute_annual_income_tax_return_with_schedule_e_still_reference_only():
     fields = [
         make_field("agi", 73168.00),
         make_field("total_income", 75150.00),
@@ -54,12 +54,12 @@ def test_compute_annual_income_tax_return_with_schedule_e_excludes_net_rental_fr
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
 
-    assert annual_income == 76453.00
-    assert confidence == "high"
-    assert "Net rental option: $75,150.00" in notes
+    assert annual_income is None
+    assert confidence == "medium"
+    assert "AGI shown for reference only" in notes
 
 
-def test_compute_annual_income_tax_return_notes_gross_rental_receipts_option():
+def test_compute_annual_income_tax_return_never_adds_gross_rents():
     fields = [
         make_field("agi", 73168.00),
         make_field("total_income", 75466.00),
@@ -70,8 +70,8 @@ def test_compute_annual_income_tax_return_notes_gross_rental_receipts_option():
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "tax_return")
 
-    assert annual_income == 76769.00
-    assert "gross rental receipts option: $112,749.00" in notes
+    assert annual_income is None
+    assert "per-schedule drafts" in notes
 
 
 def test_compute_annual_income_w2_confidence_is_high():

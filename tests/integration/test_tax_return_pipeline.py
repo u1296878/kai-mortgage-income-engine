@@ -42,8 +42,9 @@ def test_tax_return_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
         assert fields["agi"]["bounding_box"] != {"x1": 0.0, "y1": 0.0, "x2": 0.0, "y2": 0.0}
         assert fields["wages"]["bounding_box"] != {"x1": 0.0, "y1": 0.0, "x2": 0.0, "y2": 0.0}
         assert fields["tax_year"]["bounding_box"] != {"x1": 0.0, "y1": 0.0, "x2": 0.0, "y2": 0.0}
-        assert result.annual_income == 79000.0
-        assert result.confidence == "high"
+        assert result.annual_income is None
+        assert result.confidence == "medium"
+        assert "AGI shown for reference only" in result.notes
     finally:
         app.dependency_overrides.clear()
 
@@ -78,11 +79,11 @@ def test_tax_return_upload_with_schedule_e_uses_total_income(test_db, tmp_path, 
         assert fields["schedule_e_property_a_gross_rents"]["value"] == 22480.0
         assert fields["schedule_e_property_b_gross_rents"]["value"] == 13500.0
         assert fields["schedule_e_net_rental_income"]["value"] == -1303.0
-        assert result.annual_income == 76453.0
+        assert result.annual_income is None
         assert len(calculations) == 2
         assert calculations[0].included is True
         assert calculations[0].qualifying_monthly > 0
-        assert "gross rental receipts option" in result.notes
+        assert "per-schedule drafts" in result.notes
     finally:
         app.dependency_overrides.clear()
 

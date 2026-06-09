@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from app.models.case import Case
 from app.models.income_stream import IncomeStream
+from app.models.rental_calculation import RentalCalculation
 from app.models.result import Result
 from app.models.user import User
 from app.schemas.extraction import BoundingBox, ExtractedField
@@ -45,7 +46,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
 
     summary = result_service.get_case_summary(test_db, case_id, manager)
 
-    assert summary.total_annual_income == 164000.00
+    assert summary.total_annual_income == 85000.00
     assert [source.field for source in summary.sources] == ["w2_wages", "agi"]
 
 
@@ -94,8 +95,40 @@ def test_case_summary_falls_back_to_result_totals_when_no_streams_exist(test_db)
 
     summary = result_service.get_case_summary(test_db, case_id, manager)
 
-    assert summary.total_annual_income == 110000.0
+    assert summary.total_annual_income == 60000.0
     assert summary.income_streams == []
+
+
+def test_case_summary_does_not_add_tax_return_agi_to_rental_drafts(test_db):
+    case_id = uuid4()
+    broker_id = uuid4()
+    manager = make_user(role="manager")
+    test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Composite"))
+    test_db.commit()
+    result_service.save_extraction_result(
+        test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 73168.00)]
+    )
+    test_db.add(
+        RentalCalculation(
+            case_id=str(case_id),
+            broker_id=str(broker_id),
+            label="Schedule E property",
+            inputs={},
+            qualifying_monthly=1500.0,
+            annual_income=18000.0,
+            breakdown={
+                "qualifying_monthly": 1500.0,
+                "property_class": "primary_2_4_unit",
+                "method": "schedule_e",
+                "years": [],
+            },
+        )
+    )
+    test_db.commit()
+
+    summary = result_service.get_case_summary(test_db, case_id, manager)
+
+    assert summary.total_annual_income == 18000.0
 
 
 def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test_db):
