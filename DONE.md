@@ -31,3 +31,4 @@
 - Income engine, Step 4c: self-employment wired and persisted - registry preview endpoint, case-scoped save/list/get/delete, case-summary fold-in, config-driven worksheet UI, and case-detail panel added.
 - Phase 10: Schedule E rental extraction to validated rental engine - tax returns now produce per-property editable rental calculation drafts with add-backs, months in service, source document keys, and broker include/exclude review; old line-26 net-only rental document path retired.
 - Phase 11: Composite tax returns - tax-return results no longer add AGI to case totals; Schedule C pages now create self-employment drafts with add-backs, source dedupe, and broker include/exclude review.
+- Phase 12: Schedule C extraction defects - line 13 depreciation is captured when labels wrap, line 27a other expenses is no longer added back wholesale, and Part V amortization/casualty details plus cross-parser tie-out tests guard the fix.

@@ -1,6 +1,6 @@
 # PROGRESS
 
-Last updated: 2026-06-07
+Last updated: 2026-06-09
 
 Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly.
 No document types currently use the extraction stub.
@@ -138,6 +138,11 @@ Income engine, Phase 11 (composite tax returns) is complete:
 - Tax-return results now save `annual_income=None`; AGI, total income, and wages remain extracted source-reference fields for review only.
 - Schedule C pages now extract Form 1084 line items and create included self-employment drafts through the validated Schedule C engine, with source dedupe.
 - Rental and self-employment drafts can be included/excluded by the broker; case totals sum only included drafts and no longer double-count tax-return AGI.
+
+Income engine, Phase 12 (Schedule C extraction defects) is complete:
+- Schedule C line 13 depreciation now uses the line-number row to capture far-right values even when labels wrap.
+- Line 27a "Other expenses" is no longer added back wholesale; only Part V amortization/casualty detail lines feed that add-back.
+- Cross-parser Schedule C consistency and 2023/2024 subtotal tie-out tests guard against depreciation misses and 27a over-add regressions.
 
 Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - `app/income/nontaxable.py` is a pure engine: one source in (`NonTaxableSource` / `SocialSecuritySource` in `app/schemas/nontaxable_inputs.py`), one qualifying monthly figure out, plus a small taxable/eligible breakdown where the method splits the amount — mirroring the rental engine's shape.
