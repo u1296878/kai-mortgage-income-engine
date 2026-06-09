@@ -1,40 +1,26 @@
 import re
 
 from app.extractors.block_utils import line_for_block, merge_blocks
-from app.extractors.tax_return_text import (
-    continuation_label_matches,
-    is_money,
-    line_anchor,
-    line_matches,
-    normalize, normalized_line_text,
-)
+from app.extractors.extracted_field_factory import parse_float
 from app.extractors.tax_return_patterns import FILING_STATUSES, LINE_FIELDS
 
 
 def line_anchors(blocks: list[dict], line_number: str, tokens: tuple[str, ...], pages: set[int] | None = None) -> list[dict]:
     anchors: list[dict] = []
     seen = set()
-    lines = sorted(unique_lines(blocks), key=lambda line: (line[0]["page"], line[0]["y1"]))
-    for index, line in enumerate(lines):
+    for line in unique_lines(blocks):
         if pages and line[0]["page"] not in pages:
             continue
         label_words = [block for block in line if not is_money(block["text"])]
-        text = normalized_line_text(label_words)
-        if label_words and (
-            line_matches(text, line_number, tokens)
-            or continuation_label_matches(lines, index, line_number, tokens)
-        ):
-            anchor = line_anchor(label_words, line_number)
-            key = (anchor["page"], round(anchor["line_y1"], 1), line_number)
+        if label_words and line_matches(normalized_line_text(label_words), line_number, tokens):
+            key = (label_words[0]["page"], round(label_words[0]["y1"], 1), line_number)
             if key not in seen:
-                anchors.append(anchor)
+                anchors.append(merge_blocks(label_words))
                 seen.add(key)
     return anchors
 
 
 def nearest_money_value(label: dict, blocks: list[dict], line_number: str | None = None) -> dict | None:
-    if line_number and (value := line_number_row_value(label, blocks)) is not None:
-        return value
     candidates = [block for block in blocks if is_money(block["text"]) and nearby_value(label, block) and value_candidate(label, block)]
     if not candidates:
         return None
@@ -60,19 +46,6 @@ def continuation_line_value(label: dict, blocks: list[dict], line_number: str) -
         if values:
             return max(values, key=lambda block: block["x1"])
     return None
-
-
-def line_number_row_value(label: dict, blocks: list[dict]) -> dict | None:
-    row_y = label.get("line_y1", label["y1"])
-    candidates = [
-        block
-        for block in blocks
-        if is_money(block["text"])
-        and block["page"] == label["page"]
-        and abs(block["y1"] - row_y) <= 10
-        and block["x1"] >= label.get("line_number_x2", label["x1"]) + 20
-    ]
-    return max(candidates, key=lambda block: block["x1"]) if candidates else None
 
 
 def find_tax_year(blocks: list[dict], federal_pages: set[int]) -> dict | None:
@@ -156,10 +129,33 @@ def page_has_line_anchor(lines: list[list[dict]], line_number: str, tokens: tupl
     return False
 
 
+def line_matches(text: str, line_number: str, tokens: tuple[str, ...]) -> bool:
+    words = text.split()
+    return line_number in words and all(token in words for token in tokens)
+
+
+def normalized_line_text(blocks: list[dict]) -> str:
+    return normalize(" ".join(block["text"] for block in blocks))
+
+
+def normalize(text: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", text.lower())).strip()
+
+
 def status_block(line: list[dict], status: str) -> dict:
     words = set(status.split())
     matches = [block for block in line if normalize(block["text"]) in words]
     return merge_blocks(matches) if matches else line[-1]
+
+
+def is_money(text: str) -> bool:
+    value = parse_float(text)
+    if value is None:
+        return False
+    clean = text.strip().replace("$", "").replace(",", "")
+    if re.fullmatch(r"\(?-?\d+\.\d{2}\)?", clean):
+        return True
+    return any(marker in text.strip() for marker in ("$", ",", "(", ")", "-")) or abs(value) >= 100
 
 
 def value_candidate(label: dict, block: dict) -> bool:
