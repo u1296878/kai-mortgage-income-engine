@@ -10,6 +10,10 @@ class ExtractionFailed(Exception):
     pass
 
 
+class PageOcrTimeout(Exception):
+    pass
+
+
 class JobAlreadyProcessed(Exception):
     pass
 

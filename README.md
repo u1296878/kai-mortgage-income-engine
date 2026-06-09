@@ -94,6 +94,10 @@ npm run build
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access token lifetime in minutes. |
 | `MANAGER_EMAIL` | empty | Optional first-run manager seed email. |
 | `MANAGER_PASSWORD` | empty | Optional first-run manager seed password. |
+| `OCR_DPI` | `150` | DPI used when rasterizing PDF pages for OCR. |
+| `OCR_MAX_WORKERS` | `4` | Maximum process-pool workers for multi-page OCR. |
+| `OCR_PAGE_TIMEOUT_SECONDS` | `60` | Per-page OCR timeout before the job fails with a page-specific error. |
+| `OCR_THREAD_LIMIT` | `1` | Tesseract/OpenMP thread limit set inside OCR workers. |
 
 ## Running tests
 

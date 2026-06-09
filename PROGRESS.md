@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-09
 
-Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly. Responsive document processing is in progress; the tax-return extractor hot path now reuses indexed per-page line grouping.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly. Responsive document processing is in progress; the tax-return extractor hot path now reuses indexed per-page line grouping, and multi-page OCR is bounded per page.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -102,8 +102,13 @@ Step 1 is complete:
 - Form 1040, Schedule C, and Schedule E extraction now share that index instead of rebuilding line groups during repeated anchor and nearest-value lookups.
 - Existing extracted field shapes and source references are unchanged; focused extractor tests and the full backend suite pass.
 
+Step 2 is complete:
+- Multi-page OCR now runs pages through a bounded `ProcessPoolExecutor`; single-page and monkeypatched test-hook paths stay in-process for lightweight tests.
+- OCR DPI, worker cap, per-page timeout, and Tesseract thread limit are environment-backed settings.
+- Page workers set `OMP_THREAD_LIMIT` before invoking Tesseract, and page timeouts raise the named `PageOcrTimeout` exception.
+- Parser tests cover configured DPI, worker capping, and timeout failure behavior.
+
 Remaining responsive-processing work:
-- Bound and parallelize OCR per page with named timeout handling.
 - Add persisted job progress fields and status-route percent reporting.
 - Persist partial page work so worker restarts resume instead of starting over.
 - Interleave page work across queued jobs so large scans do not starve small documents.
