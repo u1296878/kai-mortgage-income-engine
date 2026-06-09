@@ -6,7 +6,12 @@ from sqlalchemy.orm import Session
 from app.audit.logger import log_event
 from app.models.job_status import JobStatus
 from app.repositories import document_repo, job_repo
-from app.services import extraction_service, result_service, schedule_e_rental_service
+from app.services import (
+    extraction_service,
+    result_service,
+    schedule_c_se_service,
+    schedule_e_rental_service,
+)
 
 
 def process_next_job(db: Session) -> bool:
@@ -31,6 +36,13 @@ def process_next_job(db: Session) -> bool:
         )
         if document.doc_type == "tax_return" and document.case_id and document.broker_id:
             schedule_e_rental_service.create_drafts_from_fields(
+                db,
+                UUID(document.case_id),
+                UUID(document.broker_id),
+                UUID(document.id),
+                fields,
+            )
+            schedule_c_se_service.create_drafts_from_fields(
                 db,
                 UUID(document.case_id),
                 UUID(document.broker_id),

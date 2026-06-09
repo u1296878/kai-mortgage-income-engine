@@ -5,6 +5,7 @@ from app.models.document import Document
 from app.models.job import Job
 from app.repositories import job_repo, result_repo
 from app.repositories import rental_calculation_repo
+from app.repositories import self_employment_calculation_repo
 from app.services import extraction_service, job_processing_service
 from app.schemas.extraction import BoundingBox, ExtractedField
 
@@ -91,6 +92,10 @@ def test_process_next_job_creates_schedule_e_rental_drafts(test_db, monkeypatch)
         make_field("schedule_e_property_a_gross_rents", 22480.0),
         make_field("schedule_e_property_a_total_expenses", 19943.0),
         make_field("schedule_e_property_a_depreciation_depletion", 8116.0),
+        make_field("tax_year", 2024.0),
+        make_field("schedule_c_business_1_net_profit", 50000.0),
+        make_field("schedule_c_business_1_nonrecurring_income", 5000.0),
+        make_field("schedule_c_business_1_depreciation", 8000.0),
     ]
     monkeypatch.setattr(
         extraction_service,
@@ -100,6 +105,8 @@ def test_process_next_job_creates_schedule_e_rental_drafts(test_db, monkeypatch)
 
     processed = job_processing_service.process_next_job(test_db)
     calculations = rental_calculation_repo.list_by_case(test_db, case_id)
+    self_employment = self_employment_calculation_repo.list_by_case(test_db, case_id)
 
     assert processed is True
     assert len(calculations) == 1
+    assert len(self_employment) == 1

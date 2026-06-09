@@ -14,6 +14,7 @@ from app.models.user import User
 from app.schemas.self_employment_results import (
     SelfEmploymentCalculationCreate,
     SelfEmploymentCalculationResponse,
+    SelfEmploymentCalculationUpdate,
 )
 from app.services import self_employment_calculation_service
 
@@ -70,6 +71,25 @@ def get_self_employment_calculation(
     try:
         return self_employment_calculation_service.get_calculation(
             db, case_id, calc_id, current_user
+        )
+    except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.patch(
+    "/cases/{case_id}/self-employment-calculations/{calc_id}",
+    response_model=SelfEmploymentCalculationResponse,
+)
+def update_self_employment_calculation(
+    case_id: UUID,
+    calc_id: UUID,
+    payload: SelfEmploymentCalculationUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> SelfEmploymentCalculationResponse:
+    try:
+        return self_employment_calculation_service.update_calculation(
+            db, case_id, calc_id, payload, current_user
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

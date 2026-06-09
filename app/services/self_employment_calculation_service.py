@@ -14,6 +14,7 @@ from app.repositories import case_repo, self_employment_calculation_repo
 from app.schemas.self_employment_results import (
     SelfEmploymentCalculationCreate,
     SelfEmploymentCalculationRequest,
+    SelfEmploymentCalculationUpdate,
 )
 from app.services.self_employment_income_service import run_self_employment_engine
 
@@ -36,6 +37,7 @@ def create_calculation(
         inputs=request.model_dump(mode="json"),
         qualifying_monthly=result.qualifying_monthly,
         annual_income=result.annual_income,
+        included=payload.included,
         breakdown=result.breakdown,
     )
     saved = self_employment_calculation_repo.create(db, calculation)
@@ -84,11 +86,28 @@ def delete_calculation(
     )
 
 
+def update_calculation(
+    db: Session,
+    case_id: UUID,
+    calc_id: UUID,
+    payload: SelfEmploymentCalculationUpdate,
+    current_user: User,
+) -> SelfEmploymentCalculation:
+    calculation = get_calculation(db, case_id, calc_id, current_user)
+    calculation.included = payload.included
+    saved = self_employment_calculation_repo.update(db, calculation)
+    log_event(
+        "self_employment_calculation_updated",
+        {"calculation_id": saved.id, "case_id": saved.case_id},
+    )
+    return saved
+
+
 def _to_calculation_request(
     payload: SelfEmploymentCalculationCreate,
 ) -> SelfEmploymentCalculationRequest:
     return SelfEmploymentCalculationRequest.model_validate(
-        payload.model_dump(exclude={"borrower_id", "label"}),
+        payload.model_dump(exclude={"borrower_id", "label", "included"}),
     )
 
 

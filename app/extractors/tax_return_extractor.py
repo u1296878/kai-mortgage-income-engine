@@ -11,6 +11,7 @@ from app.extractors.tax_return_locator import (
     schedule_c_pages,
 )
 from app.extractors.tax_return_patterns import LINE_FIELDS
+from app.extractors.schedule_c_extractor import extract_schedule_c_fields
 from app.extractors.schedule_e_extractor import extract_schedule_e_fields
 from app.schemas.extraction import ExtractedField
 
@@ -31,6 +32,7 @@ def extract_tax_return_fields(blocks: list[dict], document_id: UUID) -> list[Ext
 
     if schedule_c:
         fields.append(make_numeric_field("schedule_c_net", schedule_c, document_id))
+    fields.extend(extract_schedule_c_fields(blocks, document_id, c_pages))
     fields.extend(extract_schedule_e_fields(blocks, document_id))
     if tax_year:
         fields.append(make_numeric_field("tax_year", tax_year, document_id))

@@ -6,7 +6,12 @@ from reportlab.pdfgen import canvas
 
 from app.dependencies import get_db
 from app.main import app
-from app.repositories import job_repo, rental_calculation_repo, result_repo
+from app.repositories import (
+    job_repo,
+    rental_calculation_repo,
+    result_repo,
+    self_employment_calculation_repo,
+)
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
 from tests.auth_helpers import auth_headers
@@ -49,7 +54,7 @@ def test_tax_return_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
         app.dependency_overrides.clear()
 
 
-def test_tax_return_upload_with_schedule_e_uses_total_income(test_db, tmp_path, monkeypatch):
+def test_tax_return_upload_with_schedules_creates_reviewable_drafts(test_db, tmp_path, monkeypatch):
     def override_db():
         yield test_db
 
@@ -73,16 +78,21 @@ def test_tax_return_upload_with_schedule_e_uses_total_income(test_db, tmp_path, 
         result = result_repo.get_result_by_job(test_db, job.id)
         fields = {field["field"]: field for field in result.extracted_fields}
         calculations = rental_calculation_repo.list_by_case(test_db, case["id"])
+        self_employment = self_employment_calculation_repo.list_by_case(test_db, case["id"])
 
         assert processed is True
         assert fields["schedule_e_present"]["value"] == 1.0
         assert fields["schedule_e_property_a_gross_rents"]["value"] == 22480.0
         assert fields["schedule_e_property_b_gross_rents"]["value"] == 13500.0
         assert fields["schedule_e_net_rental_income"]["value"] == -1303.0
+        assert fields["schedule_c_business_1_net_profit"]["value"] == 50000.0
         assert result.annual_income is None
         assert len(calculations) == 2
+        assert len(self_employment) == 1
         assert calculations[0].included is True
+        assert self_employment[0].included is True
         assert calculations[0].qualifying_monthly > 0
+        assert self_employment[0].qualifying_monthly > 0
         assert "per-schedule drafts" in result.notes
     finally:
         app.dependency_overrides.clear()
@@ -160,5 +170,23 @@ def _tax_return_schedule_e_pdf_bytes() -> bytes:
     c.drawString(50, 320, "26 Total rental real estate income or loss")
     c.drawString(500, 280, "26")
     c.drawString(540, 280, "(1303.00)")
+    c.showPage()
+    c.drawString(50, 740, "Schedule C Profit or Loss From Business")
+    c.drawString(50, 680, "6 Other income")
+    c.drawString(500, 680, "5000.00")
+    c.drawString(50, 660, "12 Depletion")
+    c.drawString(500, 660, "500.00")
+    c.drawString(50, 640, "13 Depreciation")
+    c.drawString(500, 640, "8000.00")
+    c.drawString(50, 620, "24b Meals")
+    c.drawString(500, 620, "2000.00")
+    c.drawString(50, 600, "27a Other expenses")
+    c.drawString(500, 600, "700.00")
+    c.drawString(50, 580, "30 Business use of home")
+    c.drawString(500, 580, "3000.00")
+    c.drawString(50, 560, "31 Net profit or loss")
+    c.drawString(500, 560, "50000.00")
+    c.drawString(50, 520, "44a Business miles")
+    c.drawString(500, 520, "1000")
     c.save()
     return buffer.getvalue()

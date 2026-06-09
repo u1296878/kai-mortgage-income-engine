@@ -35,7 +35,9 @@ def build_case_summary(
     )
     nontaxable_total = sum(calc.annual_income or 0.0 for calc in nontaxable_calculations)
     self_employment_total = sum(
-        calc.annual_income or 0.0 for calc in self_employment_calculations
+        calc.annual_income or 0.0
+        for calc in self_employment_calculations
+        if calc.included
     )
     # Saved worksheet calculations are additive and can double-count if an
     # underwriter also keeps the same income in a stream; no dedupe in this slice.

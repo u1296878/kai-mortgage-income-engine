@@ -5,7 +5,10 @@ import pytest
 from app.exceptions import CaseNotFound, SelfEmploymentCalculationNotFound
 from app.models.case import Case
 from app.models.user import User
-from app.schemas.self_employment_results import SelfEmploymentCalculationCreate
+from app.schemas.self_employment_results import (
+    SelfEmploymentCalculationCreate,
+    SelfEmploymentCalculationUpdate,
+)
 from app.services import self_employment_calculation_service as service
 
 
@@ -121,6 +124,22 @@ def test_list_returns_case_calculations(test_db):
     calculations = service.list_calculations_by_case(test_db, UUID(case.id), broker)
 
     assert [calc.label for calc in calculations] == ["A", "B"]
+
+
+def test_update_calculation_sets_included(test_db):
+    broker = make_user()
+    case = make_case(test_db, broker.id)
+    saved = service.create_calculation(test_db, UUID(case.id), schedule_d_payload(), broker)
+
+    updated = service.update_calculation(
+        test_db,
+        UUID(case.id),
+        UUID(saved.id),
+        SelfEmploymentCalculationUpdate(included=False),
+        broker,
+    )
+
+    assert updated.included is False
 
 
 def test_get_missing_calculation_raises_not_found(test_db):

@@ -15,6 +15,11 @@ class SelfEmploymentCalculationRequest(BaseModel):
 class SelfEmploymentCalculationCreate(SelfEmploymentCalculationRequest):
     borrower_id: UUID | None = None
     label: str | None = None
+    included: bool = True
+
+
+class SelfEmploymentCalculationUpdate(BaseModel):
+    included: bool
 
 
 class SelfEmploymentResult(BaseModel):
@@ -34,5 +39,8 @@ class SelfEmploymentCalculationResponse(BaseModel):
     kind: str
     qualifying_monthly: float
     annual_income: float
+    included: bool
+    source_document_id: UUID | None
+    source_business_key: str | None
     breakdown: dict[str, Any]
     created_at: datetime

@@ -91,6 +91,27 @@ def test_list_is_scoped_to_case_owner(client):
     assert other.status_code == 404
 
 
+def test_update_included_excludes_from_case_summary(client):
+    headers, _ = auth_user(client)
+    case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
+    created = client.post(
+        f"/cases/{case['id']}/self-employment-calculations",
+        json=_payload(),
+        headers=headers,
+    ).json()
+
+    update = client.patch(
+        f"/cases/{case['id']}/self-employment-calculations/{created['id']}",
+        json={"included": False},
+        headers=headers,
+    )
+    summary = client.get(f"/cases/{case['id']}/summary", headers=headers)
+
+    assert update.status_code == 200
+    assert update.json()["included"] is False
+    assert summary.json()["total_annual_income"] == 0.0
+
+
 def test_delete_removes_calculation(client):
     headers, _ = auth_user(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
