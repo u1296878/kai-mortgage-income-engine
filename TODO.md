@@ -22,6 +22,7 @@
 - [x] Phase 10: tax-return Schedule E rental extraction now feeds per-property drafts through the validated rental engine; old line-26 net-only path retired
 - [x] Phase 11: tax returns are composite sources; AGI-as-income retired and Schedule C now feeds self-employment drafts
 - [x] Phase 12: Schedule C extraction defects fixed; line 13 depreciation captured on wrapped labels, and 27a no longer over-adds other expenses
+- [x] Phase 13: Schedule C extraction is column-aware and gated by adversarial digital/OCR fixtures; shared 1040 locator baseline restored
 - [x] Income engine, Step 3: non-taxable + Social Security calc engine (`app/income/nontaxable.py` — 3 non-taxable methods + 2 SS methods, 25% gross-up) ties out to the worksheet
 - [x] Income engine, Step 3b: wire + persist non-taxable; Income-Worksheet and Rental-Worksheet are now fully covered
 - [x] Income engine, Step 3c: transcribe SAM rows 113-443 into spec section 5

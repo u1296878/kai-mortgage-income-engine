@@ -1,11 +1,11 @@
 from uuid import UUID
 
+from app.extractors.schedule_c_columns import line_amount_value
 from app.extractors.extracted_field_factory import make_numeric_field, parse_float
 from app.extractors.tax_return_locator import (
     grouped_lines,
     line_anchors,
     nearby_value,
-    nearest_money_value,
     value_candidate,
 )
 from app.extractors.tax_return_text import is_money, normalized_line_text
@@ -63,14 +63,9 @@ def _line_money_value(
     blocks: list[dict],
     page: int,
     line_number: str,
-    tokens: tuple[str, ...],
+    _tokens: tuple[str, ...],
 ) -> dict | None:
-    values = [
-        value
-        for label in line_anchors(blocks, line_number, tokens, {page})
-        if (value := nearest_money_value(label, blocks, line_number)) is not None
-    ]
-    return values[0] if values else None
+    return line_amount_value(blocks, page, line_number)
 
 
 def _line_numeric_value(

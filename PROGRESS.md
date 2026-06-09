@@ -144,6 +144,11 @@ Income engine, Phase 12 (Schedule C extraction defects) is complete:
 - Line 27a "Other expenses" is no longer added back wholesale; only Part V amortization/casualty detail lines feed that add-back.
 - Cross-parser Schedule C consistency and 2023/2024 subtotal tie-out tests guard against depreciation misses and 27a over-add regressions.
 
+Income engine, Phase 13 (column-aware Schedule C extraction) is complete:
+- The shared Form 1040 locator is restored to its baseline behavior and is no longer widened for Schedule C fields.
+- Schedule C money fields now use a contained column-aware reader that anchors on left-margin line numbers and derives the amount column from line 31.
+- Adversarial digital and OCR-style fixtures guard against line 23 taxes, Form 8829 references, gross receipts near line 6, and 27a over-add regressions.
+
 Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - `app/income/nontaxable.py` is a pure engine: one source in (`NonTaxableSource` / `SocialSecuritySource` in `app/schemas/nontaxable_inputs.py`), one qualifying monthly figure out, plus a small taxable/eligible breakdown where the method splits the amount — mirroring the rental engine's shape.
 - Three non-taxable methods (spec 3): `gross_100` (`gross/12`), `total_adjusted` (taxable not grossed up + non-taxable slice grossed up 25%, each term rounded then summed), `current_monthly` (the return's taxable ratio applied to the current monthly amount, then the eligible slice grossed up). Two Social Security methods: `gross_100` and `adjusted` (`(gross + gross*0.15*0.25)/12`). Gross-up rate is a parameter defaulting to 0.25 (spec 1.3).
