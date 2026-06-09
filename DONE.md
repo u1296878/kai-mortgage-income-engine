@@ -30,3 +30,4 @@
 - Income engine, Step 4b: self-employment entity calc core - partnership, S-corp, and corporation pure engines added with K-1, W-2, business-return ownership share, corporation dividend subtraction, shared averaging, and validation tests.
 - Income engine, Step 4c: self-employment wired and persisted - registry preview endpoint, case-scoped save/list/get/delete, case-summary fold-in, config-driven worksheet UI, and case-detail panel added.
 - Phase 10: Schedule E rental extraction to validated rental engine - tax returns now produce per-property editable rental calculation drafts with add-backs, months in service, source document keys, and broker include/exclude review; old line-26 net-only rental document path retired.
+- Phase 11: Composite tax returns - tax-return results no longer add AGI to case totals; Schedule C pages now create self-employment drafts with add-backs, source dedupe, and broker include/exclude review.

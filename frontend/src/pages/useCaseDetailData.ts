@@ -9,6 +9,7 @@ import {
   deleteRentalCalculation,
   deleteSelfEmploymentCalculation,
   updateRentalCalculation,
+  updateSelfEmploymentCalculation,
 } from "../api/income";
 import { listCaseIncomeStreams } from "../api/incomeStreams";
 import { getDocumentJob, retryJob, waitForJobCompletion } from "../api/jobs";
@@ -117,14 +118,8 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     mutationFn: (status: CaseStatus) => updateCaseStatus(caseId!, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["case", caseId] }),
   });
-  const deleteCaseMutation = useMutation({
-    mutationFn: () => deleteCase(caseId!),
-    onSuccess: onCaseDeleted,
-  });
-  const removeDocumentMutation = useMutation({
-    mutationFn: unlinkDocumentFromCase,
-    onSuccess: refreshCaseData,
-  });
+  const deleteCaseMutation = useMutation({ mutationFn: () => deleteCase(caseId!), onSuccess: onCaseDeleted });
+  const removeDocumentMutation = useMutation({ mutationFn: unlinkDocumentFromCase, onSuccess: refreshCaseData });
   const deleteDocumentMutation = useMutation({
     mutationFn: deleteDocument,
     onSuccess: refreshCaseData,
@@ -132,11 +127,11 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
   });
   const retryMutation = useMutation({ mutationFn: retryJob, onSuccess: refreshCaseData });
   const deleteCalculationMutation = useMutation({
-    mutationFn: (calculationId: string) => deleteEmploymentCalculation(caseId!, calculationId),
+    mutationFn: (id: string) => deleteEmploymentCalculation(caseId!, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
   const deleteRentalCalculationMutation = useMutation({
-    mutationFn: (calculationId: string) => deleteRentalCalculation(caseId!, calculationId),
+    mutationFn: (id: string) => deleteRentalCalculation(caseId!, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
   const updateRentalCalculationMutation = useMutation({
@@ -145,11 +140,16 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
   const deleteNontaxableCalculationMutation = useMutation({
-    mutationFn: (calculationId: string) => deleteNontaxableCalculation(caseId!, calculationId),
+    mutationFn: (id: string) => deleteNontaxableCalculation(caseId!, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
   const deleteSelfEmploymentCalculationMutation = useMutation({
-    mutationFn: (calculationId: string) => deleteSelfEmploymentCalculation(caseId!, calculationId),
+    mutationFn: (id: string) => deleteSelfEmploymentCalculation(caseId!, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
+  });
+  const updateSelfEmploymentCalculationMutation = useMutation({
+    mutationFn: ({ id, included }: { id: string; included: boolean }) =>
+      updateSelfEmploymentCalculation(caseId!, id, { included }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["caseSummary", caseId] }),
   });
 
@@ -162,6 +162,7 @@ export function useCaseDetailData(caseId: string | undefined, onCaseDeleted: () 
     updateRentalCalculationMutation,
     deleteNontaxableCalculationMutation,
     deleteSelfEmploymentCalculationMutation,
+    updateSelfEmploymentCalculationMutation,
     deleteCaseMutation,
     deleteDocumentMutation,
     documents,

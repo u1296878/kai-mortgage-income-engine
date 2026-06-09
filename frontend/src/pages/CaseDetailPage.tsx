@@ -50,6 +50,7 @@ export function CaseDetailPage(): JSX.Element {
   const rentalUpdatingId = data.updateRentalCalculationMutation.isPending ? (data.updateRentalCalculationMutation.variables?.id ?? null) : null;
   const nontaxableDeletingId = data.deleteNontaxableCalculationMutation.isPending ? (data.deleteNontaxableCalculationMutation.variables ?? null) : null;
   const selfEmploymentDeletingId = data.deleteSelfEmploymentCalculationMutation.isPending ? (data.deleteSelfEmploymentCalculationMutation.variables ?? null) : null;
+  const selfEmploymentUpdatingId = data.updateSelfEmploymentCalculationMutation.isPending ? (data.updateSelfEmploymentCalculationMutation.variables?.id ?? null) : null;
 
   return (
     <div className="space-y-4">
@@ -140,6 +141,10 @@ export function CaseDetailPage(): JSX.Element {
             onDelete={(calculationId) => {
               data.deleteSelfEmploymentCalculationMutation.mutate(calculationId);
             }}
+            onIncludedChange={(calculationId, included) => {
+              data.updateSelfEmploymentCalculationMutation.mutate({ id: calculationId, included });
+            }}
+            updatingId={selfEmploymentUpdatingId}
           />
         </StateCard>
       ) : null}

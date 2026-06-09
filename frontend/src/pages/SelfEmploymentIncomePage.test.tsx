@@ -32,6 +32,9 @@ describe("SelfEmploymentIncomePage", () => {
       kind: "schedule_c",
       qualifying_monthly: 4166.67,
       annual_income: 50000.04,
+      included: true,
+      source_document_id: null,
+      source_business_key: null,
       breakdown: {},
       created_at: "2026-05-31T00:00:00Z",
     });

@@ -29,6 +29,7 @@ export type {
   SelfEmploymentCalculationCreate,
   SelfEmploymentCalculationRequest,
   SelfEmploymentCalculationResponse,
+  SelfEmploymentCalculationUpdate,
   SelfEmploymentKind,
   SelfEmploymentResultResponse,
 } from "./selfEmployment";

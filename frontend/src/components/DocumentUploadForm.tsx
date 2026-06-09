@@ -3,6 +3,14 @@ import type { FormEvent } from "react";
 import type { DocumentType } from "../types/api";
 
 const DOCUMENT_TYPES: DocumentType[] = ["w2", "pay_stub", "tax_return", "bank_statement", "other"];
+const DOCUMENT_TYPE_HELP: Record<DocumentType, string> = {
+  w2: "Extracts annual W-2 wage fields with source references.",
+  pay_stub: "Extracts current-period and YTD pay fields for income review.",
+  tax_return:
+    "Extracts rental (Schedule E) and self-employment (Schedule C) income as reviewable drafts. AGI/total income are shown for reference only and are not added to the total.",
+  bank_statement: "Extracts deposits and monthly deposit averages.",
+  other: "Standalone rental-style extraction. For Schedule E rental review, prefer tax_return.",
+};
 
 interface DocumentUploadFormProps {
   onUpload: (file: File, docType: DocumentType) => Promise<unknown>;
@@ -65,7 +73,7 @@ export function DocumentUploadForm({
       >
         {isSubmitting ? "Uploading..." : "Upload Document"}
       </button>
-      <p className="text-xs text-slate-500">`other` currently maps to rental-style extraction.</p>
+      <p className="text-xs text-slate-500">{DOCUMENT_TYPE_HELP[docType]}</p>
     </form>
   );
 }

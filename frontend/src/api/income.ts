@@ -20,6 +20,7 @@ import type {
   SelfEmploymentCalculationCreate,
   SelfEmploymentCalculationRequest,
   SelfEmploymentCalculationResponse,
+  SelfEmploymentCalculationUpdate,
   SelfEmploymentResultResponse,
 } from "../types/selfEmployment";
 
@@ -176,4 +177,15 @@ export function deleteSelfEmploymentCalculation(
   return apiRequest<void>(`/cases/${caseId}/self-employment-calculations/${id}`, {
     method: "DELETE",
   });
+}
+
+export function updateSelfEmploymentCalculation(
+  caseId: string,
+  id: string,
+  payload: SelfEmploymentCalculationUpdate,
+): Promise<SelfEmploymentCalculationResponse> {
+  return apiRequest<SelfEmploymentCalculationResponse>(
+    `/cases/${caseId}/self-employment-calculations/${id}`,
+    { method: "PATCH", body: JSON.stringify(payload) },
+  );
 }

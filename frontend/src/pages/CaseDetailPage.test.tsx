@@ -24,6 +24,8 @@ vi.mock("../api/income", () => ({
   deleteNontaxableCalculation: vi.fn(),
   deleteRentalCalculation: vi.fn(),
   deleteSelfEmploymentCalculation: vi.fn(),
+  updateRentalCalculation: vi.fn(),
+  updateSelfEmploymentCalculation: vi.fn(),
 }));
 vi.mock("../api/incomeStreams", () => ({ listCaseIncomeStreams: vi.fn().mockResolvedValue([]) }));
 vi.mock("../api/borrowers", () => ({ listCaseBorrowers: vi.fn().mockResolvedValue([]) }));
@@ -54,9 +56,9 @@ vi.mock("../api/results", () => ({
             bounding_box: { x1: 10, y1: 20, x2: 30, y2: 40 },
           },
         ],
-        annual_income: 87638,
-        confidence: "high",
-        notes: null,
+        annual_income: null,
+        confidence: "medium",
+        notes: "Income derived from per-schedule drafts; AGI shown for reference only.",
         created_at: "2026-05-31T00:00:00Z",
       },
     ],

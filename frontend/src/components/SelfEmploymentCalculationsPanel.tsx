@@ -5,12 +5,16 @@ interface Props {
   calculations: SelfEmploymentCalculationResponse[];
   onDelete: (id: string) => void;
   deletingId: string | null;
+  onIncludedChange: (id: string, included: boolean) => void;
+  updatingId: string | null;
 }
 
 export function SelfEmploymentCalculationsPanel({
   calculations,
   onDelete,
   deletingId,
+  onIncludedChange,
+  updatingId,
 }: Props): JSX.Element {
   return (
     <div className="space-y-3 text-sm">
@@ -27,6 +31,15 @@ export function SelfEmploymentCalculationsPanel({
               {calculation.kind} {toCurrency(calculation.qualifying_monthly)}/mo |{" "}
               {toCurrency(calculation.annual_income)}/yr
             </p>
+            <label className="mt-1 flex items-center gap-2 text-slate-700">
+              <input
+                checked={calculation.included}
+                disabled={updatingId === calculation.id}
+                onChange={(event) => onIncludedChange(calculation.id, event.target.checked)}
+                type="checkbox"
+              />
+              Included
+            </label>
           </div>
           <button
             className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100"

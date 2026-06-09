@@ -17,6 +17,11 @@ export interface SelfEmploymentCalculationCreate
   extends SelfEmploymentCalculationRequest {
   borrower_id?: string | null;
   label?: string | null;
+  included?: boolean;
+}
+
+export interface SelfEmploymentCalculationUpdate {
+  included: boolean;
 }
 
 export interface SelfEmploymentResultResponse {
@@ -32,5 +37,8 @@ export interface SelfEmploymentCalculationResponse
   case_id: string;
   borrower_id: string | null;
   label: string | null;
+  included: boolean;
+  source_document_id: string | null;
+  source_business_key: string | null;
   created_at: string;
 }
