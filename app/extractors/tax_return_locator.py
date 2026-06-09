@@ -1,18 +1,21 @@
 import re
 
-from app.extractors.block_utils import line_for_block, merge_blocks
-from app.extractors.extracted_field_factory import parse_float
+from app.extractors.block_utils import merge_blocks
+from app.extractors.tax_return_block_index import TaxReturnBlockIndex, as_tax_return_index
 from app.extractors.tax_return_patterns import FILING_STATUSES, LINE_FIELDS
+from app.extractors.tax_return_text import is_money, normalize, normalized_line_text
 
 
-def line_anchors(blocks: list[dict], line_number: str, tokens: tuple[str, ...], pages: set[int] | None = None) -> list[dict]:
+def line_anchors(
+    blocks: list[dict] | TaxReturnBlockIndex,
+    line_number: str,
+    tokens: tuple[str, ...],
+    pages: set[int] | None = None,
+) -> list[dict]:
     anchors: list[dict] = []
     seen = set()
-    for line in unique_lines(blocks):
-        if pages and line[0]["page"] not in pages:
-            continue
-        label_words = [block for block in line if not is_money(block["text"])]
-        if label_words and line_matches(normalized_line_text(label_words), line_number, tokens):
+    for _line, label_words, text in as_tax_return_index(blocks).label_lines(pages):
+        if line_matches(text, line_number, tokens):
             key = (label_words[0]["page"], round(label_words[0]["y1"], 1), line_number)
             if key not in seen:
                 anchors.append(merge_blocks(label_words))
@@ -20,8 +23,13 @@ def line_anchors(blocks: list[dict], line_number: str, tokens: tuple[str, ...], 
     return anchors
 
 
-def nearest_money_value(label: dict, blocks: list[dict], line_number: str | None = None) -> dict | None:
-    candidates = [block for block in blocks if is_money(block["text"]) and nearby_value(label, block) and value_candidate(label, block)]
+def nearest_money_value(label: dict, blocks: list[dict] | TaxReturnBlockIndex, line_number: str | None = None) -> dict | None:
+    index = as_tax_return_index(blocks)
+    candidates = [
+        block
+        for block in index.page_blocks(label["page"])
+        if is_money(block["text"]) and nearby_value(label, block) and value_candidate(label, block)
+    ]
     if not candidates:
         return None
     same_line = [block for block in candidates if abs(block["y1"] - label["y1"]) <= 5]
@@ -32,10 +40,11 @@ def nearest_money_value(label: dict, blocks: list[dict], line_number: str | None
     return None
 
 
-def continuation_line_value(label: dict, blocks: list[dict], line_number: str) -> dict | None:
+def continuation_line_value(label: dict, blocks: list[dict] | TaxReturnBlockIndex, line_number: str) -> dict | None:
+    index = as_tax_return_index(blocks)
     lines = [
         line
-        for line in unique_lines(blocks)
+        for line in index.unique_lines({label["page"]})
         if line[0]["page"] == label["page"] and 0 < line[0]["y1"] - label["y1"] <= 90
     ]
     for line in sorted(lines, key=lambda items: items[0]["y1"]):
@@ -48,17 +57,25 @@ def continuation_line_value(label: dict, blocks: list[dict], line_number: str) -
     return None
 
 
-def find_tax_year(blocks: list[dict], federal_pages: set[int]) -> dict | None:
+def find_tax_year(blocks: list[dict] | TaxReturnBlockIndex, federal_pages: set[int]) -> dict | None:
+    index = as_tax_return_index(blocks)
     for line in candidate_lines(blocks, federal_pages):
         text = normalized_line_text(line)
         if "form 1040" in text or "individual income tax return" in text:
             year = next((block for block in line if re.fullmatch(r"20\d{2}", block["text"])), None)
             if year:
                 return year
-    return next((block for block in blocks if (not federal_pages or block["page"] in federal_pages) and re.fullmatch(r"20\d{2}", block["text"])), None)
+    return next(
+        (
+            block
+            for block in index.blocks
+            if (not federal_pages or block["page"] in federal_pages) and re.fullmatch(r"20\d{2}", block["text"])
+        ),
+        None,
+    )
 
 
-def find_filing_status(blocks: list[dict], federal_pages: set[int]) -> dict | None:
+def find_filing_status(blocks: list[dict] | TaxReturnBlockIndex, federal_pages: set[int]) -> dict | None:
     for line in candidate_lines(blocks, federal_pages):
         text = normalized_line_text(line)
         for status in FILING_STATUSES:
@@ -67,7 +84,7 @@ def find_filing_status(blocks: list[dict], federal_pages: set[int]) -> dict | No
     return None
 
 
-def federal_form_pages(blocks: list[dict]) -> set[int]:
+def federal_form_pages(blocks: list[dict] | TaxReturnBlockIndex) -> set[int]:
     lines_by_page = grouped_lines(blocks)
     if not lines_by_page:
         return set()
@@ -75,31 +92,20 @@ def federal_form_pages(blocks: list[dict]) -> set[int]:
     return {best_page} if best_score > 0 else set()
 
 
-def schedule_c_pages(blocks: list[dict]) -> set[int]:
+def schedule_c_pages(blocks: list[dict] | TaxReturnBlockIndex) -> set[int]:
     return {page for page, lines in grouped_lines(blocks).items() if schedule_c_page_score(lines) > 0}
 
 
-def grouped_lines(blocks: list[dict]) -> dict[int, list[list[dict]]]:
-    grouped: dict[int, list[list[dict]]] = {}
-    for line in unique_lines(blocks):
-        grouped.setdefault(line[0]["page"], []).append(line)
-    return grouped
+def grouped_lines(blocks: list[dict] | TaxReturnBlockIndex) -> dict[int, list[list[dict]]]:
+    return as_tax_return_index(blocks).grouped_lines()
 
 
-def unique_lines(blocks: list[dict]) -> list[list[dict]]:
-    lines = []
-    seen = set()
-    for block in blocks:
-        key = (block["page"], round(block["y1"]))
-        if key not in seen:
-            seen.add(key)
-            lines.append(sorted(line_for_block(blocks, block), key=lambda item: item["x1"]))
-    return lines
+def unique_lines(blocks: list[dict] | TaxReturnBlockIndex, pages: set[int] | None = None) -> list[list[dict]]:
+    return as_tax_return_index(blocks).unique_lines(pages)
 
 
-def candidate_lines(blocks: list[dict], pages: set[int]) -> list[list[dict]]:
-    lines = unique_lines(blocks)
-    return [line for line in lines if line[0]["page"] in pages] if pages else lines
+def candidate_lines(blocks: list[dict] | TaxReturnBlockIndex, pages: set[int]) -> list[list[dict]]:
+    return unique_lines(blocks, pages) if pages else unique_lines(blocks)
 
 
 def federal_page_score(lines: list[list[dict]]) -> int:
@@ -134,28 +140,10 @@ def line_matches(text: str, line_number: str, tokens: tuple[str, ...]) -> bool:
     return line_number in words and all(token in words for token in tokens)
 
 
-def normalized_line_text(blocks: list[dict]) -> str:
-    return normalize(" ".join(block["text"] for block in blocks))
-
-
-def normalize(text: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", text.lower())).strip()
-
-
 def status_block(line: list[dict], status: str) -> dict:
     words = set(status.split())
     matches = [block for block in line if normalize(block["text"]) in words]
     return merge_blocks(matches) if matches else line[-1]
-
-
-def is_money(text: str) -> bool:
-    value = parse_float(text)
-    if value is None:
-        return False
-    clean = text.strip().replace("$", "").replace(",", "")
-    if re.fullmatch(r"\(?-?\d+\.\d{2}\)?", clean):
-        return True
-    return any(marker in text.strip() for marker in ("$", ",", "(", ")", "-")) or abs(value) >= 100
 
 
 def value_candidate(label: dict, block: dict) -> bool:

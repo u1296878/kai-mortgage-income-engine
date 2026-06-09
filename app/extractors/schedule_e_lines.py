@@ -1,4 +1,5 @@
 from app.extractors.extracted_field_factory import parse_float
+from app.extractors.tax_return_block_index import TaxReturnBlockIndex
 from app.extractors.tax_return_locator import (
     line_anchors,
     nearest_money_value,
@@ -7,7 +8,7 @@ from app.extractors.tax_return_locator import (
 )
 
 
-def find_line(blocks: list[dict], line_number: str, tokens: tuple[str, ...]) -> list[dict] | None:
+def find_line(blocks: list[dict] | TaxReturnBlockIndex, line_number: str, tokens: tuple[str, ...]) -> list[dict] | None:
     return next((line for line in unique_lines(blocks) if line_matches(line, line_number, tokens)), None)
 
 
@@ -16,7 +17,7 @@ def line_matches(line: list[dict], line_number: str, tokens: tuple[str, ...]) ->
     return line_number in words and all(token in words for token in tokens)
 
 
-def line_y(blocks: list[dict], line_number: str, tokens: tuple[str, ...]) -> float | None:
+def line_y(blocks: list[dict] | TaxReturnBlockIndex, line_number: str, tokens: tuple[str, ...]) -> float | None:
     line = find_line(blocks, line_number, tokens)
     return line[0]["y1"] if line else None
 
@@ -35,14 +36,14 @@ def nearest_column(block: dict, columns: dict[str, float]) -> str | None:
     return min(columns, key=lambda column: abs(block["x1"] - columns[column])) if columns else None
 
 
-def line_value(blocks: list[dict], line_number: str, tokens: tuple[str, ...]) -> dict | None:
+def line_value(blocks: list[dict] | TaxReturnBlockIndex, line_number: str, tokens: tuple[str, ...]) -> dict | None:
     line = find_line(blocks, line_number, tokens)
     values = amount_blocks(line, 320) if line else []
     return values[-1] if values else None
 
 
 def continuation_value(
-    blocks: list[dict],
+    blocks: list[dict] | TaxReturnBlockIndex,
     line_number: str,
     tokens: tuple[str, ...],
     pages: set[int],

@@ -3,6 +3,7 @@ from uuid import UUID
 from app.exceptions import ExtractionFailed
 from app.extractors.block_utils import merge_blocks
 from app.extractors.extracted_field_factory import make_field, make_numeric_field, make_text_field, parse_float
+from app.extractors.tax_return_block_index import TaxReturnBlockIndex, as_tax_return_index
 from app.extractors.schedule_e_lines import (
     amount_blocks,
     continuation_value,
@@ -32,11 +33,11 @@ TOTAL_LINES = {
     "depreciation_depletion": ("23d", ("line", "18", "properties")),
     "total_expenses": ("23e", ("line", "20", "properties")),
 }
-
-def extract_schedule_e_properties(blocks: list[dict]) -> list[ScheduleEProperty]:
+def extract_schedule_e_properties(blocks: list[dict] | TaxReturnBlockIndex) -> list[ScheduleEProperty]:
+    block_index = as_tax_return_index(blocks)
     properties: list[ScheduleEProperty] = []
-    for page in sorted(schedule_e_pages(blocks)):
-        page_blocks = [block for block in blocks if block["page"] == page]
+    for page in sorted(schedule_e_pages(block_index)):
+        page_blocks = block_index.page_blocks(page)
         columns = _column_positions(page_blocks)
         if not columns:
             continue
@@ -48,7 +49,7 @@ def extract_schedule_e_properties(blocks: list[dict]) -> list[ScheduleEProperty]
         properties.extend(prop for prop in page_properties.values() if _has_property_income(prop))
     return properties
 
-def extract_schedule_e_fields(blocks: list[dict], document_id: UUID) -> list[ExtractedField]:
+def extract_schedule_e_fields(blocks: list[dict] | TaxReturnBlockIndex, document_id: UUID) -> list[ExtractedField]:
     properties = extract_schedule_e_properties(blocks)
     if not properties:
         return []
@@ -68,7 +69,7 @@ def extract_schedule_e_fields(blocks: list[dict], document_id: UUID) -> list[Ext
         fields.append(make_numeric_field("schedule_e_net_rental_income", net, document_id))
     return fields
 
-def schedule_e_pages(blocks: list[dict]) -> set[int]:
+def schedule_e_pages(blocks: list[dict] | TaxReturnBlockIndex) -> set[int]:
     return {page for page, lines in grouped_lines(blocks).items() if _page_score(lines) > 0}
 
 def _page_score(lines: list[list[dict]]) -> int:
@@ -85,7 +86,6 @@ def _column_positions(blocks: list[dict]) -> dict[str, float]:
         if columns:
             return columns
     return {}
-
 
 def _set_addresses(blocks: list[dict], properties: dict[str, ScheduleEProperty]) -> None:
     header_y = line_y(blocks, "1a", ("physical", "address", "property"))
@@ -156,11 +156,12 @@ def _property_fields(prop: ScheduleEProperty, document_id: UUID) -> list[Extract
     return fields
 
 
-def _first_header(blocks: list[dict]) -> dict:
+def _first_header(blocks: list[dict] | TaxReturnBlockIndex) -> dict:
+    block_index = as_tax_return_index(blocks)
     for line in unique_lines(blocks):
         if "schedule e" in normalized_line_text(line):
             return merge_blocks(line)
-    return blocks[0]
+    return block_index.blocks[0]
 
 
 def _total_block(properties: list[ScheduleEProperty], attr: str, name: str) -> dict | None:

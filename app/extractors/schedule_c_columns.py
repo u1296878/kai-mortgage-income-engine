@@ -1,13 +1,14 @@
 from math import inf
 
+from app.extractors.tax_return_block_index import TaxReturnBlockIndex, as_tax_return_index
 from app.extractors.tax_return_text import is_money, normalize
 
 IRS_FORM_REFERENCES = {"8829", "4562", "6198", "8995", "1040"}
 ROW_TOLERANCE = 10
 
 
-def line_amount_value(blocks: list[dict], page: int, line_number: str) -> dict | None:
-    page_blocks = [block for block in blocks if block["page"] == page]
+def line_amount_value(blocks: list[dict] | TaxReturnBlockIndex, page: int, line_number: str) -> dict | None:
+    page_blocks = as_tax_return_index(blocks).page_blocks(page)
     amount_band = _amount_column_band(page_blocks)
     if amount_band is None:
         return None

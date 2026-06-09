@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-09
 
-Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly.
+Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly. Responsive document processing is in progress; the tax-return extractor hot path now reuses indexed per-page line grouping.
 No document types currently use the extraction stub.
 
 - [x] Step 1: Project scaffold
@@ -94,6 +94,20 @@ Deployment hardening pass is complete:
 - Startup recovery now auto-fails jobs left in `processing` during a restart instead of re-queueing them into a crash loop; users can retry manually from the existing failed-job retry path.
 - The job worker runs in-process again while storage is local, so uploads and processing share the same container filesystem. Split the worker only after storage moves to S3/R2.
 - Railway should run a single service for now with `OMP_THREAD_LIMIT=1` and `MALLOC_ARENA_MAX=2`, plus more memory headroom for OCR.
+
+## Responsive document processing in progress
+
+Step 1 is complete:
+- Added `TaxReturnBlockIndex` to build page blocks, row buckets, unique lines, grouped lines, and normalized label-line entries once per tax return.
+- Form 1040, Schedule C, and Schedule E extraction now share that index instead of rebuilding line groups during repeated anchor and nearest-value lookups.
+- Existing extracted field shapes and source references are unchanged; focused extractor tests and the full backend suite pass.
+
+Remaining responsive-processing work:
+- Bound and parallelize OCR per page with named timeout handling.
+- Add persisted job progress fields and status-route percent reporting.
+- Persist partial page work so worker restarts resume instead of starting over.
+- Interleave page work across queued jobs so large scans do not starve small documents.
+- Poll/render frontend progress while jobs run.
 
 ## Income engine in progress
 

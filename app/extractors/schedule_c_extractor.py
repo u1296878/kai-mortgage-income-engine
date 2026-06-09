@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.extractors.schedule_c_columns import line_amount_value
+from app.extractors.tax_return_block_index import TaxReturnBlockIndex, as_tax_return_index
 from app.extractors.extracted_field_factory import make_numeric_field, parse_float
 from app.extractors.tax_return_locator import (
     grouped_lines,
@@ -28,18 +29,19 @@ NUMERIC_LINES = {
 
 
 def extract_schedule_c_fields(
-    blocks: list[dict],
+    blocks: list[dict] | TaxReturnBlockIndex,
     document_id: UUID,
     pages: set[int],
 ) -> list[ExtractedField]:
+    block_index = as_tax_return_index(blocks)
     fields: list[ExtractedField] = []
     for index, page in enumerate(sorted(pages), start=1):
-        fields.extend(_business_fields(blocks, document_id, page, index))
+        fields.extend(_business_fields(block_index, document_id, page, index))
     return fields
 
 
 def _business_fields(
-    blocks: list[dict],
+    blocks: TaxReturnBlockIndex,
     document_id: UUID,
     page: int,
     index: int,
@@ -60,7 +62,7 @@ def _business_fields(
 
 
 def _line_money_value(
-    blocks: list[dict],
+    blocks: TaxReturnBlockIndex,
     page: int,
     line_number: str,
     _tokens: tuple[str, ...],
@@ -69,7 +71,7 @@ def _line_money_value(
 
 
 def _line_numeric_value(
-    blocks: list[dict],
+    blocks: TaxReturnBlockIndex,
     page: int,
     line_number: str,
     tokens: tuple[str, ...],
@@ -82,10 +84,10 @@ def _line_numeric_value(
     return values[0] if values else None
 
 
-def _nearest_numeric_value(label: dict, blocks: list[dict]) -> dict | None:
+def _nearest_numeric_value(label: dict, blocks: TaxReturnBlockIndex) -> dict | None:
     candidates = [
         block
-        for block in blocks
+        for block in blocks.page_blocks(label["page"])
         if parse_float(block["text"]) is not None
         and nearby_value(label, block)
         and value_candidate(label, block)
@@ -96,7 +98,7 @@ def _nearest_numeric_value(label: dict, blocks: list[dict]) -> dict | None:
     return max(same_line or candidates, key=lambda block: block["x1"])
 
 
-def _part_v_amortization_casualty(blocks: list[dict], page: int) -> dict | None:
+def _part_v_amortization_casualty(blocks: TaxReturnBlockIndex, page: int) -> dict | None:
     values = []
     for line in _part_v_detail_lines(blocks, page):
         label_text = normalized_line_text([block for block in line if not is_money(block["text"])])
@@ -107,7 +109,7 @@ def _part_v_amortization_casualty(blocks: list[dict], page: int) -> dict | None:
     return _sum_value_blocks(values) if values else None
 
 
-def _part_v_detail_lines(blocks: list[dict], page: int) -> list[list[dict]]:
+def _part_v_detail_lines(blocks: TaxReturnBlockIndex, page: int) -> list[list[dict]]:
     lines = sorted(grouped_lines(blocks).get(page, []), key=lambda line: line[0]["y1"])
     for index, line in enumerate(lines):
         text = normalized_line_text(line)

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.exceptions import ExtractionFailed
+from app.extractors.tax_return_block_index import TaxReturnBlockIndex
 from app.extractors.extracted_field_factory import make_field, make_numeric_field
 from app.extractors.tax_return_locator import (
     federal_form_pages,
@@ -17,23 +18,24 @@ from app.schemas.extraction import ExtractedField
 
 
 def extract_tax_return_fields(blocks: list[dict], document_id: UUID) -> list[ExtractedField]:
-    federal_pages = federal_form_pages(blocks)
-    c_pages = schedule_c_pages(blocks)
+    index = TaxReturnBlockIndex(blocks)
+    federal_pages = federal_form_pages(index)
+    c_pages = schedule_c_pages(index)
     fields: list[ExtractedField] = []
 
     for field_name, (line_number, tokens) in LINE_FIELDS.items():
-        value = _extract_line_value(blocks, line_number, tokens, federal_pages)
+        value = _extract_line_value(index, line_number, tokens, federal_pages)
         if value:
             fields.append(make_numeric_field(field_name, value, document_id))
 
-    schedule_c = _extract_line_value(blocks, "31", ("net", "profit"), c_pages) if c_pages else None
-    tax_year = find_tax_year(blocks, federal_pages)
-    filing_status = find_filing_status(blocks, federal_pages)
+    schedule_c = _extract_line_value(index, "31", ("net", "profit"), c_pages) if c_pages else None
+    tax_year = find_tax_year(index, federal_pages)
+    filing_status = find_filing_status(index, federal_pages)
 
     if schedule_c:
         fields.append(make_numeric_field("schedule_c_net", schedule_c, document_id))
-    fields.extend(extract_schedule_c_fields(blocks, document_id, c_pages))
-    fields.extend(extract_schedule_e_fields(blocks, document_id))
+    fields.extend(extract_schedule_c_fields(index, document_id, c_pages))
+    fields.extend(extract_schedule_e_fields(index, document_id))
     if tax_year:
         fields.append(make_numeric_field("tax_year", tax_year, document_id))
     if filing_status:
@@ -44,7 +46,7 @@ def extract_tax_return_fields(blocks: list[dict], document_id: UUID) -> list[Ext
 
 
 def _extract_line_value(
-    blocks: list[dict],
+    blocks: TaxReturnBlockIndex,
     line_number: str,
     tokens: tuple[str, ...],
     pages: set[int] | None = None,
