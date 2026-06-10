@@ -4,13 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db
 from app.exceptions import (
     CaseNotFound,
     InvalidSelfEmploymentInput,
     SelfEmploymentCalculationNotFound,
 )
-from app.models.user import User
+from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.self_employment_results import (
     SelfEmploymentCalculationCreate,
     SelfEmploymentCalculationResponse,
@@ -29,11 +29,10 @@ def create_self_employment_calculation(
     case_id: UUID,
     payload: SelfEmploymentCalculationCreate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> SelfEmploymentCalculationResponse:
     try:
         return self_employment_calculation_service.create_calculation(
-            db, case_id, payload, current_user
+            db, case_id, payload, LOCAL_USER_ID
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -48,11 +47,10 @@ def create_self_employment_calculation(
 def list_self_employment_calculations(
     case_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[SelfEmploymentCalculationResponse]:
     try:
         return self_employment_calculation_service.list_calculations_by_case(
-            db, case_id, current_user
+            db, case_id, LOCAL_USER_ID
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -66,11 +64,10 @@ def get_self_employment_calculation(
     case_id: UUID,
     calc_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> SelfEmploymentCalculationResponse:
     try:
         return self_employment_calculation_service.get_calculation(
-            db, case_id, calc_id, current_user
+            db, case_id, calc_id, LOCAL_USER_ID
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -85,11 +82,10 @@ def update_self_employment_calculation(
     calc_id: UUID,
     payload: SelfEmploymentCalculationUpdate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> SelfEmploymentCalculationResponse:
     try:
         return self_employment_calculation_service.update_calculation(
-            db, case_id, calc_id, payload, current_user
+            db, case_id, calc_id, payload, LOCAL_USER_ID
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -103,11 +99,10 @@ def delete_self_employment_calculation(
     case_id: UUID,
     calc_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
     try:
         self_employment_calculation_service.delete_calculation(
-            db, case_id, calc_id, current_user
+            db, case_id, calc_id, LOCAL_USER_ID
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

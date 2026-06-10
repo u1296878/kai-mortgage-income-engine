@@ -1,21 +1,22 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.borrower_role import BorrowerRole
+RoleValue = Literal["primary", "co_borrower"]
 
 
 class BorrowerCreate(BaseModel):
     first_name: str
     last_name: str
-    role: BorrowerRole
+    role: RoleValue
 
 
 class BorrowerUpdate(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
-    role: BorrowerRole | None = None
+    role: RoleValue | None = None
 
 
 class BorrowerResponse(BaseModel):
@@ -26,6 +27,6 @@ class BorrowerResponse(BaseModel):
     broker_id: UUID
     first_name: str
     last_name: str
-    role: BorrowerRole
+    role: RoleValue
     created_at: datetime
     updated_at: datetime

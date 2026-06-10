@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.auth_helpers import auth_user
+from tests.local_user_helpers import local_user
 
 
 @pytest.fixture
@@ -66,14 +66,8 @@ def _partnership_body():
     }
 
 
-def test_self_employment_calculate_requires_authentication(client):
-    response = client.post("/income/self-employment/calculate", json=_schedule_c_body())
-
-    assert response.status_code == 401
-
-
 def test_self_employment_calculate_returns_personal_schedule_breakdown(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
 
     response = client.post(
         "/income/self-employment/calculate",
@@ -90,7 +84,7 @@ def test_self_employment_calculate_returns_personal_schedule_breakdown(client):
 
 
 def test_self_employment_calculate_returns_entity_breakdown(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
 
     response = client.post(
         "/income/self-employment/calculate",
@@ -106,7 +100,7 @@ def test_self_employment_calculate_returns_entity_breakdown(client):
 
 
 def test_self_employment_calculate_rejects_unknown_kind(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
 
     response = client.post(
         "/income/self-employment/calculate",
@@ -118,7 +112,7 @@ def test_self_employment_calculate_rejects_unknown_kind(client):
 
 
 def test_self_employment_calculate_rejects_missing_required_field(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     body = _schedule_c_body()
     del body["payload"]["years"][0]["net_profit"]
 

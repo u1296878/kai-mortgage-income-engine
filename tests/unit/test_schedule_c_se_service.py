@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from app.models.case import Case
-from app.models.user import User
+from tests.local_user_helpers import make_user
 from app.schemas.extraction import BoundingBox, ExtractedField
 from app.schemas.self_employment_inputs import ScheduleCInput, ScheduleCYear
 from app.schemas.self_employment_results import SelfEmploymentCalculationRequest
@@ -60,22 +60,17 @@ def test_case_summary_counts_only_included_self_employment_drafts(test_db):
     case_id = uuid4()
     broker_id = uuid4()
     document_id = uuid4()
-    manager = User(
-        id=str(uuid4()),
-        email="manager@example.com",
-        hashed_password="x",
-        role="manager",
-    )
+    local_user = make_user(broker_id)
     test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Composite"))
     test_db.commit()
     drafts = schedule_c_se_service.create_drafts_from_fields(
         test_db, case_id, broker_id, document_id, _schedule_c_fields(document_id)
     )
 
-    included_summary = result_service.get_case_summary(test_db, case_id, manager)
+    included_summary = result_service.get_case_summary(test_db, case_id, local_user)
     drafts[0].included = False
     test_db.commit()
-    excluded_summary = result_service.get_case_summary(test_db, case_id, manager)
+    excluded_summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert included_summary.total_annual_income == drafts[0].annual_income
     assert excluded_summary.total_annual_income == 0.0

@@ -5,7 +5,7 @@ import pytest
 from app.exceptions import CaseNotFound
 from app.models.case import Case
 from app.models.document import Document
-from app.models.user import User
+from tests.local_user_helpers import make_user
 from app.services import case_service
 
 
@@ -27,25 +27,13 @@ def make_document(case_id, broker_id=None):
         broker_id=str(broker_id) if broker_id else None,
     )
 
-
-def make_user(user_id=None, role="broker"):
-    return User(
-        id=str(user_id or uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
-
-
 def test_create_case_saves_record(test_db):
     broker_id = uuid4()
-    manager = make_user(role="manager")
 
     case = case_service.create_case(
         test_db,
         "Johnson Refinance 2024",
         broker_id,
-        manager,
     )
 
     assert case.title == "Johnson Refinance 2024"
@@ -54,13 +42,11 @@ def test_create_case_saves_record(test_db):
 
 def test_create_case_sets_status_to_open(test_db):
     broker_id = uuid4()
-    manager = make_user(role="manager")
 
     case = case_service.create_case(
         test_db,
         "Johnson Refinance 2024",
         broker_id,
-        manager,
     )
 
     assert case.status == "open"
@@ -92,29 +78,28 @@ def test_get_case_with_documents_returns_empty_list_when_no_documents(test_db):
     assert result.documents == []
 
 
-def test_list_cases_returns_all_when_no_broker_id(test_db):
-    manager = make_user(role="manager")
-    first_case = make_case()
-    second_case = make_case()
-    test_db.add_all([first_case, second_case])
+def test_list_cases_returns_local_user_cases(test_db):
+    broker_id = uuid4()
+    first_case = make_case(broker_id=broker_id)
+    second_case = make_case(broker_id=broker_id)
+    other_case = make_case()
+    test_db.add_all([first_case, second_case, other_case])
     test_db.commit()
 
-    cases = case_service.list_cases(test_db, manager)
+    cases = case_service.list_cases(test_db, broker_id)
 
     assert {case.id for case in cases} == {first_case.id, second_case.id}
 
 
-def test_list_cases_filters_by_broker_id(test_db):
+def test_list_cases_returns_empty_for_other_local_user(test_db):
     broker_id = uuid4()
-    manager = make_user(role="manager")
     broker_case = make_case(broker_id=broker_id)
-    other_case = make_case()
-    test_db.add_all([broker_case, other_case])
+    test_db.add(broker_case)
     test_db.commit()
 
-    cases = case_service.list_cases(test_db, manager, broker_id)
+    cases = case_service.list_cases(test_db, uuid4())
 
-    assert [case.id for case in cases] == [broker_case.id]
+    assert cases == []
 
 
 def test_update_case_changes_title(test_db):

@@ -7,7 +7,7 @@ from app.main import app
 from app.models.result import Result
 from app.repositories import document_repo, job_repo, result_repo
 from app.storage import local_storage
-from tests.auth_helpers import auth_user
+from tests.local_user_helpers import local_user
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def client(test_db, tmp_path, monkeypatch):
 
 
 def test_delete_document_removes_record_file_job_and_result(client, test_db, tmp_path):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     upload = client.post(
         "/documents/upload",
         files={"file": ("w2.pdf", b"contents", "application/pdf")},
@@ -45,7 +45,7 @@ def test_delete_document_removes_record_file_job_and_result(client, test_db, tmp
 
 
 def test_remove_document_from_case_clears_document_case(client, test_db):
-    headers, broker_id = auth_user(client)
+    headers, broker_id = local_user(client)
     case = client.post(
         "/cases",
         json={"title": "Borrower Case", "broker_id": broker_id},

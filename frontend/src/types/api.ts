@@ -34,8 +34,6 @@ export type {
   SelfEmploymentResultResponse,
 } from "./selfEmployment";
 
-export type UserRole = "broker" | "manager";
-
 export type CaseStatus = "open" | "in_review" | "complete";
 
 export type DocumentType =
@@ -44,19 +42,6 @@ export type DocumentType =
   | "tax_return"
   | "bank_statement"
   | "other";
-
-export interface UserRead {
-  id: string;
-  email: string;
-  role: UserRole;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-}
 
 export interface CaseResponse {
   id: string;

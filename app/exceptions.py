@@ -30,23 +30,7 @@ class ResultNotFound(Exception):
     pass
 
 
-class UserAlreadyExists(Exception):
-    pass
-
-
-class InvalidCredentials(Exception):
-    pass
-
-
-class AccountDeactivated(Exception):
-    pass
-
-
 class Unauthorized(Exception):
-    pass
-
-
-class InvalidCaseRequest(Exception):
     pass
 
 
@@ -63,10 +47,6 @@ class BorrowerNotFound(Exception):
 
 
 class InvalidBorrowerAssignment(Exception):
-    pass
-
-
-class UserNotFound(Exception):
     pass
 
 

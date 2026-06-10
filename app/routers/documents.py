@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, Upl
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db
 from app.exceptions import DocumentNotFound, Unauthorized
 from app.models.document_type import DocumentType
-from app.models.user import User
+from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.document import DocumentCaseLink, DocumentResponse
 from app.services import document_service
 
@@ -22,11 +22,10 @@ def upload_document(
     file: Annotated[UploadFile, File()],
     doc_type: Annotated[DocumentType, Form()],
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
     case_id: Annotated[UUID | None, Form()] = None,
 ) -> DocumentResponse:
     try:
-        return document_service.upload_document(db, file, doc_type, current_user, case_id)
+        return document_service.upload_document(db, file, doc_type, LOCAL_USER_ID, case_id)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -35,10 +34,9 @@ def upload_document(
 def get_document(
     document_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> DocumentResponse:
     try:
-        return document_service.get_document(db, document_id, current_user)
+        return document_service.get_document(db, document_id, LOCAL_USER_ID)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -47,10 +45,9 @@ def get_document(
 def get_document_file(
     document_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> StreamingResponse:
     try:
-        document, file_path = document_service.get_document_file(db, document_id, current_user)
+        document, file_path = document_service.get_document_file(db, document_id, LOCAL_USER_ID)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except Unauthorized as error:
@@ -68,14 +65,13 @@ def link_document_to_case(
     document_id: UUID,
     link: DocumentCaseLink,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> DocumentResponse:
     try:
         return document_service.link_document_to_case(
             db,
             document_id,
             link.case_id,
-            current_user,
+            LOCAL_USER_ID,
         )
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -85,10 +81,9 @@ def link_document_to_case(
 def unlink_document_from_case(
     document_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> DocumentResponse:
     try:
-        return document_service.unlink_document_from_case(db, document_id, current_user)
+        return document_service.unlink_document_from_case(db, document_id, LOCAL_USER_ID)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -97,10 +92,9 @@ def unlink_document_from_case(
 def delete_document(
     document_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
     try:
-        document_service.delete_document(db, document_id, current_user)
+        document_service.delete_document(db, document_id, LOCAL_USER_ID)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return Response(status_code=204)

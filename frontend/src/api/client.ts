@@ -1,8 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
-let authToken: string | null = null;
-let unauthorizedHandler: (() => void) | null = null;
-
 export class ApiError extends Error {
   status: number;
 
@@ -13,31 +10,16 @@ export class ApiError extends Error {
   }
 }
 
-export function setApiToken(token: string | null): void {
-  authToken = token;
-}
-
-export function setUnauthorizedHandler(handler: (() => void) | null): void {
-  unauthorizedHandler = handler;
-}
-
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
-  if (authToken) {
-    headers.set("Authorization", `Bearer ${authToken}`);
-  }
   if (init.body && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
-  if (response.status === 401 && unauthorizedHandler) {
-    unauthorizedHandler();
-  }
-
   if (!response.ok) {
     throw new ApiError(response.status, await getErrorMessage(response));
   }

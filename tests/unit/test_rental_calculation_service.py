@@ -4,7 +4,7 @@ import pytest
 
 from app.exceptions import CaseNotFound, RentalCalculationNotFound
 from app.models.case import Case
-from app.models.user import User
+from tests.local_user_helpers import make_user
 from app.schemas.rental_inputs import (
     PropertyClass,
     RentalMethod,
@@ -13,14 +13,6 @@ from app.schemas.rental_inputs import (
 )
 from app.services import rental_calculation_service as service
 
-
-def make_user(user_id=None, role="broker"):
-    return User(
-        id=str(user_id or uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
 
 
 def make_case(test_db, broker_id):
@@ -89,18 +81,6 @@ def test_create_on_other_brokers_case_raises_case_not_found(test_db):
         service.create_calculation(
             test_db, UUID(case.id), primary_property(), None, None, intruder
         )
-
-
-def test_manager_can_create_for_any_case(test_db):
-    broker = make_user()
-    manager = make_user(role="manager")
-    case = make_case(test_db, broker.id)
-
-    calculation = service.create_calculation(
-        test_db, UUID(case.id), primary_property(), None, None, manager
-    )
-
-    assert calculation.case_id == case.id
 
 
 def test_list_returns_case_calculations(test_db):

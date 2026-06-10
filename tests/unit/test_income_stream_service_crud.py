@@ -29,41 +29,6 @@ def test_create_income_stream_sets_case_and_broker(test_db):
     assert stream.name == "Primary job"
 
 
-def test_broker_cannot_create_stream_for_other_broker_case(test_db):
-    case = make_case(uuid4())
-    broker = make_user()
-    test_db.add(case)
-    test_db.commit()
-
-    with pytest.raises(CaseNotFound):
-        income_stream_service.create_income_stream(
-            test_db,
-            case.id,
-            "Blocked stream",
-            IncomeStreamType.employment.value,
-            None,
-            broker,
-        )
-
-
-def test_manager_can_create_stream_for_any_case(test_db):
-    case = make_case(uuid4())
-    manager = make_user(role="manager")
-    test_db.add(case)
-    test_db.commit()
-
-    stream = income_stream_service.create_income_stream(
-        test_db,
-        case.id,
-        "Manager created",
-        IncomeStreamType.other.value,
-        None,
-        manager,
-    )
-
-    assert stream.case_id == case.id
-
-
 def test_list_income_streams_broker_sees_only_own_case_streams(test_db):
     broker_id = uuid4()
     broker = make_user(broker_id)
@@ -82,26 +47,6 @@ def test_list_income_streams_broker_sees_only_own_case_streams(test_db):
 
     with pytest.raises(CaseNotFound):
         income_stream_service.list_income_streams_by_case(test_db, other_case.id, broker)
-
-
-def test_broker_cannot_get_other_broker_stream(test_db):
-    owner_id = uuid4()
-    owner = make_user(owner_id)
-    outsider = make_user()
-    case = make_case(owner_id)
-    test_db.add(case)
-    test_db.commit()
-    stream = income_stream_service.create_income_stream(
-        test_db,
-        case.id,
-        "Private stream",
-        IncomeStreamType.employment.value,
-        None,
-        owner,
-    )
-
-    with pytest.raises(IncomeStreamNotFound):
-        income_stream_service.get_income_stream(test_db, stream.id, outsider)
 
 
 def test_update_income_stream_changes_metadata(test_db):

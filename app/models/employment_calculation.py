@@ -16,7 +16,7 @@ class EmploymentCalculation(Base):
         default=lambda: str(uuid4()),
     )
     case_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    # broker_id is denormalized for scoping, exactly like IncomeStream.
+    # TODO step 2b: remove ownership plumbing.
     broker_id: Mapped[str] = mapped_column(String(36), nullable=False)
     borrower_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     label: Mapped[str | None] = mapped_column(String, nullable=True)

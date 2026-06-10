@@ -10,15 +10,6 @@ const caseApi = vi.hoisted(() => ({
   listCases: vi.fn(),
 }));
 
-vi.mock("../auth/AuthContext", () => ({
-  useAuth: () => ({
-    user: { id: "u-1", email: "manager@example.com", role: "manager" },
-    loading: false,
-    login: vi.fn(),
-    logout: vi.fn(),
-  }),
-}));
-
 vi.mock("../api/cases", () => ({
   createCase: caseApi.createCase,
   listCases: caseApi.listCases,
@@ -55,7 +46,7 @@ describe("CasesPage", () => {
     );
 
     expect(await screen.findByText("Johnson Refi")).toBeInTheDocument();
-    expect(screen.getByText("Broker ID: broker-1")).toBeInTheDocument();
+    expect(screen.queryByText("Broker ID: broker-1")).not.toBeInTheDocument();
   });
 
   it("creates a new case from the form", async () => {

@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.auth_helpers import auth_user
+from tests.local_user_helpers import local_user
 
 
 @pytest.fixture
@@ -53,18 +53,8 @@ def _payload(label="Acme Corp"):
     }
 
 
-def test_create_requires_authentication(client):
-    case_id = "11111111-1111-1111-1111-111111111111"
-
-    response = client.post(
-        f"/cases/{case_id}/employment-calculations", json=_payload()
-    )
-
-    assert response.status_code == 401
-
-
 def test_saved_calculation_appears_in_case_summary_total(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
 
     created = client.post(
@@ -82,7 +72,7 @@ def test_saved_calculation_appears_in_case_summary_total(client):
 
 
 def test_invalid_ay_toggle_returns_422(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     payload = _payload()
     payload["overtime"]["annualize"] = True
@@ -97,40 +87,8 @@ def test_invalid_ay_toggle_returns_422(client):
     assert response.status_code == 422
 
 
-def test_broker_cannot_create_for_other_brokers_case(client):
-    headers_a, _ = auth_user(client)
-    headers_b, _ = auth_user(client)
-    case_b = client.post("/cases", json={"title": "B"}, headers=headers_b).json()
-
-    response = client.post(
-        f"/cases/{case_b['id']}/employment-calculations",
-        json=_payload(),
-        headers=headers_a,
-    )
-
-    assert response.status_code == 404
-
-
-def test_list_is_scoped_to_case_owner(client):
-    headers_a, _ = auth_user(client)
-    headers_b, _ = auth_user(client)
-    case_a = client.post("/cases", json={"title": "A"}, headers=headers_a).json()
-    client.post(
-        f"/cases/{case_a['id']}/employment-calculations",
-        json=_payload(),
-        headers=headers_a,
-    )
-
-    own = client.get(f"/cases/{case_a['id']}/employment-calculations", headers=headers_a)
-    other = client.get(f"/cases/{case_a['id']}/employment-calculations", headers=headers_b)
-
-    assert own.status_code == 200
-    assert [calc["label"] for calc in own.json()] == ["Acme Corp"]
-    assert other.status_code == 404
-
-
 def test_delete_removes_calculation(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     created = client.post(
         f"/cases/{case['id']}/employment-calculations",

@@ -6,8 +6,6 @@ from app.audit.logger import log_event
 from app.exceptions import DocumentNotFound, JobAlreadyProcessed, JobNotFound
 from app.models.job import Job
 from app.models.job_status import JobStatus
-from app.models.user import User
-from app.models.user_role import UserRole
 from app.repositories import document_repo, job_repo
 
 
@@ -21,22 +19,23 @@ def create_job_for_document(db: Session, document_id: UUID) -> Job:
     return saved_job
 
 
-def get_job_status(db: Session, job_id: UUID, current_user: User) -> Job:
+def get_job_status(db: Session, job_id: UUID, local_user_id: UUID) -> Job:
     job = job_repo.get_job(db, job_id)
-    _ensure_job_document_access(db, job, current_user)
+    _ensure_job_document_access(db, job, local_user_id)
     return job
 
 
 def get_job_for_document(
     db: Session,
     document_id: UUID,
-    current_user: User,
+    local_user_id: UUID,
 ) -> Job:
     try:
         document = document_repo.get_document(db, document_id)
     except DocumentNotFound as error:
         raise JobNotFound(f"Job not found for document: {document_id}") from error
-    if not _is_manager(current_user) and document.broker_id != current_user.id:
+    # TODO step 2b: remove ownership plumbing.
+    if document.broker_id != str(local_user_id):
         raise JobNotFound(f"Job not found for document: {document_id}")
     job = job_repo.get_job_by_document(db, document_id)
     if job is None:
@@ -44,9 +43,9 @@ def get_job_for_document(
     return job
 
 
-def retry_job(db: Session, job_id: UUID, current_user: User) -> Job:
+def retry_job(db: Session, job_id: UUID, local_user_id: UUID) -> Job:
     job = job_repo.get_job(db, job_id)
-    _ensure_job_document_access(db, job, current_user)
+    _ensure_job_document_access(db, job, local_user_id)
     if job.status == JobStatus.complete.value:
         raise JobAlreadyProcessed(f"Job already processed: {job_id}")
     retried_job = job_repo.reset_job_to_pending(db, job_id)
@@ -63,16 +62,11 @@ def recover_stuck_jobs(db: Session) -> None:
         )
 
 
-def _ensure_job_document_access(db: Session, job: Job, current_user: User) -> None:
-    if _is_manager(current_user):
-        return
+def _ensure_job_document_access(db: Session, job: Job, local_user_id: UUID) -> None:
     try:
         document = document_repo.get_document(db, UUID(job.document_id))
     except DocumentNotFound as error:
         raise JobNotFound(f"Job not found: {job.id}") from error
-    if document.broker_id != current_user.id:
+    # TODO step 2b: remove ownership plumbing.
+    if document.broker_id != str(local_user_id):
         raise JobNotFound(f"Job not found: {job.id}")
-
-
-def _is_manager(user: User) -> bool:
-    return user.role == UserRole.manager.value

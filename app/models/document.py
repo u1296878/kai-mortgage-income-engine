@@ -19,6 +19,7 @@ class Document(Base):
     doc_type: Mapped[str] = mapped_column(String, nullable=False)
     storage_path: Mapped[str] = mapped_column(String, nullable=False)
     case_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # TODO step 2b: remove ownership plumbing.
     broker_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

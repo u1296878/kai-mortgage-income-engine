@@ -1,9 +1,6 @@
 import { Link, Outlet } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
 
 export function AppShell(): JSX.Element {
-  const { user, logout } = useAuth();
-
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
@@ -25,23 +22,8 @@ export function AppShell(): JSX.Element {
             <Link className="text-sm text-blue-700 hover:underline" to="/income/self-employment">
               Self-employment
             </Link>
-            {user?.role === "manager" ? (
-              <Link className="text-sm text-blue-700 hover:underline" to="/admin/brokers">
-                Brokers
-              </Link>
-            ) : null}
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span>{user?.email}</span>
-            <span className="rounded-md border border-slate-300 px-2 py-1">{user?.role}</span>
-            <button
-              className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100"
-              onClick={logout}
-              type="button"
-            >
-              Logout
-            </button>
-          </div>
+          <div className="rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700">Local</div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">

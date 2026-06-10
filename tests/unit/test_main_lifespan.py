@@ -23,11 +23,6 @@ async def test_lifespan_recovers_stuck_jobs_and_starts_worker(tmp_path, monkeypa
     monkeypatch.setattr(main_module.settings, "storage_path", tmp_path)
     monkeypatch.setattr(
         main_module,
-        "seed_manager",
-        lambda session: calls.append(("seed_manager", session)),
-    )
-    monkeypatch.setattr(
-        main_module,
         "recover_stuck_jobs",
         lambda session: calls.append(("recover_stuck_jobs", session)),
     )
@@ -49,13 +44,10 @@ async def test_lifespan_recovers_stuck_jobs_and_starts_worker(tmp_path, monkeypa
 
     assert calls[:3] == [
         "init_db",
-        ("seed_manager", db),
         ("recover_stuck_jobs", db),
+        ("start_worker", main_module.SessionLocal, main_module.settings.worker_poll_interval),
     ]
-    assert calls[3][0] == "start_worker"
-    assert calls[3][1] is main_module.SessionLocal
-    assert calls[3][2] == main_module.settings.worker_poll_interval
-    assert calls[4] == ("stop_worker", main_module.settings.worker_poll_interval + 2)
+    assert calls[3] == ("stop_worker", main_module.settings.worker_poll_interval + 2)
     assert db.closed is True
 
 
@@ -71,7 +63,6 @@ async def test_lifespan_starts_and_stops_worker_thread(tmp_path, monkeypatch):
     worker_runtime.stop_worker(0.1)
     monkeypatch.setattr(main_module, "init_db", lambda: None)
     monkeypatch.setattr(main_module, "SessionLocal", lambda: db)
-    monkeypatch.setattr(main_module, "seed_manager", lambda session: None)
     monkeypatch.setattr(main_module, "recover_stuck_jobs", lambda session: None)
     monkeypatch.setattr(worker_runtime, "run_worker", fake_run_worker)
     monkeypatch.setattr(main_module, "start_worker", worker_runtime.start_worker)
@@ -96,7 +87,6 @@ async def test_lifespan_creates_storage_path(tmp_path, monkeypatch):
     db = FakeSession()
     monkeypatch.setattr(main_module, "init_db", lambda: None)
     monkeypatch.setattr(main_module, "SessionLocal", lambda: db)
-    monkeypatch.setattr(main_module, "seed_manager", lambda session: None)
     monkeypatch.setattr(main_module, "recover_stuck_jobs", lambda session: None)
     monkeypatch.setattr(main_module, "start_worker", lambda db_factory, poll_interval: None)
     monkeypatch.setattr(main_module, "stop_worker", lambda timeout: None)
