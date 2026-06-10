@@ -20,30 +20,42 @@ For PDF parsing:
 ```bash
 git clone https://github.com/u1296878/kai-mortgage-income-engine.git
 cd kai-mortgage-income-engine
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Pull And Run
+
+The app is designed to start locally with no required environment variables:
+
+```bash
+python -m app
+```
+
+This creates the local SQLite database on first run, starts the in-process background
+worker, binds the server to `http://127.0.0.1:8000`, and opens the default browser.
+For a headless run:
+
+```bash
+python -m app --no-browser
+```
+
+Ollama setup for fully local extraction is coming in a later conversion step.
+
 ## Local environment setup
 
-Copy the example env file and fill in required values:
-
-    cp .env.example .env
-
-Edit `.env` and set at minimum:
-
-    JWT_SECRET_KEY=any-long-random-string-for-local-dev
-
-To create the first manager account on startup, also set:
+The app reads `.env` automatically via pydantic-settings, but `.env` is optional for
+local boot. To create the first manager account on startup, set:
 
     MANAGER_EMAIL=manager@example.com
     MANAGER_PASSWORD=your-chosen-password
 
-The app reads `.env` automatically via pydantic-settings.
-
 ## Running locally
 
 ```bash
-uvicorn app.main:app --reload
+python -m app
 ```
 
 The background worker starts automatically with the app and polls for pending jobs.
@@ -86,10 +98,12 @@ npm run build
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./local.db` | SQLAlchemy database URL used by the app. |
+| `DATABASE_URL` | `sqlite:///local.db` | SQLAlchemy database URL used by the app. |
 | `STORAGE_PATH` | `./storage` | Local folder where uploaded documents are stored. |
 | `WORKER_POLL_INTERVAL` | `5` | Seconds between background worker job polls. |
-| `JWT_SECRET_KEY` | required | JWT signing secret. Provide a long random value in `.env` or deployment env vars. |
+| `APP_PORT` | `8000` | Localhost port used by `python -m app`. |
+| `NO_BROWSER` | `false` | Set true to prevent `python -m app` from opening a browser. |
+| `JWT_SECRET_KEY` | local default | JWT signing secret. Temporary until auth is removed in the local conversion. |
 | `JWT_ALGORITHM` | `HS256` | JWT signing algorithm. |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access token lifetime in minutes. |
 | `MANAGER_EMAIL` | empty | Optional first-run manager seed email. |
