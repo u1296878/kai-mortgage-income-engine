@@ -29,10 +29,15 @@ def _open_when_ready(url: str, timeout_seconds: float = 15) -> None:
     while time.monotonic() < deadline:
         try:
             with urllib.request.urlopen(url, timeout=0.5):
-                webbrowser.open(url)
-                return
+                pass
+        except urllib.error.HTTPError:
+            # Any HTTP response means the local server is listening.
+            pass
         except (OSError, urllib.error.URLError):
             time.sleep(0.25)
+            continue
+        webbrowser.open(url)
+        return
 
 
 if __name__ == "__main__":

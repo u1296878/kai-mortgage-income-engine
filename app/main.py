@@ -29,6 +29,7 @@ from app.services.job_service import recover_stuck_jobs
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    settings.storage_path.mkdir(parents=True, exist_ok=True)
     init_db()
     seed_db = SessionLocal()
     try:
