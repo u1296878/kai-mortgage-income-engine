@@ -20,12 +20,6 @@ class Settings(BaseSettings):
     app_port: int = 8000
     no_browser: bool = False
     allowed_origins: str = "*"
-    # TODO step 2: remove with auth.
-    jwt_secret_key: str = "local-development-only-jwt-secret-change-after-auth-removal"
-    jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: int = 60
-    manager_email: str | None = None
-    manager_password: str | None = None
     ocr_dpi: int = 150
     ocr_max_workers: int = 4
     ocr_page_timeout_seconds: int = 60

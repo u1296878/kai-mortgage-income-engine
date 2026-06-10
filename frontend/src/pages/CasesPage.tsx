@@ -4,10 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { createCase, listCases } from "../api/cases";
 import { StateCard } from "../components/StateCard";
 import { toDate } from "../components/formatters";
-import { useAuth } from "../auth/AuthContext";
 
 export function CasesPage(): JSX.Element {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -76,7 +74,6 @@ export function CasesPage(): JSX.Element {
             <p>Case ID: {item.id}</p>
             <p>Status: {item.status}</p>
             <p>Created: {toDate(item.created_at)}</p>
-            {user?.role === "manager" ? <p>Broker ID: {item.broker_id}</p> : null}
             <Link className="text-blue-700 underline" to={`/cases/${item.id}`}>
               Open case
             </Link>

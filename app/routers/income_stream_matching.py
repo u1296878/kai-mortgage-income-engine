@@ -4,9 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db
 from app.exceptions import CaseNotFound
-from app.models.user import User
+from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.income_stream_matching import (
     IncomeStreamMatchApplyRequest,
     IncomeStreamMatchApplyResponse,
@@ -24,10 +24,9 @@ router = APIRouter(tags=["income_stream_matching"])
 def preview_case_matches(
     case_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[IncomeStreamMatchSuggestion]:
     try:
-        return income_stream_match_service.preview_case_matches(db, case_id, current_user)
+        return income_stream_match_service.preview_case_matches(db, case_id, LOCAL_USER_ID)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -40,13 +39,12 @@ def apply_case_matches(
     case_id: UUID,
     payload: IncomeStreamMatchApplyRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> IncomeStreamMatchApplyResponse:
     try:
         suggestions, applied_count, created_stream_count = income_stream_match_service.apply_case_matches(
             db,
             case_id,
-            current_user,
+            LOCAL_USER_ID,
             payload.force_reassign,
         )
     except CaseNotFound as error:

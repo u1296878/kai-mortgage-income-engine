@@ -3,16 +3,8 @@ from uuid import uuid4
 
 from app.models.case import Case
 from app.models.result import Result
-from app.models.user import User
+from tests.local_user_helpers import make_user
 
-
-def make_user(user_id=None, role="broker"):
-    return User(
-        id=str(user_id or uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
 
 
 def make_case(broker_id):

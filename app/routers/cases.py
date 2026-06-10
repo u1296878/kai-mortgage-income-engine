@@ -4,9 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
-from app.exceptions import CaseNotFound, InvalidCaseRequest
-from app.models.user import User
+from app.dependencies import get_db
+from app.exceptions import CaseNotFound
+from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.case import CaseCreate, CaseResponse, CaseUpdate, CaseWithDocuments
 from app.services import case_service
 
@@ -17,31 +17,24 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 def create_case(
     case: CaseCreate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> CaseResponse:
-    try:
-        return case_service.create_case(db, case.title, case.broker_id, current_user)
-    except InvalidCaseRequest as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
+    return case_service.create_case(db, case.title, LOCAL_USER_ID)
 
 
 @router.get("", response_model=list[CaseResponse])
 def list_cases(
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-    broker_id: UUID | None = None,
 ) -> list[CaseResponse]:
-    return case_service.list_cases(db, current_user, broker_id)
+    return case_service.list_cases(db, LOCAL_USER_ID)
 
 
 @router.get("/{case_id}", response_model=CaseResponse)
 def get_case(
     case_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> CaseResponse:
     try:
-        return case_service.get_case(db, case_id, current_user)
+        return case_service.get_case(db, case_id, LOCAL_USER_ID)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -50,15 +43,12 @@ def get_case(
 def get_case_with_documents(
     case_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
-    broker_id: UUID | None = None,
 ) -> CaseWithDocuments:
     try:
         return case_service.get_case_with_documents(
             db,
             case_id,
-            current_user,
-            broker_id,
+            LOCAL_USER_ID,
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -69,11 +59,10 @@ def update_case(
     case_id: UUID,
     updates: CaseUpdate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> CaseResponse:
     try:
         update_values = updates.model_dump(exclude_none=True)
-        return case_service.update_case(db, case_id, update_values, current_user)
+        return case_service.update_case(db, case_id, update_values, LOCAL_USER_ID)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -82,10 +71,9 @@ def update_case(
 def delete_case(
     case_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
     try:
-        case_service.delete_case(db, case_id, current_user)
+        case_service.delete_case(db, case_id, LOCAL_USER_ID)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return Response(status_code=204)

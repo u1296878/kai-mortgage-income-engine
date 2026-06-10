@@ -1,15 +1,11 @@
-from typing import Annotated
+from fastapi import APIRouter, HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException
-
-from app.dependencies import get_current_user
 from app.exceptions import (
     InvalidEmploymentInput,
     InvalidNonTaxableInput,
     InvalidRentalInput,
     InvalidSelfEmploymentInput,
 )
-from app.models.user import User
 from app.schemas.income_inputs import EmploymentInput
 from app.schemas.income_results import EmploymentResult
 from app.schemas.nontaxable_inputs import NonTaxableCalculationRequest
@@ -33,7 +29,6 @@ router = APIRouter(prefix="/income", tags=["income"])
 @router.post("/employment/calculate", response_model=EmploymentResult)
 def calculate_employment_income(
     employment: EmploymentInput,
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> EmploymentResult:
     try:
         return employment_income_service.calculate_employment_income(employment)
@@ -44,7 +39,6 @@ def calculate_employment_income(
 @router.post("/rental/calculate", response_model=RentalResult)
 def calculate_rental_income(
     property_input: RentalProperty,
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> RentalResult:
     try:
         return rental_income_service.calculate_rental_income(property_input)
@@ -55,7 +49,6 @@ def calculate_rental_income(
 @router.post("/nontaxable/calculate", response_model=NonTaxableResult)
 def calculate_nontaxable_income(
     request: NonTaxableCalculationRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> NonTaxableResult:
     try:
         return nontaxable_income_service.calculate_nontaxable_income(request)
@@ -66,7 +59,6 @@ def calculate_nontaxable_income(
 @router.post("/self-employment/calculate", response_model=SelfEmploymentResult)
 def calculate_self_employment_income(
     request: SelfEmploymentCalculationRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> SelfEmploymentResult:
     try:
         return self_employment_income_service.calculate_self_employment_income(request)

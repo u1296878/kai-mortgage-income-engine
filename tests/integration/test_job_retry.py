@@ -6,7 +6,7 @@ from app.main import app
 from app.models.job_status import JobStatus
 from app.repositories import job_repo
 from app.storage import local_storage
-from tests.auth_helpers import auth_user
+from tests.local_user_helpers import local_user
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def test_retry_complete_job_returns_400(client, test_db):
 
 
 def _upload_and_get_job(client, test_db):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     upload = client.post(
         "/documents/upload",
         files={"file": ("w2.pdf", b"contents", "application/pdf")},

@@ -44,10 +44,9 @@ def test_assign_result_to_stream_recalculates_income(test_db):
     assert updated.confidence == "high"
 
 
-def test_assign_result_to_stream_rejects_different_case_for_broker_and_manager(test_db):
+def test_assign_result_to_stream_rejects_different_case(test_db):
     broker_id = uuid4()
     broker = make_user(broker_id)
-    manager = make_user(role="manager")
     case_a = make_case(broker_id)
     case_b = make_case(broker_id)
     result = make_result(case_b.id, 85000.0)
@@ -64,34 +63,10 @@ def test_assign_result_to_stream_rejects_different_case_for_broker_and_manager(t
 
     with pytest.raises(InvalidIncomeStreamAssignment):
         income_stream_service.assign_result_to_stream(test_db, stream.id, result.id, broker)
-    with pytest.raises(InvalidIncomeStreamAssignment):
-        income_stream_service.assign_result_to_stream(test_db, stream.id, result.id, manager)
     unchanged_result = test_db.get(Result, result.id)
-    unchanged_stream = income_stream_service.get_income_stream(test_db, stream.id, manager)
+    unchanged_stream = income_stream_service.get_income_stream(test_db, stream.id, broker)
     assert unchanged_result.income_stream_id is None
     assert unchanged_stream.annual_income is None
-
-
-def test_broker_cannot_assign_other_broker_result(test_db):
-    owner_id = uuid4()
-    other_id = uuid4()
-    owner = make_user(owner_id)
-    case_owner = make_case(owner_id)
-    case_other = make_case(other_id)
-    result = make_result(case_other.id, 92000.0)
-    test_db.add_all([case_owner, case_other, result])
-    test_db.commit()
-    stream = income_stream_service.create_income_stream(
-        test_db,
-        case_owner.id,
-        "Owner stream",
-        IncomeStreamType.employment.value,
-        None,
-        owner,
-    )
-
-    with pytest.raises(ResultNotFound):
-        income_stream_service.assign_result_to_stream(test_db, stream.id, result.id, owner)
 
 
 def test_unassign_result_recalculates_income(test_db):

@@ -5,8 +5,6 @@ from sqlalchemy.orm import Session
 from app.audit.logger import log_event
 from app.exceptions import CaseNotFound, DocumentNotFound, JobNotFound, ResultNotFound
 from app.models.result import Result
-from app.models.user import User
-from app.models.user_role import UserRole
 from app.repositories import (
     borrower_repo,
     case_repo,
@@ -61,10 +59,11 @@ def save_extraction_result(
 def get_case_summary(
     db: Session,
     case_id: UUID,
-    current_user: User,
+    local_user_id: UUID,
 ) -> CaseSummaryResponse:
     case = case_repo.get_case(db, case_id)
-    if not _is_manager(current_user) and case.broker_id != current_user.id:
+    # TODO step 2b: remove ownership plumbing.
+    if case.broker_id != str(local_user_id):
         raise CaseNotFound(f"Case not found: {case_id}")
     results = result_repo.list_results_by_case(db, case_id)
     borrowers = borrower_repo.list_borrowers_by_case(db, case_id)
@@ -87,45 +86,39 @@ def get_case_summary(
     )
 
 
-def get_result(db: Session, result_id: UUID, current_user: User) -> Result:
+def get_result(db: Session, result_id: UUID, local_user_id: UUID) -> Result:
     result = result_repo.get_result(db, result_id)
-    _ensure_result_access(db, result, current_user)
+    _ensure_result_access(db, result, local_user_id)
     return result
 
 
-def get_result_for_job(db: Session, job_id: UUID, current_user: User) -> Result:
+def get_result_for_job(db: Session, job_id: UUID, local_user_id: UUID) -> Result:
     try:
         job = job_repo.get_job(db, job_id)
     except JobNotFound as error:
         raise ResultNotFound(f"Result not found for job: {job_id}") from error
-    _ensure_job_access(db, job, current_user)
+    _ensure_job_access(db, job, local_user_id)
     result = result_repo.get_result_by_job(db, job_id)
     if result is None:
         raise ResultNotFound(f"Result not found for job: {job_id}")
     return result
 
 
-def _ensure_result_access(db: Session, result: Result, current_user: User) -> None:
-    if _is_manager(current_user):
-        return
+def _ensure_result_access(db: Session, result: Result, local_user_id: UUID) -> None:
     try:
         document = document_repo.get_document(db, UUID(result.document_id))
     except DocumentNotFound as error:
         raise ResultNotFound(f"Result not found: {result.id}") from error
-    if document.broker_id != current_user.id:
+    # TODO step 2b: remove ownership plumbing.
+    if document.broker_id != str(local_user_id):
         raise ResultNotFound(f"Result not found: {result.id}")
 
 
-def _ensure_job_access(db: Session, job, current_user: User) -> None:
-    if _is_manager(current_user):
-        return
+def _ensure_job_access(db: Session, job, local_user_id: UUID) -> None:
     try:
         document = document_repo.get_document(db, UUID(job.document_id))
     except DocumentNotFound as error:
         raise ResultNotFound(f"Result not found for job: {job.id}") from error
-    if document.broker_id != current_user.id:
+    # TODO step 2b: remove ownership plumbing.
+    if document.broker_id != str(local_user_id):
         raise ResultNotFound(f"Result not found for job: {job.id}")
-
-
-def _is_manager(user: User) -> bool:
-    return user.role == UserRole.manager.value

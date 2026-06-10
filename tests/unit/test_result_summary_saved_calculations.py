@@ -5,18 +5,10 @@ from app.models.employment_calculation import EmploymentCalculation
 from app.models.nontaxable_calculation import NonTaxableCalculation
 from app.models.rental_calculation import RentalCalculation
 from app.models.self_employment_calculation import SelfEmploymentCalculation
-from app.models.user import User
+from tests.local_user_helpers import make_user
 from app.schemas.extraction import BoundingBox, ExtractedField
 from app.services import result_service
 
-
-def make_user(role="broker"):
-    return User(
-        id=str(uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
 
 
 def make_field(field: str = "w2_wages", value: float = 85000.00) -> ExtractedField:
@@ -30,66 +22,66 @@ def make_field(field: str = "w2_wages", value: float = 85000.00) -> ExtractedFie
 
 
 def test_summary_adds_saved_employment_calculations(test_db):
-    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
     test_db.add(_employment_calc(case_id, broker_id, 84000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, manager)
+    summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert summary.total_annual_income == 169000.00
     assert len(summary.employment_calculations) == 1
 
 
 def test_summary_adds_saved_rental_calculations(test_db):
-    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
     test_db.add(_rental_calc(case_id, broker_id, 12000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, manager)
+    summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert summary.total_annual_income == 97000.00
     assert len(summary.rental_calculations) == 1
 
 
 def test_summary_negative_rental_calculation_reduces_total(test_db):
-    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
     test_db.add(_rental_calc(case_id, broker_id, -18000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, manager)
+    summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert summary.total_annual_income == 67000.00
 
 
 def test_summary_excludes_rental_calculations_marked_not_included(test_db):
-    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
     rental = _rental_calc(case_id, broker_id, 12000.00)
     rental.included = False
     test_db.add(rental)
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, manager)
+    summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert summary.total_annual_income == 85000.00
     assert summary.rental_calculations[0].included is False
 
 def test_summary_adds_saved_nontaxable_calculations(test_db):
-    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
     test_db.add(_nontaxable_calc(case_id, broker_id, 12450.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, manager)
+    summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert summary.total_annual_income == 97450.00
     assert len(summary.nontaxable_calculations) == 1
 
 
 def test_summary_negative_self_employment_calculation_reduces_total(test_db):
-    case_id, broker_id, manager = _case_with_result(test_db, 85000.00)
+    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
     test_db.add(_self_employment_calc(case_id, broker_id, -12000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, manager)
+    summary = result_service.get_case_summary(test_db, case_id, local_user)
 
     assert summary.total_annual_income == 73000.00
     assert len(summary.self_employment_calculations) == 1
@@ -97,14 +89,14 @@ def test_summary_negative_self_employment_calculation_reduces_total(test_db):
 
 def _case_with_result(test_db, annual_income):
     case_id = uuid4()
-    broker_id = uuid4()
-    manager = make_user(role="manager")
+    local_user = make_user()
+    broker_id = local_user.id
     test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Add-on"))
     test_db.commit()
     result_service.save_extraction_result(
         test_db, uuid4(), uuid4(), case_id, "w2", [make_field(value=annual_income)]
     )
-    return case_id, broker_id, manager
+    return case_id, broker_id, local_user
 
 
 def _employment_calc(case_id, broker_id, annual_income):

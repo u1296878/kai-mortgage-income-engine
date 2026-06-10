@@ -6,7 +6,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
-from tests.auth_helpers import auth_headers
+from tests.local_user_helpers import local_headers
 
 
 def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatch):
@@ -16,7 +16,7 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    headers = auth_headers(client)
+    headers = local_headers(client)
 
     try:
         case_response = client.post(

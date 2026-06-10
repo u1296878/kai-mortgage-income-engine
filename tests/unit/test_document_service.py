@@ -7,7 +7,7 @@ from fastapi import UploadFile
 from app.exceptions import DocumentNotFound, UnsupportedDocumentType
 from app.models.case import Case
 from app.models.document import Document
-from app.models.user import User
+from tests.local_user_helpers import make_user
 from app.services import document_service
 from app.storage import local_storage
 
@@ -15,14 +15,6 @@ from app.storage import local_storage
 def make_upload_file(filename: str = "paystub.pdf") -> UploadFile:
     return UploadFile(filename=filename, file=BytesIO(b"file contents"))
 
-
-def make_user(user_id=None, role="broker"):
-    return User(
-        id=str(user_id or uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
 
 
 def test_upload_document_saves_file(test_db, tmp_path, monkeypatch):
@@ -138,8 +130,8 @@ def test_link_missing_document_raises(test_db):
         document_service.link_document_to_case(test_db, document_id, case_id, user)
 
 
-def test_link_missing_case_preserves_existing_behavior(test_db):
-    manager = make_user(role="manager")
+def test_link_missing_case_raises_not_found(test_db):
+    local_user = make_user()
     document = Document(
         id=str(uuid4()),
         filename="tax.pdf",
@@ -150,12 +142,10 @@ def test_link_missing_case_preserves_existing_behavior(test_db):
     test_db.commit()
     case_id = uuid4()
 
-    linked_document = document_service.link_document_to_case(
-        test_db,
-        document.id,
-        case_id,
-        manager,
-    )
-
-    assert linked_document.case_id == str(case_id)
-    assert linked_document.broker_id is None
+    with pytest.raises(DocumentNotFound):
+        document_service.link_document_to_case(
+            test_db,
+            document.id,
+            case_id,
+            local_user,
+        )

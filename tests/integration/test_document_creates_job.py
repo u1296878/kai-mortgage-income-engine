@@ -4,7 +4,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.repositories import job_repo
 from app.storage import local_storage
-from tests.auth_helpers import auth_headers, auth_user
+from tests.local_user_helpers import local_headers, local_user
 
 
 def test_uploading_document_automatically_creates_pending_job(
@@ -18,7 +18,7 @@ def test_uploading_document_automatically_creates_pending_job(
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    headers = auth_headers(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/documents/upload",
@@ -46,7 +46,7 @@ def test_upload_with_case_id_sets_case_before_job_creation(
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    headers, broker_id = auth_user(client)
+    headers, broker_id = local_user(client)
     case_response = client.post(
         "/cases",
         json={"title": "Upload Flow Case", "broker_id": broker_id},

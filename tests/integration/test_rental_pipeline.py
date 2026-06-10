@@ -9,7 +9,7 @@ from app.main import app
 from app.repositories import job_repo, result_repo
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
-from tests.auth_helpers import auth_headers
+from tests.local_user_helpers import local_headers
 
 
 def test_rental_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
@@ -19,7 +19,7 @@ def test_rental_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    headers = auth_headers(client)
+    headers = local_headers(client)
 
     try:
         response = client.post(

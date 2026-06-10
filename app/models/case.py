@@ -16,6 +16,7 @@ class Case(Base):
         primary_key=True,
         default=lambda: str(uuid4()),
     )
+    # TODO step 2b: remove ownership plumbing.
     broker_id: Mapped[str] = mapped_column(String(36), nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(

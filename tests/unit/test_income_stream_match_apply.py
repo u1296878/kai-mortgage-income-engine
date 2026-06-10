@@ -54,10 +54,11 @@ def test_low_confidence_match_is_not_auto_applied(test_db):
     assert refreshed.income_stream_id is None
 
 
-def test_same_case_validation_blocks_cross_case_assignment_even_for_manager(test_db):
-    manager = make_user(role="manager")
-    case_a = make_case(uuid4())
-    case_b = make_case(uuid4())
+def test_same_case_validation_blocks_cross_case_assignment(test_db):
+    broker_id = uuid4()
+    local_user = make_user(broker_id)
+    case_a = make_case(broker_id)
+    case_b = make_case(broker_id)
     stream_b = IncomeStream(
         case_id=case_b.id,
         broker_id=case_b.broker_id,
@@ -71,7 +72,7 @@ def test_same_case_validation_blocks_cross_case_assignment_even_for_manager(test
     _, applied_count, created_count = income_stream_match_service.apply_case_matches(
         test_db,
         case_a.id,
-        manager,
+        local_user,
     )
 
     refreshed = test_db.get(Result, result_a.id)

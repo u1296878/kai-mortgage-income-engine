@@ -3,7 +3,6 @@ import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import type { PDFPageProxy } from "pdfjs-dist";
 import type { ExtractedField } from "../types/api";
-import { getStoredToken } from "../auth/token";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
@@ -31,20 +30,13 @@ export function DocumentViewer({ isOpen, documentId, source, onClose }: Document
     if (!isOpen || !documentId) {
       return;
     }
-    const token = getStoredToken();
-    if (!token) {
-      setError("Missing auth token for document viewer.");
-      return;
-    }
 
     let active = true;
     setLoading(true);
     setError(null);
     setPageMetrics({});
     setNumPages(0);
-    void fetch(`${apiBaseUrl}/documents/${documentId}/file`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    void fetch(`${apiBaseUrl}/documents/${documentId}/file`)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`Failed to load document (${response.status})`);

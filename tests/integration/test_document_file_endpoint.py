@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import get_db
 from app.main import app
 from app.storage import local_storage
-from tests.auth_helpers import auth_user
+from tests.local_user_helpers import local_user
 
 
 @pytest.fixture
@@ -18,22 +18,8 @@ def client(test_db, tmp_path, monkeypatch):
     app.dependency_overrides.clear()
 
 
-def test_document_file_requires_authentication(client):
-    owner_headers, _ = auth_user(client)
-    upload = client.post(
-        "/documents/upload",
-        files={"file": ("w2.pdf", b"%PDF-1.4\nowner\n", "application/pdf")},
-        data={"doc_type": "w2"},
-        headers=owner_headers,
-    )
-
-    response = client.get(f"/documents/{upload.json()['id']}/file")
-
-    assert response.status_code == 401
-
-
 def test_document_owner_can_fetch_document_file(client):
-    owner_headers, _ = auth_user(client)
+    owner_headers, _ = local_user(client)
     expected_bytes = b"%PDF-1.4\nowner\n"
     upload = client.post(
         "/documents/upload",
@@ -52,27 +38,9 @@ def test_document_owner_can_fetch_document_file(client):
     assert response.content == expected_bytes
 
 
-def test_wrong_broker_gets_forbidden_for_document_file(client):
-    owner_headers, _ = auth_user(client)
-    other_broker_headers, _ = auth_user(client)
-    upload = client.post(
-        "/documents/upload",
-        files={"file": ("w2.pdf", b"%PDF-1.4\nowner\n", "application/pdf")},
-        data={"doc_type": "w2"},
-        headers=owner_headers,
-    )
-
-    response = client.get(
-        f"/documents/{upload.json()['id']}/file",
-        headers=other_broker_headers,
-    )
-
-    assert response.status_code == 403
-
-
-def test_manager_can_fetch_any_document_file(client):
-    owner_headers, _ = auth_user(client)
-    manager_headers, _ = auth_user(client, role="manager")
+def test_local_endpoint_returns_uploaded_document_file(client):
+    owner_headers, _ = local_user(client)
+    local_headers, _ = local_user(client)
     expected_bytes = b"%PDF-1.4\nowner\n"
     upload = client.post(
         "/documents/upload",
@@ -83,7 +51,7 @@ def test_manager_can_fetch_any_document_file(client):
 
     response = client.get(
         f"/documents/{upload.json()['id']}/file",
-        headers=manager_headers,
+        headers=local_headers,
     )
 
     assert response.status_code == 200

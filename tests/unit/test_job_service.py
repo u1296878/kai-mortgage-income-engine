@@ -6,17 +6,9 @@ import pytest
 from app.exceptions import JobNotFound
 from app.models.document import Document
 from app.models.job import Job
-from app.models.user import User
+from tests.local_user_helpers import make_user
 from app.services import job_service
 
-
-def make_user(user_id=None, role="broker"):
-    return User(
-        id=str(user_id or uuid4()),
-        email=f"{uuid4()}@example.com",
-        hashed_password="hash",
-        role=role,
-    )
 
 
 def test_create_job_for_document_returns_pending_job(test_db):

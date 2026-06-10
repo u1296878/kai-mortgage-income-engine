@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.auth_helpers import auth_user
+from tests.local_user_helpers import local_user
 
 
 @pytest.fixture
@@ -52,14 +52,8 @@ def _valid_body():
     }
 
 
-def test_calculate_requires_authentication(client):
-    response = client.post("/income/employment/calculate", json=_valid_body())
-
-    assert response.status_code == 401
-
-
 def test_calculate_returns_total_and_per_bucket_breakdown(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
 
     response = client.post(
         "/income/employment/calculate",
@@ -75,7 +69,7 @@ def test_calculate_returns_total_and_per_bucket_breakdown(client):
 
 
 def test_calculate_rejects_both_ay_toggles_set(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     body = _valid_body()
     body["overtime"]["annualize"] = True
     body["overtime"]["use_ytd"] = True
@@ -86,7 +80,7 @@ def test_calculate_rejects_both_ay_toggles_set(client):
 
 
 def test_calculate_rejects_neither_ay_toggle_set(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     body = _valid_body()
     body["overtime"]["use_ytd"] = False
 
@@ -96,7 +90,7 @@ def test_calculate_rejects_neither_ay_toggle_set(client):
 
 
 def test_calculate_rejects_malformed_body(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
 
     response = client.post(
         "/income/employment/calculate",
@@ -118,14 +112,8 @@ def _rental_schedule_e_body():
     }
 
 
-def test_rental_calculate_requires_authentication(client):
-    response = client.post("/income/rental/calculate", json=_rental_schedule_e_body())
-
-    assert response.status_code == 401
-
-
 def test_rental_calculate_returns_qualifying_and_breakdown(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
 
     response = client.post(
         "/income/rental/calculate",
@@ -141,7 +129,7 @@ def test_rental_calculate_returns_qualifying_and_breakdown(client):
 
 
 def test_rental_calculate_rejects_schedule_e_with_no_years(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     body = _rental_schedule_e_body()
     body["schedule_e_years"] = []
 
@@ -151,7 +139,7 @@ def test_rental_calculate_rejects_schedule_e_with_no_years(client):
 
 
 def test_rental_calculate_rejects_investment_without_pitia(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     body = _rental_schedule_e_body()
     body["property_class"] = "investment"
 
@@ -161,7 +149,7 @@ def test_rental_calculate_rejects_investment_without_pitia(client):
 
 
 def test_rental_calculate_rejects_lease_without_gross_rent(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     body = {"property_class": "primary_2_4_unit", "method": "lease"}
 
     response = client.post("/income/rental/calculate", json=body, headers=headers)

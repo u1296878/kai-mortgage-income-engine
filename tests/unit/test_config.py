@@ -9,13 +9,11 @@ def test_settings_constructs_without_env_file(monkeypatch):
     monkeypatch.setattr(config, "app_data_dir", lambda: data_dir)
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.delenv("STORAGE_PATH", raising=False)
-    monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
 
     settings = Settings(_env_file=None)
 
     assert settings.database_url == "sqlite:///C:/Users/example/AppData/Local/KaiMortgageIncomeEngine/local.db"
     assert settings.storage_path == data_dir / "storage"
-    assert settings.jwt_secret_key
     assert settings.app_port == 8000
 
 

@@ -2,10 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DocumentViewer } from "./DocumentViewer";
 
-vi.mock("../auth/token", () => ({
-  getStoredToken: () => "token-123",
-}));
-
 vi.mock("react-pdf", async () => {
   const React = await import("react");
   const Document = ({ children, onLoadSuccess }: { children: React.ReactNode; onLoadSuccess?: (args: { numPages: number }) => void }) => {

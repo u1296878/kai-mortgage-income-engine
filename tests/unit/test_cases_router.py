@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db
 from app.exceptions import CaseNotFound
 from app.main import app
 from app.services import case_service
@@ -16,11 +16,7 @@ def client():
     def override_db():
         yield "test-db"
 
-    def override_user():
-        return SimpleNamespace(id=str(uuid4()), role="broker")
-
     app.dependency_overrides[get_db] = override_db
-    app.dependency_overrides[get_current_user] = override_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -43,7 +39,7 @@ def test_create_case_returns_case_response(client, monkeypatch):
     monkeypatch.setattr(
         case_service,
         "create_case",
-        lambda db, title, broker_id, current_user: case,
+        lambda db, title, local_user_id: case,
     )
 
     response = client.post(

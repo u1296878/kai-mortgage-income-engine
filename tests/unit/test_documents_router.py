@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db
 from app.exceptions import DocumentNotFound, Unauthorized
 from app.main import app
 from app.services import document_service
@@ -16,11 +16,7 @@ def client():
     def override_db():
         yield "test-db"
 
-    def override_user():
-        return SimpleNamespace(id=str(uuid4()), role="broker")
-
     app.dependency_overrides[get_db] = override_db
-    app.dependency_overrides[get_current_user] = override_user
     yield TestClient(app)
     app.dependency_overrides.clear()
 

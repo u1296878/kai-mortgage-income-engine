@@ -17,6 +17,7 @@ class IncomeStream(Base):
         default=lambda: str(uuid4()),
     )
     case_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    # TODO step 2b: remove ownership plumbing.
     broker_id: Mapped[str] = mapped_column(String(36), nullable=False)
     borrower_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     name: Mapped[str] = mapped_column(String, nullable=False)

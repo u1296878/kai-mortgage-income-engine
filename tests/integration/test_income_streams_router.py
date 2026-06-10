@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import get_db
 from app.main import app
 from app.models.result import Result
-from tests.auth_helpers import auth_headers, auth_user
+from tests.local_user_helpers import local_headers, local_user
 
 
 @pytest.fixture
@@ -19,19 +19,8 @@ def client(test_db):
     app.dependency_overrides.clear()
 
 
-def test_create_income_stream_requires_auth(client):
-    case_id = uuid4()
-
-    response = client.post(
-        f"/cases/{case_id}/income-streams",
-        json={"name": "Employment", "stream_type": "employment"},
-    )
-
-    assert response.status_code == 401
-
-
 def test_broker_creates_income_stream_for_own_case(client):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     case = client.post("/cases", json={"title": "Case A"}, headers=headers)
 
     response = client.post(
@@ -45,66 +34,8 @@ def test_broker_creates_income_stream_for_own_case(client):
     assert response.json()["case_id"] == case.json()["id"]
 
 
-def test_broker_cannot_create_income_stream_for_other_case(client):
-    headers_a, _ = auth_user(client)
-    headers_b, _ = auth_user(client)
-    case_b = client.post("/cases", json={"title": "Case B"}, headers=headers_b)
-
-    response = client.post(
-        f"/cases/{case_b.json()['id']}/income-streams",
-        json={"name": "Blocked", "stream_type": "employment"},
-        headers=headers_a,
-    )
-
-    assert response.status_code == 404
-
-
-def test_manager_can_create_income_stream_for_broker_case(client):
-    manager = auth_headers(client, "manager")
-    broker_headers, broker_id = auth_user(client)
-    case = client.post(
-        "/cases",
-        json={"title": "Broker case", "broker_id": broker_id},
-        headers=manager,
-    )
-
-    response = client.post(
-        f"/cases/{case.json()['id']}/income-streams",
-        json={"name": "Manager stream", "stream_type": "other"},
-        headers=manager,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["case_id"] == case.json()["id"]
-    assert response.json()["broker_id"] == broker_id
-
-
-def test_broker_lists_only_own_case_streams(client):
-    headers_a, _ = auth_user(client)
-    headers_b, _ = auth_user(client)
-    case_a = client.post("/cases", json={"title": "A"}, headers=headers_a).json()
-    case_b = client.post("/cases", json={"title": "B"}, headers=headers_b).json()
-    client.post(
-        f"/cases/{case_a['id']}/income-streams",
-        json={"name": "A stream", "stream_type": "employment"},
-        headers=headers_a,
-    )
-    client.post(
-        f"/cases/{case_b['id']}/income-streams",
-        json={"name": "B stream", "stream_type": "employment"},
-        headers=headers_b,
-    )
-
-    own_response = client.get(f"/cases/{case_a['id']}/income-streams", headers=headers_a)
-    other_response = client.get(f"/cases/{case_b['id']}/income-streams", headers=headers_a)
-
-    assert own_response.status_code == 200
-    assert [stream["name"] for stream in own_response.json()] == ["A stream"]
-    assert other_response.status_code == 404
-
-
 def test_assign_and_unassign_result_from_income_stream(client, test_db):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     stream = client.post(
         f"/cases/{case['id']}/income-streams",
@@ -129,7 +60,7 @@ def test_assign_and_unassign_result_from_income_stream(client, test_db):
 
 
 def test_delete_income_stream_does_not_delete_result(client, test_db):
-    headers, _ = auth_user(client)
+    headers, _ = local_user(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     stream = client.post(
         f"/cases/{case['id']}/income-streams",

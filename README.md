@@ -1,13 +1,16 @@
 # Kai Mortgage Income Engine
 
-Kai Mortgage Income Engine is a local-first FastAPI backend for internal mortgage document processing. Brokers upload financial documents, the system stores them by case, creates processing jobs, extracts income fields, and returns reviewable income verification results with source references.
+Kai Mortgage Income Engine is a local desktop-style app for mortgage income document review. One mortgage professional runs it on their own computer, opens the browser at `localhost`, uploads financial documents, and reviews extracted income results with source references.
+
+There is no login, no cloud storage, and no multi-user role model on this branch. The local server stores data in SQLite and keeps uploaded files on the same machine.
 
 ## Requirements
 
 - Python 3.11+
 - pip
+- Node.js 20+ for the React frontend
 
-For PDF parsing:
+For PDF OCR:
 
 ```bash
 # macOS: brew install tesseract
@@ -26,17 +29,22 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+For local development and tests:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 ## Pull And Run
 
-The app is designed to start locally with no required environment variables:
+The backend starts with no required environment variables:
 
 ```bash
 python -m app
 ```
 
-This creates the local SQLite database and storage directory on first run, starts the
-in-process background worker, binds the server to `http://127.0.0.1:8000`, and opens
-the default browser.
+This creates the local SQLite database and storage directory on first run, starts the in-process background worker, binds the server to `http://127.0.0.1:8000`, and opens the default browser.
+
 For a headless run:
 
 ```bash
@@ -45,57 +53,35 @@ python -m app --no-browser
 
 Ollama setup for fully local extraction is coming in a later conversion step.
 
-## Local environment setup
+## Frontend
 
-The app reads `.env` automatically via pydantic-settings, but `.env` is optional for
-local boot. To create the first manager account on startup, set:
+The React frontend lives in `frontend/` and covers the local case workflow:
 
-    MANAGER_EMAIL=manager@example.com
-    MANAGER_PASSWORD=your-chosen-password
-
-## Running locally
-
-```bash
-python -m app
-```
-
-The background worker starts automatically with the app and polls for pending jobs.
-
-To run the worker as its own process:
-
-```bash
-python -m app.worker_main
-```
-
-## Frontend (Phase 5 foundation)
-
-A React frontend now lives in `frontend/` and covers:
-
-- `/login` for JWT sign-in
-- `/cases` for broker/manager case listing
-- `/cases/:caseId` for upload, job status, extracted fields, and case summary review
+- `/cases` for case listing and creation
+- `/cases/:caseId` for upload, job status, extracted fields, source review, and case summary
+- `/income/*` worksheet tools for employment, rental, non-taxable, and self-employment income
 
 Run the UI locally:
 
 ```bash
 cd frontend
-cp .env.example .env
 npm install
 npm run dev
 ```
 
 By default the Vite dev server proxies `/api/*` to `http://127.0.0.1:8000`.
-To point at Railway, set `VITE_API_PROXY_TARGET` to your Railway backend URL in `frontend/.env`.
 
 Frontend tests/build:
 
 ```bash
 cd frontend
-npm run test
+npm run test -- --run
 npm run build
 ```
 
-## Environment variables
+## Environment Variables
+
+All variables are optional for local boot.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -104,95 +90,69 @@ npm run build
 | `WORKER_POLL_INTERVAL` | `5` | Seconds between background worker job polls. |
 | `APP_PORT` | `8000` | Localhost port used by `python -m app`. |
 | `NO_BROWSER` | `false` | Set true to prevent `python -m app` from opening a browser. |
-| `JWT_SECRET_KEY` | local default | JWT signing secret. Temporary until auth is removed in the local conversion. |
-| `JWT_ALGORITHM` | `HS256` | JWT signing algorithm. |
-| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Access token lifetime in minutes. |
-| `MANAGER_EMAIL` | empty | Optional first-run manager seed email. |
-| `MANAGER_PASSWORD` | empty | Optional first-run manager seed password. |
 | `OCR_DPI` | `150` | DPI used when rasterizing PDF pages for OCR. |
 | `OCR_MAX_WORKERS` | `4` | Maximum process-pool workers for multi-page OCR. |
 | `OCR_PAGE_TIMEOUT_SECONDS` | `60` | Per-page OCR timeout before the job fails with a page-specific error. |
 | `OCR_THREAD_LIMIT` | `1` | Tesseract/OpenMP thread limit set inside OCR workers. |
 
-## Running tests
+## Running Tests
 
 ```bash
 pytest
 ```
 
-Expected test count after this step: 511.
+The current backend suite has 449 tests. The current frontend suite has 25 tests.
 
-## Authentication
+## Local Access Model
 
-Local JWT auth is available. Users register and log in at `/auth/register` and `/auth/login`, then call protected endpoints with `Authorization: Bearer <token>`. `/auth/me` returns the current authenticated user.
+The app has one local identity for legacy `broker_id` columns while the schema is being simplified. API endpoints are open on localhost and do not require `Authorization` headers. The frontend opens directly into the case workflow.
 
-Brokers can access only their own cases, documents, jobs, results, and summaries. Managers can access all records.
+## Income Streams
 
-Production note: manager provisioning is still a hardening item. Before production, manager account creation should move behind an admin-only or deployment-controlled flow.
+Results can be grouped into case-level income streams such as employment, rental, or bank-statement income. When a case has income streams, case summary totals use stream annual incomes instead of blindly summing every result. This avoids double-counting when multiple documents support the same income source.
 
-## Income streams
+Income stream matching endpoints provide deterministic suggestion previews and high-confidence auto-apply. Manual assignments are preserved by default, and same-case validation prevents cross-case linking.
 
-Results can be grouped into case-level income streams (for example employment, rental, or bank-statement income) through authenticated stream endpoints. When a case has income streams, case summary totals use stream annual incomes instead of blindly summing every result. This avoids double-counting when multiple documents support the same income source.
+Cases can include borrowers (`primary` and `co_borrower`), and income streams can be tied to specific borrowers.
 
-Income stream matching endpoints now provide deterministic suggestion previews and high-confidence auto-apply. Manual assignments are preserved by default, and same-case validation prevents cross-case linking.
-
-Cases can now include borrowers (`primary` and `co_borrower`), and income streams can be tied to specific borrowers. Borrower and stream assignment routes follow the same broker/manager scope rules and same-case validation used elsewhere in the pipeline.
-
-## Exercising the pipeline manually
+## Exercising The Pipeline Manually
 
 These examples assume the API is running at `http://127.0.0.1:8000`. `jq` is optional but makes response handling easier.
 
 ```bash
-curl -s -X POST http://127.0.0.1:8000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"broker@example.com","password":"secret-password"}' | jq
-
-TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"broker@example.com","password":"secret-password"}' \
-  | jq -r '.access_token')
-
 CASE_ID=$(curl -s -X POST http://127.0.0.1:8000/cases \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
   -d '{"title":"Johnson Refinance 2024"}' \
   | jq -r '.id')
 
 DOCUMENT_ID=$(curl -s -X POST http://127.0.0.1:8000/documents/upload \
-  -H "Authorization: Bearer $TOKEN" \
   -F "doc_type=w2" \
   -F "case_id=$CASE_ID" \
   -F "file=@./sample.pdf;type=application/pdf" \
   | jq -r '.id')
 
-JOB_ID=$(curl -s "http://127.0.0.1:8000/documents/$DOCUMENT_ID/job" \
-  -H "Authorization: Bearer $TOKEN" | jq -r '.id')
+JOB_ID=$(curl -s "http://127.0.0.1:8000/documents/$DOCUMENT_ID/job" | jq -r '.id')
 
-curl -s "http://127.0.0.1:8000/jobs/$JOB_ID" \
-  -H "Authorization: Bearer $TOKEN" | jq
+curl -s "http://127.0.0.1:8000/jobs/$JOB_ID" | jq
 
-# Wait a few seconds for the worker to process the pending job.
+# Wait a few seconds for the in-process worker to process the pending job.
 sleep 6
 
-curl -s "http://127.0.0.1:8000/jobs/$JOB_ID/result" \
-  -H "Authorization: Bearer $TOKEN" | jq
+curl -s "http://127.0.0.1:8000/jobs/$JOB_ID/result" | jq
 
-curl -s "http://127.0.0.1:8000/cases/$CASE_ID/summary" \
-  -H "Authorization: Bearer $TOKEN" | jq
+curl -s "http://127.0.0.1:8000/cases/$CASE_ID/summary" | jq
 ```
 
-## Pipeline overview
+## Pipeline Overview
 
 ```text
-upload -> store -> job created -> worker picks up -> extraction -> result saved -> broker retrieves
+upload -> store locally -> job created -> worker picks up -> extraction -> result saved -> review
 ```
 
-## Current limitations
+## Current Limitations
 
 - W-2, pay stub, tax return, bank statement, and rental-style `other` documents use real PDF parsing.
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
-- JWT auth and broker/manager resource scoping are implemented.
+- Local Ollama extraction wiring is still in progress.
 - Matching is rules-based and intentionally conservative; advanced borrower-level and underwriting logic is still future work.
-- Manager account provisioning is not production-hardened yet.
-- Railway deployment setup is not finalized yet; production environment variables and Postgres wiring still need to be applied.
-- File storage is local and must be swapped to S3 or Cloudflare R2 before production use.
+- Legacy `broker_id` columns remain temporarily and are populated with the fixed local identity.

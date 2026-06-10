@@ -14,7 +14,7 @@ from app.repositories import (
 )
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
-from tests.auth_helpers import auth_headers
+from tests.local_user_helpers import local_headers
 
 
 def test_tax_return_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
@@ -24,7 +24,7 @@ def test_tax_return_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    headers = auth_headers(client)
+    headers = local_headers(client)
 
     try:
         response = client.post(
@@ -61,7 +61,7 @@ def test_tax_return_upload_with_schedules_creates_reviewable_drafts(test_db, tmp
     app.dependency_overrides[get_db] = override_db
     monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
     client = TestClient(app)
-    headers = auth_headers(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Schedule E"}, headers=headers).json()
 
     try:

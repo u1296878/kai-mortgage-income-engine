@@ -4,9 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db
 from app.exceptions import JobAlreadyProcessed, JobNotFound
-from app.models.user import User
+from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.job import JobStatusResponse
 from app.services import job_service
 
@@ -17,10 +17,9 @@ router = APIRouter(tags=["jobs"])
 def get_job(
     job_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> JobStatusResponse:
     try:
-        return job_service.get_job_status(db, job_id, current_user)
+        return job_service.get_job_status(db, job_id, LOCAL_USER_ID)
     except JobNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -29,10 +28,9 @@ def get_job(
 def get_document_job(
     document_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> JobStatusResponse:
     try:
-        return job_service.get_job_for_document(db, document_id, current_user)
+        return job_service.get_job_for_document(db, document_id, LOCAL_USER_ID)
     except JobNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -41,10 +39,9 @@ def get_document_job(
 def retry_job(
     job_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
 ) -> JobStatusResponse:
     try:
-        return job_service.retry_job(db, job_id, current_user)
+        return job_service.retry_job(db, job_id, LOCAL_USER_ID)
     except JobNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except JobAlreadyProcessed as error:
