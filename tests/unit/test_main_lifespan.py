@@ -15,11 +15,12 @@ class FakeSession:
 
 
 @pytest.mark.asyncio
-async def test_lifespan_recovers_stuck_jobs_and_starts_worker(monkeypatch):
+async def test_lifespan_recovers_stuck_jobs_and_starts_worker(tmp_path, monkeypatch):
     calls = []
     db = FakeSession()
     monkeypatch.setattr(main_module, "init_db", lambda: calls.append("init_db"))
     monkeypatch.setattr(main_module, "SessionLocal", lambda: db)
+    monkeypatch.setattr(main_module.settings, "storage_path", tmp_path)
     monkeypatch.setattr(
         main_module,
         "seed_manager",
@@ -59,7 +60,7 @@ async def test_lifespan_recovers_stuck_jobs_and_starts_worker(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_lifespan_starts_and_stops_worker_thread(monkeypatch):
+async def test_lifespan_starts_and_stops_worker_thread(tmp_path, monkeypatch):
     started = Event()
     db = FakeSession()
 
@@ -76,6 +77,7 @@ async def test_lifespan_starts_and_stops_worker_thread(monkeypatch):
     monkeypatch.setattr(main_module, "start_worker", worker_runtime.start_worker)
     monkeypatch.setattr(main_module, "stop_worker", worker_runtime.stop_worker)
     monkeypatch.setattr(main_module.settings, "worker_poll_interval", 1)
+    monkeypatch.setattr(main_module.settings, "storage_path", tmp_path)
 
     async with main_module.lifespan(FastAPI()):
         assert started.wait(timeout=1)
@@ -86,3 +88,21 @@ async def test_lifespan_starts_and_stops_worker_thread(monkeypatch):
     thread = worker_runtime.get_worker_thread()
     assert thread is not None
     assert not thread.is_alive()
+
+
+@pytest.mark.asyncio
+async def test_lifespan_creates_storage_path(tmp_path, monkeypatch):
+    storage_path = tmp_path / "app-data" / "storage"
+    db = FakeSession()
+    monkeypatch.setattr(main_module, "init_db", lambda: None)
+    monkeypatch.setattr(main_module, "SessionLocal", lambda: db)
+    monkeypatch.setattr(main_module, "seed_manager", lambda session: None)
+    monkeypatch.setattr(main_module, "recover_stuck_jobs", lambda session: None)
+    monkeypatch.setattr(main_module, "start_worker", lambda db_factory, poll_interval: None)
+    monkeypatch.setattr(main_module, "stop_worker", lambda timeout: None)
+    monkeypatch.setattr(main_module.settings, "storage_path", storage_path)
+
+    async with main_module.lifespan(FastAPI()):
+        pass
+
+    assert storage_path.exists()

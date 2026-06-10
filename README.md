@@ -34,8 +34,9 @@ The app is designed to start locally with no required environment variables:
 python -m app
 ```
 
-This creates the local SQLite database on first run, starts the in-process background
-worker, binds the server to `http://127.0.0.1:8000`, and opens the default browser.
+This creates the local SQLite database and storage directory on first run, starts the
+in-process background worker, binds the server to `http://127.0.0.1:8000`, and opens
+the default browser.
 For a headless run:
 
 ```bash
@@ -98,8 +99,8 @@ npm run build
 
 | Variable | Default | Description |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///local.db` | SQLAlchemy database URL used by the app. |
-| `STORAGE_PATH` | `./storage` | Local folder where uploaded documents are stored. |
+| `DATABASE_URL` | OS app-data SQLite file | SQLAlchemy database URL used by the app. |
+| `STORAGE_PATH` | OS app-data `storage/` folder | Local folder where uploaded documents are stored. |
 | `WORKER_POLL_INTERVAL` | `5` | Seconds between background worker job polls. |
 | `APP_PORT` | `8000` | Localhost port used by `python -m app`. |
 | `NO_BROWSER` | `false` | Set true to prevent `python -m app` from opening a browser. |
