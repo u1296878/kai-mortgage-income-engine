@@ -1,6 +1,4 @@
-import asyncio
-from contextlib import asynccontextmanager, suppress
-from threading import Event
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,8 +23,8 @@ from app.routers.self_employment_calculations import (
     router as self_employment_calculations_router,
 )
 from app.seed import seed_manager
+from app.runtime.worker_runtime import start_worker, stop_worker
 from app.services.job_service import recover_stuck_jobs
-from app.workers.job_worker import run_worker
 
 
 @asynccontextmanager
@@ -38,21 +36,11 @@ async def lifespan(_app: FastAPI):
         recover_stuck_jobs(seed_db)
     finally:
         seed_db.close()
-    stop_event = Event()
-    loop = asyncio.get_running_loop()
-    worker = loop.run_in_executor(
-        None,
-        run_worker,
-        SessionLocal,
-        settings.worker_poll_interval,
-        stop_event,
-    )
+    start_worker(SessionLocal, settings.worker_poll_interval)
     try:
         yield
     finally:
-        stop_event.set()
-        with suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(worker, timeout=settings.worker_poll_interval + 2)
+        stop_worker(settings.worker_poll_interval + 2)
 
 
 app = FastAPI(title="Kai Mortgage Income Engine", lifespan=lifespan)
