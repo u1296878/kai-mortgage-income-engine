@@ -22,66 +22,66 @@ def make_field(field: str = "w2_wages", value: float = 85000.00) -> ExtractedFie
 
 
 def test_summary_adds_saved_employment_calculations(test_db):
-    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
-    test_db.add(_employment_calc(case_id, broker_id, 84000.00))
+    case_id = _case_with_result(test_db, 85000.00)
+    test_db.add(_employment_calc(case_id, 84000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 169000.00
     assert len(summary.employment_calculations) == 1
 
 
 def test_summary_adds_saved_rental_calculations(test_db):
-    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
-    test_db.add(_rental_calc(case_id, broker_id, 12000.00))
+    case_id = _case_with_result(test_db, 85000.00)
+    test_db.add(_rental_calc(case_id, 12000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 97000.00
     assert len(summary.rental_calculations) == 1
 
 
 def test_summary_negative_rental_calculation_reduces_total(test_db):
-    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
-    test_db.add(_rental_calc(case_id, broker_id, -18000.00))
+    case_id = _case_with_result(test_db, 85000.00)
+    test_db.add(_rental_calc(case_id, -18000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 67000.00
 
 
 def test_summary_excludes_rental_calculations_marked_not_included(test_db):
-    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
-    rental = _rental_calc(case_id, broker_id, 12000.00)
+    case_id = _case_with_result(test_db, 85000.00)
+    rental = _rental_calc(case_id, 12000.00)
     rental.included = False
     test_db.add(rental)
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 85000.00
     assert summary.rental_calculations[0].included is False
 
 def test_summary_adds_saved_nontaxable_calculations(test_db):
-    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
-    test_db.add(_nontaxable_calc(case_id, broker_id, 12450.00))
+    case_id = _case_with_result(test_db, 85000.00)
+    test_db.add(_nontaxable_calc(case_id, 12450.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 97450.00
     assert len(summary.nontaxable_calculations) == 1
 
 
 def test_summary_negative_self_employment_calculation_reduces_total(test_db):
-    case_id, broker_id, local_user = _case_with_result(test_db, 85000.00)
-    test_db.add(_self_employment_calc(case_id, broker_id, -12000.00))
+    case_id = _case_with_result(test_db, 85000.00)
+    test_db.add(_self_employment_calc(case_id, -12000.00))
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 73000.00
     assert len(summary.self_employment_calculations) == 1
@@ -89,17 +89,15 @@ def test_summary_negative_self_employment_calculation_reduces_total(test_db):
 
 def _case_with_result(test_db, annual_income):
     case_id = uuid4()
-    local_user = make_user()
-    broker_id = local_user.id
-    test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Add-on"))
+    test_db.add(Case(id=str(case_id), title="Add-on"))
     test_db.commit()
     result_service.save_extraction_result(
         test_db, uuid4(), uuid4(), case_id, "w2", [make_field(value=annual_income)]
     )
-    return case_id, broker_id, local_user
+    return case_id
 
 
-def _employment_calc(case_id, broker_id, annual_income):
+def _employment_calc(case_id, annual_income):
     monthly = round(annual_income / 12, 2)
     bucket = {"qualifying_monthly": 0.0, "rate_of_pay_monthly": 0.0, "periods": []}
     breakdown = {
@@ -112,7 +110,6 @@ def _employment_calc(case_id, broker_id, annual_income):
     }
     return EmploymentCalculation(
         case_id=str(case_id),
-        broker_id=str(broker_id),
         label="Acme Corp",
         inputs={},
         total_monthly=monthly,
@@ -121,11 +118,10 @@ def _employment_calc(case_id, broker_id, annual_income):
     )
 
 
-def _rental_calc(case_id, broker_id, annual_income):
+def _rental_calc(case_id, annual_income):
     monthly = round(annual_income / 12, 2)
     return RentalCalculation(
         case_id=str(case_id),
-        broker_id=str(broker_id),
         label="123 Main St",
         inputs={},
         qualifying_monthly=monthly,
@@ -139,11 +135,10 @@ def _rental_calc(case_id, broker_id, annual_income):
     )
 
 
-def _nontaxable_calc(case_id, broker_id, annual_income):
+def _nontaxable_calc(case_id, annual_income):
     monthly = round(annual_income / 12, 2)
     return NonTaxableCalculation(
         case_id=str(case_id),
-        broker_id=str(broker_id),
         label="SSI",
         kind="social_security",
         inputs={},
@@ -153,11 +148,10 @@ def _nontaxable_calc(case_id, broker_id, annual_income):
     )
 
 
-def _self_employment_calc(case_id, broker_id, annual_income):
+def _self_employment_calc(case_id, annual_income):
     monthly = round(annual_income / 12, 2)
     return SelfEmploymentCalculation(
         case_id=str(case_id),
-        broker_id=str(broker_id),
         label="Schedule E royalty loss",
         kind="schedule_e_royalty",
         inputs={},

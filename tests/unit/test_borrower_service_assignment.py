@@ -9,10 +9,9 @@ from tests.unit.income_stream_test_helpers import make_case, make_user
 
 
 def test_assign_stream_to_borrower_requires_same_case(test_db):
-    broker_id = uuid4()
-    broker = make_user(broker_id)
-    case_a = make_case(broker_id)
-    case_b = make_case(broker_id)
+    user = make_user()
+    case_a = make_case()
+    case_b = make_case()
     test_db.add_all([case_a, case_b])
     test_db.commit()
     borrower = borrower_service.create_borrower(
@@ -21,7 +20,6 @@ def test_assign_stream_to_borrower_requires_same_case(test_db):
         "Case",
         "A",
         "primary",
-        broker,
     )
     stream = income_stream_service.create_income_stream(
         test_db,
@@ -29,7 +27,6 @@ def test_assign_stream_to_borrower_requires_same_case(test_db):
         "Case B stream",
         IncomeStreamType.employment.value,
         None,
-        broker,
     )
 
     with pytest.raises(InvalidBorrowerAssignment):
@@ -37,15 +34,13 @@ def test_assign_stream_to_borrower_requires_same_case(test_db):
             test_db,
             UUID(borrower.id),
             UUID(stream.id),
-            broker,
         )
 
 
 def test_same_case_validation_blocks_cross_case_assignment(test_db):
-    broker_id = uuid4()
-    broker = make_user(broker_id)
-    case_a = make_case(broker_id)
-    case_b = make_case(broker_id)
+    user = make_user()
+    case_a = make_case()
+    case_b = make_case()
     test_db.add_all([case_a, case_b])
     test_db.commit()
     borrower = borrower_service.create_borrower(
@@ -54,7 +49,6 @@ def test_same_case_validation_blocks_cross_case_assignment(test_db):
             "Manager",
             "Check",
             "primary",
-            broker,
     )
     stream = income_stream_service.create_income_stream(
         test_db,
@@ -62,7 +56,6 @@ def test_same_case_validation_blocks_cross_case_assignment(test_db):
         "Case B stream",
         IncomeStreamType.employment.value,
         None,
-        broker,
     )
 
     with pytest.raises(InvalidBorrowerAssignment):
@@ -70,14 +63,12 @@ def test_same_case_validation_blocks_cross_case_assignment(test_db):
             test_db,
             UUID(borrower.id),
             UUID(stream.id),
-            broker,
         )
 
 
 def test_unassign_stream_from_borrower_preserves_stream(test_db):
-    broker_id = uuid4()
-    broker = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     test_db.add(case)
     test_db.commit()
     borrower = borrower_service.create_borrower(
@@ -86,7 +77,6 @@ def test_unassign_stream_from_borrower_preserves_stream(test_db):
         "Clear",
         "Borrower",
         "primary",
-        broker,
     )
     stream = income_stream_service.create_income_stream(
         test_db,
@@ -94,20 +84,17 @@ def test_unassign_stream_from_borrower_preserves_stream(test_db):
         "Employment",
         IncomeStreamType.employment.value,
         None,
-        broker,
     )
     borrower_service.assign_income_stream_to_borrower(
         test_db,
         UUID(borrower.id),
         UUID(stream.id),
-        broker,
     )
 
     cleared = borrower_service.clear_income_stream_borrower(
         test_db,
         UUID(borrower.id),
         UUID(stream.id),
-        broker,
     )
 
     assert cleared.id == stream.id

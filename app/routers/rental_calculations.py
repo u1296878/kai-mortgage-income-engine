@@ -10,7 +10,6 @@ from app.exceptions import (
     InvalidRentalInput,
     RentalCalculationNotFound,
 )
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.rental_inputs import (
     RentalCalculationCreate,
     RentalCalculationUpdate,
@@ -41,7 +40,6 @@ def create_rental_calculation(
             property_input,
             payload.borrower_id,
             payload.label,
-            LOCAL_USER_ID,
             payload.included,
         )
     except CaseNotFound as error:
@@ -65,7 +63,7 @@ def update_rental_calculation(
             if payload.included is None:
                 raise HTTPException(status_code=422, detail="No rental calculation updates provided")
             return rental_calculation_service.update_calculation_included(
-                db, case_id, calc_id, payload.included, LOCAL_USER_ID
+                db, case_id, calc_id, payload.included
             )
         property_input = RentalProperty.model_validate(
             payload.model_dump(
@@ -81,7 +79,6 @@ def update_rental_calculation(
             payload.borrower_id,
             payload.label,
             payload.included,
-            LOCAL_USER_ID,
         )
     except (CaseNotFound, RentalCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -101,7 +98,6 @@ def list_rental_calculations(
         return rental_calculation_service.list_calculations_by_case(
             db,
             case_id,
-            LOCAL_USER_ID,
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -121,7 +117,6 @@ def get_rental_calculation(
             db,
             case_id,
             calc_id,
-            LOCAL_USER_ID,
         )
     except (CaseNotFound, RentalCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -141,7 +136,6 @@ def delete_rental_calculation(
             db,
             case_id,
             calc_id,
-            LOCAL_USER_ID,
         )
     except (CaseNotFound, RentalCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

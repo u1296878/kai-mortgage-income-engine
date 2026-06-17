@@ -24,12 +24,8 @@ def get_document(db: Session, document_id: UUID) -> Document:
 def list_documents_by_case(
     db: Session,
     case_id: UUID,
-    broker_id: UUID | None = None,
 ) -> list[Document]:
     statement = select(Document).where(Document.case_id == str(case_id))
-    # TODO step 2b: remove ownership plumbing.
-    if broker_id is not None:
-        statement = statement.where(Document.broker_id == str(broker_id))
     return list(db.scalars(statement).all())
 
 

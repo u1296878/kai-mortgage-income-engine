@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -7,7 +5,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.models.income_stream import IncomeStream
 from app.models.result import Result
-from tests.local_user_helpers import local_headers, local_user
+from tests.local_user_helpers import local_headers
 from tests.income_stream_match_helpers import seed_result, w2_fields
 
 
@@ -22,11 +20,10 @@ def client(test_db):
 
 
 def test_high_confidence_matches_can_be_applied(client, test_db):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Apply"}, headers=headers).json()
     stream = IncomeStream(
         case_id=case["id"],
-        broker_id=case["broker_id"],
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -50,17 +47,16 @@ def test_apply_matches_does_not_cross_case_boundaries(client, test_db):
     headers = local_headers(client)
     case_a = client.post(
         "/cases",
-        json={"title": "Case A", "broker_id": str(uuid4())},
+        json={"title": "Case A"},
         headers=headers,
     ).json()
     case_b = client.post(
         "/cases",
-        json={"title": "Case B", "broker_id": str(uuid4())},
+        json={"title": "Case B"},
         headers=headers,
     ).json()
     stream_b = IncomeStream(
         case_id=case_b["id"],
-        broker_id=case_b["broker_id"],
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -80,11 +76,10 @@ def test_apply_matches_does_not_cross_case_boundaries(client, test_db):
 
 
 def test_manual_assignment_is_preserved_when_matching_runs(client, test_db):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Manual"}, headers=headers).json()
     stream = IncomeStream(
         case_id=case["id"],
-        broker_id=case["broker_id"],
         name="Employment: Acme Corp",
         stream_type="employment",
     )

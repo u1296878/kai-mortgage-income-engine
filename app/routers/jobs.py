@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
 from app.exceptions import JobAlreadyProcessed, JobNotFound
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.job import JobStatusResponse
 from app.services import job_service
 
@@ -19,7 +18,7 @@ def get_job(
     db: Annotated[Session, Depends(get_db)],
 ) -> JobStatusResponse:
     try:
-        return job_service.get_job_status(db, job_id, LOCAL_USER_ID)
+        return job_service.get_job_status(db, job_id)
     except JobNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -30,7 +29,7 @@ def get_document_job(
     db: Annotated[Session, Depends(get_db)],
 ) -> JobStatusResponse:
     try:
-        return job_service.get_job_for_document(db, document_id, LOCAL_USER_ID)
+        return job_service.get_job_for_document(db, document_id)
     except JobNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -41,7 +40,7 @@ def retry_job(
     db: Annotated[Session, Depends(get_db)],
 ) -> JobStatusResponse:
     try:
-        return job_service.retry_job(db, job_id, LOCAL_USER_ID)
+        return job_service.retry_job(db, job_id)
     except JobNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except JobAlreadyProcessed as error:

@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
@@ -9,7 +7,7 @@ from app.workers.job_worker import process_next_job
 from tests.local_user_helpers import local_headers
 
 
-def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatch):
+def test_user_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatch):
     def override_db():
         yield test_db
 
@@ -21,7 +19,7 @@ def test_broker_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatc
     try:
         case_response = client.post(
             "/cases",
-            json={"title": "Johnson Refinance 2024", "broker_id": str(uuid4())},
+            json={"title": "Johnson Refinance 2024"},
             headers=headers,
         )
         assert case_response.status_code == 200

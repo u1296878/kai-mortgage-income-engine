@@ -8,9 +8,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
-from app.exceptions import DocumentNotFound, Unauthorized
+from app.exceptions import DocumentNotFound
 from app.models.document_type import DocumentType
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.document import DocumentCaseLink, DocumentResponse
 from app.services import document_service
 
@@ -25,7 +24,7 @@ def upload_document(
     case_id: Annotated[UUID | None, Form()] = None,
 ) -> DocumentResponse:
     try:
-        return document_service.upload_document(db, file, doc_type, LOCAL_USER_ID, case_id)
+        return document_service.upload_document(db, file, doc_type, case_id)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -36,7 +35,7 @@ def get_document(
     db: Annotated[Session, Depends(get_db)],
 ) -> DocumentResponse:
     try:
-        return document_service.get_document(db, document_id, LOCAL_USER_ID)
+        return document_service.get_document(db, document_id)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -47,11 +46,9 @@ def get_document_file(
     db: Annotated[Session, Depends(get_db)],
 ) -> StreamingResponse:
     try:
-        document, file_path = document_service.get_document_file(db, document_id, LOCAL_USER_ID)
+        document, file_path = document_service.get_document_file(db, document_id)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-    except Unauthorized as error:
-        raise HTTPException(status_code=403, detail=str(error)) from error
 
     content_type, _ = mimetypes.guess_type(document.filename)
     return StreamingResponse(
@@ -71,7 +68,6 @@ def link_document_to_case(
             db,
             document_id,
             link.case_id,
-            LOCAL_USER_ID,
         )
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -83,7 +79,7 @@ def unlink_document_from_case(
     db: Annotated[Session, Depends(get_db)],
 ) -> DocumentResponse:
     try:
-        return document_service.unlink_document_from_case(db, document_id, LOCAL_USER_ID)
+        return document_service.unlink_document_from_case(db, document_id)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -94,7 +90,7 @@ def delete_document(
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
     try:
-        document_service.delete_document(db, document_id, LOCAL_USER_ID)
+        document_service.delete_document(db, document_id)
     except DocumentNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return Response(status_code=204)

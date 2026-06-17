@@ -24,7 +24,6 @@ class BorrowerResponse(BaseModel):
 
     id: UUID
     case_id: UUID
-    broker_id: UUID
     first_name: str
     last_name: str
     role: RoleValue

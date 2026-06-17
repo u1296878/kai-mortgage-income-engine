@@ -24,7 +24,6 @@ def client():
 def make_case(**overrides):
     values = {
         "id": str(uuid4()),
-        "broker_id": str(uuid4()),
         "title": "Johnson Refinance 2024",
         "status": "open",
         "created_at": datetime(2026, 5, 21, 12, 0, 0),
@@ -36,16 +35,9 @@ def make_case(**overrides):
 
 def test_create_case_returns_case_response(client, monkeypatch):
     case = make_case()
-    monkeypatch.setattr(
-        case_service,
-        "create_case",
-        lambda db, title, local_user_id: case,
-    )
+    monkeypatch.setattr(case_service, "create_case", lambda db, title: case)
 
-    response = client.post(
-        "/cases",
-        json={"title": case.title, "broker_id": case.broker_id},
-    )
+    response = client.post("/cases", json={"title": case.title})
 
     assert response.status_code == 200
     assert response.json()["title"] == case.title
@@ -53,11 +45,7 @@ def test_create_case_returns_case_response(client, monkeypatch):
 
 def test_list_cases_returns_list(client, monkeypatch):
     case = make_case()
-    monkeypatch.setattr(
-        case_service,
-        "list_cases",
-        lambda db, current_user, broker_id=None: [case],
-    )
+    monkeypatch.setattr(case_service, "list_cases", lambda db: [case])
 
     response = client.get("/cases")
 
@@ -67,7 +55,7 @@ def test_list_cases_returns_list(client, monkeypatch):
 
 def test_get_case_returns_case(client, monkeypatch):
     case = make_case()
-    monkeypatch.setattr(case_service, "get_case", lambda db, case_id, current_user: case)
+    monkeypatch.setattr(case_service, "get_case", lambda db, case_id: case)
 
     response = client.get(f"/cases/{case.id}")
 
@@ -76,7 +64,7 @@ def test_get_case_returns_case(client, monkeypatch):
 
 
 def test_get_missing_case_returns_404(client, monkeypatch):
-    def raise_not_found(db, case_id, current_user):
+    def raise_not_found(db, case_id):
         raise CaseNotFound("Case not found")
 
     case_id = uuid4()
@@ -96,11 +84,7 @@ def test_get_case_with_documents_returns_documents(client, monkeypatch):
         uploaded_at=datetime(2026, 5, 21, 12, 0, 0),
     )
     case = make_case(documents=[document])
-    monkeypatch.setattr(
-        case_service,
-        "get_case_with_documents",
-        lambda db, case_id, current_user, broker_id=None: case,
-    )
+    monkeypatch.setattr(case_service, "get_case_with_documents", lambda db, case_id: case)
 
     response = client.get(f"/cases/{case.id}/documents")
 
@@ -113,7 +97,7 @@ def test_patch_case_returns_updated_case(client, monkeypatch):
     monkeypatch.setattr(
         case_service,
         "update_case",
-        lambda db, case_id, updates, current_user: case,
+        lambda db, case_id, updates: case,
     )
 
     response = client.patch(f"/cases/{case.id}", json={"title": "Updated Title"})
@@ -124,11 +108,7 @@ def test_patch_case_returns_updated_case(client, monkeypatch):
 
 def test_delete_case_returns_204(client, monkeypatch):
     case_id = uuid4()
-    monkeypatch.setattr(
-        case_service,
-        "delete_case",
-        lambda db, case_id, current_user: None,
-    )
+    monkeypatch.setattr(case_service, "delete_case", lambda db, case_id: None)
 
     response = client.delete(f"/cases/{case_id}")
 

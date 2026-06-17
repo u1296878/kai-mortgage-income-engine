@@ -45,7 +45,6 @@ export type DocumentType =
 
 export interface CaseResponse {
   id: string;
-  broker_id: string;
   title: string;
   status: CaseStatus;
   created_at: string;
@@ -106,7 +105,6 @@ export interface ResultResponse {
 export interface BorrowerResponse {
   id: string;
   case_id: string;
-  broker_id: string;
   first_name: string;
   last_name: string;
   role: "primary" | "co_borrower";
@@ -117,7 +115,6 @@ export interface BorrowerResponse {
 export interface IncomeStreamResponse {
   id: string;
   case_id: string;
-  broker_id: string;
   borrower_id: string | null;
   name: string;
   stream_type: string;

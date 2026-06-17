@@ -11,7 +11,6 @@ from app.exceptions import (
     IncomeStreamNotFound,
     InvalidBorrowerAssignment,
 )
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.borrower import BorrowerCreate, BorrowerResponse, BorrowerUpdate
 from app.schemas.income_stream import IncomeStreamResponse
 from app.services import borrower_service
@@ -32,7 +31,6 @@ def create_borrower(
             payload.first_name,
             payload.last_name,
             payload.role,
-            LOCAL_USER_ID,
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -44,7 +42,7 @@ def list_borrowers(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[BorrowerResponse]:
     try:
-        return borrower_service.list_borrowers_by_case(db, case_id, LOCAL_USER_ID)
+        return borrower_service.list_borrowers_by_case(db, case_id)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -55,7 +53,7 @@ def get_borrower(
     db: Annotated[Session, Depends(get_db)],
 ) -> BorrowerResponse:
     try:
-        return borrower_service.get_borrower(db, borrower_id, LOCAL_USER_ID)
+        return borrower_service.get_borrower(db, borrower_id)
     except BorrowerNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -68,7 +66,7 @@ def update_borrower(
 ) -> BorrowerResponse:
     try:
         updates = payload.model_dump(exclude_none=True)
-        return borrower_service.update_borrower(db, borrower_id, updates, LOCAL_USER_ID)
+        return borrower_service.update_borrower(db, borrower_id, updates)
     except BorrowerNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -79,7 +77,7 @@ def delete_borrower(
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
     try:
-        borrower_service.delete_borrower(db, borrower_id, LOCAL_USER_ID)
+        borrower_service.delete_borrower(db, borrower_id)
     except BorrowerNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except InvalidBorrowerAssignment as error:
@@ -101,7 +99,6 @@ def assign_income_stream_to_borrower(
             db,
             borrower_id,
             stream_id,
-            LOCAL_USER_ID,
         )
     except (BorrowerNotFound, IncomeStreamNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -123,7 +120,6 @@ def clear_income_stream_borrower(
             db,
             borrower_id,
             stream_id,
-            LOCAL_USER_ID,
         )
     except (BorrowerNotFound, IncomeStreamNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

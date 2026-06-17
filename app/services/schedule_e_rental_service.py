@@ -15,7 +15,6 @@ PROPERTY_KEYS = ("a", "b", "c")
 def create_drafts_from_fields(
     db: Session,
     case_id: UUID,
-    broker_id: UUID,
     document_id: UUID,
     fields: list[ExtractedField],
 ) -> list[RentalCalculation]:
@@ -31,7 +30,6 @@ def create_drafts_from_fields(
         result = compute_rental_income(property_input)
         calculation = RentalCalculation(
             case_id=str(case_id),
-            broker_id=str(broker_id),
             label=_label(by_name, key),
             inputs=property_input.model_dump(mode="json"),
             qualifying_monthly=result.qualifying_monthly,

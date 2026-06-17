@@ -8,9 +8,8 @@ from app.services import income_stream_match_service, result_service
 
 
 def test_case_summary_does_not_double_count_after_auto_matching(test_db):
-    broker_id = uuid4()
-    broker = make_user(broker_id)
-    case = Case(id=str(uuid4()), broker_id=str(broker_id), title="Auto match")
+    user = make_user()
+    case = Case(id=str(uuid4()), title="Auto match")
     test_db.add(case)
     test_db.commit()
     first = _employment_result(case.id, 85000.0, "high", "Acme Corp")
@@ -18,8 +17,8 @@ def test_case_summary_does_not_double_count_after_auto_matching(test_db):
     test_db.add_all([first, second])
     test_db.commit()
 
-    income_stream_match_service.apply_case_matches(test_db, case.id, broker)
-    summary = result_service.get_case_summary(test_db, case.id, broker)
+    income_stream_match_service.apply_case_matches(test_db, case.id)
+    summary = result_service.get_case_summary(test_db, case.id)
 
     assert summary.total_annual_income == 85000.0
 

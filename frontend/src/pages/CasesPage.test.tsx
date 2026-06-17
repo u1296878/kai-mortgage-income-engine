@@ -21,7 +21,6 @@ describe("CasesPage", () => {
     caseApi.listCases.mockResolvedValue([
       {
         id: "case-1",
-        broker_id: "broker-1",
         title: "Johnson Refi",
         status: "open",
         created_at: "2026-05-31T00:00:00Z",
@@ -30,7 +29,6 @@ describe("CasesPage", () => {
     ]);
     caseApi.createCase.mockResolvedValue({
       id: "case-2",
-      broker_id: "broker-1",
       title: "New purchase",
       status: "open",
       created_at: "2026-05-31T00:00:00Z",
@@ -46,7 +44,6 @@ describe("CasesPage", () => {
     );
 
     expect(await screen.findByText("Johnson Refi")).toBeInTheDocument();
-    expect(screen.queryByText("Broker ID: broker-1")).not.toBeInTheDocument();
   });
 
   it("creates a new case from the form", async () => {

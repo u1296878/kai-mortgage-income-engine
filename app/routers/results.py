@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
 from app.exceptions import CaseNotFound, ResultNotFound
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.result import CaseSummaryResponse, ResultResponse
 from app.services import result_service
 
@@ -19,7 +18,7 @@ def get_result(
     db: Annotated[Session, Depends(get_db)],
 ) -> ResultResponse:
     try:
-        return result_service.get_result(db, result_id, LOCAL_USER_ID)
+        return result_service.get_result(db, result_id)
     except ResultNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -30,7 +29,7 @@ def get_job_result(
     db: Annotated[Session, Depends(get_db)],
 ) -> ResultResponse:
     try:
-        return result_service.get_result_for_job(db, job_id, LOCAL_USER_ID)
+        return result_service.get_result_for_job(db, job_id)
     except ResultNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -41,6 +40,6 @@ def get_case_summary(
     db: Annotated[Session, Depends(get_db)],
 ) -> CaseSummaryResponse:
     try:
-        return result_service.get_case_summary(db, case_id, LOCAL_USER_ID)
+        return result_service.get_case_summary(db, case_id)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

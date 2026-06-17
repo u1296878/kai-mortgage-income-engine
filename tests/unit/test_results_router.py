@@ -55,7 +55,7 @@ def test_get_result_returns_result_response(client, monkeypatch):
     monkeypatch.setattr(
         result_service,
         "get_result",
-        lambda db, result_id, current_user: result,
+        lambda db, result_id: result,
     )
 
     response = client.get(f"/results/{result.id}")
@@ -65,7 +65,7 @@ def test_get_result_returns_result_response(client, monkeypatch):
 
 
 def test_get_missing_result_returns_404(client, monkeypatch):
-    def raise_not_found(db, result_id, current_user):
+    def raise_not_found(db, result_id):
         raise ResultNotFound("Result not found")
 
     result_id = uuid4()
@@ -90,7 +90,7 @@ def test_get_case_summary_returns_summary(client, monkeypatch):
     monkeypatch.setattr(
         result_service,
         "get_case_summary",
-        lambda db, case_id, current_user: summary,
+        lambda db, case_id: summary,
     )
 
     response = client.get(f"/cases/{case_id}/summary")

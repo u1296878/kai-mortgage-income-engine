@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.local_user_helpers import local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def _payload(label="Acme Corp"):
 
 
 def test_saved_calculation_appears_in_case_summary_total(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
 
     created = client.post(
@@ -72,7 +72,7 @@ def test_saved_calculation_appears_in_case_summary_total(client):
 
 
 def test_invalid_ay_toggle_returns_422(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     payload = _payload()
     payload["overtime"]["annualize"] = True
@@ -88,7 +88,7 @@ def test_invalid_ay_toggle_returns_422(client):
 
 
 def test_delete_removes_calculation(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     created = client.post(
         f"/cases/{case['id']}/employment-calculations",

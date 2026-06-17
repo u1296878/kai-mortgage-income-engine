@@ -25,12 +25,8 @@ def find_case(db: Session, case_id: UUID) -> Case | None:
     return db.get(Case, str(case_id))
 
 
-def list_cases(db: Session, broker_id: UUID | None = None) -> list[Case]:
-    statement = select(Case)
-    # TODO step 2b: remove ownership plumbing.
-    if broker_id is not None:
-        statement = statement.where(Case.broker_id == str(broker_id))
-    return list(db.scalars(statement).all())
+def list_cases(db: Session) -> list[Case]:
+    return list(db.scalars(select(Case)).all())
 
 
 def update_case(db: Session, case_id: UUID, updates: dict) -> Case:

@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import get_db
 from app.main import app
 from app.models.result import Result
-from tests.local_user_helpers import local_headers, local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -19,8 +19,8 @@ def client(test_db):
     app.dependency_overrides.clear()
 
 
-def test_broker_creates_income_stream_for_own_case(client):
-    headers, _ = local_user(client)
+def test_user_creates_income_stream_for_own_case(client):
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case A"}, headers=headers)
 
     response = client.post(
@@ -35,7 +35,7 @@ def test_broker_creates_income_stream_for_own_case(client):
 
 
 def test_assign_and_unassign_result_from_income_stream(client, test_db):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     stream = client.post(
         f"/cases/{case['id']}/income-streams",
@@ -60,7 +60,7 @@ def test_assign_and_unassign_result_from_income_stream(client, test_db):
 
 
 def test_delete_income_stream_does_not_delete_result(client, test_db):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     stream = client.post(
         f"/cases/{case['id']}/income-streams",

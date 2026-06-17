@@ -21,15 +21,13 @@ def test_build_property_input_uses_addbacks_and_fair_rental_months():
 
 def test_create_drafts_persists_qualifying_rental_calculation(test_db):
     case_id = uuid4()
-    broker_id = uuid4()
     document_id = uuid4()
-    test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Schedule E"))
+    test_db.add(Case(id=str(case_id), title="Schedule E"))
     test_db.commit()
 
     calculations = schedule_e_rental_service.create_drafts_from_fields(
         test_db,
         case_id,
-        broker_id,
         document_id,
         property_fields("a"),
     )
@@ -43,16 +41,15 @@ def test_create_drafts_persists_qualifying_rental_calculation(test_db):
 
 def test_create_drafts_is_idempotent_for_same_document_property(test_db):
     case_id = uuid4()
-    broker_id = uuid4()
     document_id = uuid4()
-    test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Schedule E"))
+    test_db.add(Case(id=str(case_id), title="Schedule E"))
     test_db.commit()
 
     first = schedule_e_rental_service.create_drafts_from_fields(
-        test_db, case_id, broker_id, document_id, property_fields("a")
+        test_db, case_id, document_id, property_fields("a")
     )
     second = schedule_e_rental_service.create_drafts_from_fields(
-        test_db, case_id, broker_id, document_id, property_fields("a")
+        test_db, case_id, document_id, property_fields("a")
     )
 
     assert len(first) == 1

@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
-from app.exceptions import DocumentNotFound, Unauthorized
+from app.exceptions import DocumentNotFound
 from app.main import app
 from app.services import document_service
 
@@ -39,7 +39,7 @@ def test_upload_endpoint_returns_document_response(client, monkeypatch):
     monkeypatch.setattr(
         document_service,
         "upload_document",
-        lambda db, file, doc_type, current_user, case_id=None: document,
+        lambda db, file, doc_type, case_id=None: document,
     )
 
     response = client.post(
@@ -68,7 +68,7 @@ def test_get_document_returns_document(client, monkeypatch):
     monkeypatch.setattr(
         document_service,
         "get_document",
-        lambda db, document_id, current_user: document,
+        lambda db, document_id: document,
     )
 
     response = client.get(f"/documents/{document.id}")
@@ -79,7 +79,7 @@ def test_get_document_returns_document(client, monkeypatch):
 
 
 def test_get_missing_document_returns_404(client, monkeypatch):
-    def raise_not_found(db, document_id, current_user):
+    def raise_not_found(db, document_id):
         raise DocumentNotFound("Document not found")
 
     document_id = uuid4()
@@ -97,7 +97,7 @@ def test_get_document_file_returns_stream(client, monkeypatch, tmp_path):
     monkeypatch.setattr(
         document_service,
         "get_document_file",
-        lambda db, document_id, current_user: (document, file_path),
+        lambda db, document_id: (document, file_path),
     )
 
     response = client.get(f"/documents/{document.id}/file")
@@ -107,15 +107,15 @@ def test_get_document_file_returns_stream(client, monkeypatch, tmp_path):
     assert response.content == b"%PDF-1.4\ntest\n"
 
 
-def test_get_document_file_forbidden_returns_403(client, monkeypatch):
-    def raise_forbidden(db, document_id, current_user):
-        raise Unauthorized("forbidden")
+def test_get_document_file_missing_returns_404(client, monkeypatch):
+    def raise_not_found(db, document_id):
+        raise DocumentNotFound("missing")
 
-    monkeypatch.setattr(document_service, "get_document_file", raise_forbidden)
+    monkeypatch.setattr(document_service, "get_document_file", raise_not_found)
 
     response = client.get(f"/documents/{uuid4()}/file")
 
-    assert response.status_code == 403
+    assert response.status_code == 404
 
 
 def test_patch_case_link_returns_updated_document(client, monkeypatch):
@@ -124,7 +124,7 @@ def test_patch_case_link_returns_updated_document(client, monkeypatch):
     monkeypatch.setattr(
         document_service,
         "link_document_to_case",
-        lambda db, document_id, linked_case_id, current_user: document,
+        lambda db, document_id, linked_case_id: document,
     )
 
     response = client.patch(
@@ -137,7 +137,7 @@ def test_patch_case_link_returns_updated_document(client, monkeypatch):
 
 
 def test_upload_with_missing_case_returns_404(client, monkeypatch):
-    def raise_not_found(db, file, doc_type, current_user, case_id=None):
+    def raise_not_found(db, file, doc_type, case_id=None):
         raise DocumentNotFound("Document not found")
 
     monkeypatch.setattr(document_service, "upload_document", raise_not_found)

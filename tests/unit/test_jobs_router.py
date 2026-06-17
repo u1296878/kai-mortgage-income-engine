@@ -41,7 +41,7 @@ def make_job(**overrides):
 
 def test_get_job_returns_status_response(client, monkeypatch):
     job = make_job()
-    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id, user: job)
+    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id: job)
 
     response = client.get(f"/jobs/{job.id}")
 
@@ -52,7 +52,7 @@ def test_get_job_returns_status_response(client, monkeypatch):
 
 def test_get_job_returns_progress_fields(client, monkeypatch):
     job = make_job(pages_total=10, pages_done=4, current_stage="ocr", percent=40.0)
-    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id, user: job)
+    monkeypatch.setattr(job_service, "get_job_status", lambda db, job_id: job)
 
     response = client.get(f"/jobs/{job.id}")
 
@@ -64,7 +64,7 @@ def test_get_job_returns_progress_fields(client, monkeypatch):
 
 
 def test_get_missing_job_returns_404(client, monkeypatch):
-    def raise_not_found(db, job_id, user):
+    def raise_not_found(db, job_id):
         raise JobNotFound("Job not found")
 
     job_id = uuid4()
@@ -81,7 +81,7 @@ def test_get_job_by_document_returns_job(client, monkeypatch):
     monkeypatch.setattr(
         job_service,
         "get_job_for_document",
-        lambda db, doc_id, user: job,
+        lambda db, doc_id: job,
     )
 
     response = client.get(f"/documents/{document_id}/job")
@@ -91,7 +91,7 @@ def test_get_job_by_document_returns_job(client, monkeypatch):
 
 
 def test_get_job_by_document_returns_404_when_no_job(client, monkeypatch):
-    def raise_not_found(db, document_id, user):
+    def raise_not_found(db, document_id):
         raise JobNotFound("Job not found")
 
     document_id = uuid4()

@@ -6,11 +6,9 @@ from app.models.result import Result
 from tests.local_user_helpers import make_user
 
 
-
-def make_case(broker_id):
+def make_case(_unused=None):
     return Case(
         id=str(uuid4()),
-        broker_id=str(broker_id),
         title="Income Case",
     )
 

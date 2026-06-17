@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.local_user_helpers import local_headers, local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -16,8 +16,8 @@ def client(test_db):
     app.dependency_overrides.clear()
 
 
-def test_broker_creates_borrower_for_own_case(client):
-    headers, _ = local_user(client)
+def test_user_creates_borrower_for_own_case(client):
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case A"}, headers=headers).json()
 
     response = client.post(

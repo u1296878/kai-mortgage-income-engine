@@ -23,7 +23,6 @@ class IncomeStreamResponse(BaseModel):
 
     id: UUID
     case_id: UUID
-    broker_id: UUID
     borrower_id: UUID | None
     name: str
     stream_type: IncomeStreamType

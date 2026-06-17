@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.local_user_helpers import local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def _social_security_body():
 
 
 def test_nontaxable_calculate_returns_income_source_result(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/income/nontaxable/calculate",
@@ -50,7 +50,7 @@ def test_nontaxable_calculate_returns_income_source_result(client):
 
 
 def test_nontaxable_calculate_returns_social_security_result(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/income/nontaxable/calculate",
@@ -65,7 +65,7 @@ def test_nontaxable_calculate_returns_social_security_result(client):
 
 
 def test_nontaxable_calculate_rejects_missing_declared_kind_source(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/income/nontaxable/calculate",

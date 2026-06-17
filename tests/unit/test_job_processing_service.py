@@ -16,7 +16,6 @@ def make_document(doc_type="other"):
         filename="other.pdf",
         doc_type=doc_type,
         storage_path="storage/path/other.pdf",
-        broker_id=str(uuid4()),
     )
 
 

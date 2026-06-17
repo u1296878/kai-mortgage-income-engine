@@ -10,7 +10,6 @@ from app.exceptions import (
     EmploymentCalculationNotFound,
     InvalidEmploymentInput,
 )
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.income_inputs import EmploymentCalculationCreate, EmploymentInput
 from app.schemas.income_results import EmploymentCalculationResponse
 from app.services import employment_calculation_service
@@ -37,7 +36,6 @@ def create_employment_calculation(
             employment_input,
             payload.borrower_id,
             payload.label,
-            LOCAL_USER_ID,
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -57,7 +55,6 @@ def list_employment_calculations(
         return employment_calculation_service.list_calculations_by_case(
             db,
             case_id,
-            LOCAL_USER_ID,
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -77,7 +74,6 @@ def get_employment_calculation(
             db,
             case_id,
             calc_id,
-            LOCAL_USER_ID,
         )
     except (CaseNotFound, EmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -97,7 +93,6 @@ def delete_employment_calculation(
             db,
             case_id,
             calc_id,
-            LOCAL_USER_ID,
         )
     except (CaseNotFound, EmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

@@ -8,12 +8,10 @@ from tests.unit.income_stream_test_helpers import make_case, make_user
 
 
 def test_high_confidence_match_can_be_applied(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     stream = IncomeStream(
         case_id=case.id,
-        broker_id=case.broker_id,
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -21,7 +19,7 @@ def test_high_confidence_match_can_be_applied(test_db):
     test_db.add_all([case, stream])
     test_db.commit()
 
-    _, applied_count, _ = income_stream_match_service.apply_case_matches(test_db, case.id, user)
+    _, applied_count, _ = income_stream_match_service.apply_case_matches(test_db, case.id)
 
     refreshed = test_db.get(Result, result.id)
     assert applied_count == 1
@@ -29,9 +27,8 @@ def test_high_confidence_match_can_be_applied(test_db):
 
 
 def test_low_confidence_match_is_not_auto_applied(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     result = seed_result(
         test_db,
         case.id,
@@ -44,7 +41,6 @@ def test_low_confidence_match_is_not_auto_applied(test_db):
     suggestions, applied_count, created_count = income_stream_match_service.apply_case_matches(
         test_db,
         case.id,
-        user,
     )
 
     refreshed = test_db.get(Result, result.id)
@@ -55,13 +51,11 @@ def test_low_confidence_match_is_not_auto_applied(test_db):
 
 
 def test_same_case_validation_blocks_cross_case_assignment(test_db):
-    broker_id = uuid4()
-    local_user = make_user(broker_id)
-    case_a = make_case(broker_id)
-    case_b = make_case(broker_id)
+    local_user = make_user()
+    case_a = make_case()
+    case_b = make_case()
     stream_b = IncomeStream(
         case_id=case_b.id,
-        broker_id=case_b.broker_id,
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -72,7 +66,6 @@ def test_same_case_validation_blocks_cross_case_assignment(test_db):
     _, applied_count, created_count = income_stream_match_service.apply_case_matches(
         test_db,
         case_a.id,
-        local_user,
     )
 
     refreshed = test_db.get(Result, result_a.id)

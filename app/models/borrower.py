@@ -16,8 +16,6 @@ class Borrower(Base):
         default=lambda: str(uuid4()),
     )
     case_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    # TODO step 2b: remove ownership plumbing.
-    broker_id: Mapped[str] = mapped_column(String(36), nullable=False)
     first_name: Mapped[str] = mapped_column(String, nullable=False)
     last_name: Mapped[str] = mapped_column(String, nullable=False)
     role: Mapped[str] = mapped_column(

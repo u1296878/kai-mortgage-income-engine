@@ -15,7 +15,6 @@ from app.services.self_employment_income_service import run_self_employment_engi
 def create_drafts_from_fields(
     db: Session,
     case_id: UUID,
-    broker_id: UUID,
     document_id: UUID,
     fields: list[ExtractedField],
 ) -> list[SelfEmploymentCalculation]:
@@ -31,7 +30,6 @@ def create_drafts_from_fields(
         result = run_self_employment_engine(request)
         calculation = SelfEmploymentCalculation(
             case_id=str(case_id),
-            broker_id=str(broker_id),
             label=f"Schedule C business {index}",
             kind=result.kind,
             inputs=request.model_dump(mode="json"),

@@ -24,7 +24,7 @@ def make_field(field: str = "w2_wages", value: float = 85000.00) -> ExtractedFie
 def test_get_case_summary_returns_total_and_sources(test_db):
     case_id = uuid4()
     local_user = make_user()
-    test_db.add(Case(id=str(case_id), broker_id=local_user.id, title="Smith Purchase"))
+    test_db.add(Case(id=str(case_id), title="Smith Purchase"))
     test_db.commit()
     first = result_service.save_extraction_result(
         test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
@@ -36,7 +36,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
     second.created_at = datetime(2024, 1, 2, tzinfo=timezone.utc)
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 85000.00
     assert [source.field for source in summary.sources] == ["w2_wages", "agi"]
@@ -45,7 +45,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
 def test_case_summary_uses_stream_totals_when_streams_exist(test_db):
     case_id = uuid4()
     local_user = make_user()
-    case = Case(id=str(case_id), broker_id=local_user.id, title="Smith Purchase")
+    case = Case(id=str(case_id), title="Smith Purchase")
     test_db.add(case)
     test_db.commit()
     result_service.save_extraction_result(
@@ -57,7 +57,6 @@ def test_case_summary_uses_stream_totals_when_streams_exist(test_db):
     test_db.add(
         IncomeStream(
             case_id=case.id,
-            broker_id=case.broker_id,
             name="Employment",
             stream_type="employment",
             annual_income=87000.0,
@@ -66,7 +65,7 @@ def test_case_summary_uses_stream_totals_when_streams_exist(test_db):
     )
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 87000.0
     assert len(summary.income_streams) == 1
@@ -75,7 +74,7 @@ def test_case_summary_uses_stream_totals_when_streams_exist(test_db):
 def test_case_summary_falls_back_to_result_totals_when_no_streams_exist(test_db):
     case_id = uuid4()
     local_user = make_user()
-    case = Case(id=str(case_id), broker_id=local_user.id, title="Fallback")
+    case = Case(id=str(case_id), title="Fallback")
     test_db.add(case)
     test_db.commit()
     result_service.save_extraction_result(
@@ -85,7 +84,7 @@ def test_case_summary_falls_back_to_result_totals_when_no_streams_exist(test_db)
         test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 50000.00)]
     )
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 60000.0
     assert summary.income_streams == []
@@ -93,9 +92,8 @@ def test_case_summary_falls_back_to_result_totals_when_no_streams_exist(test_db)
 
 def test_case_summary_does_not_add_tax_return_agi_to_rental_drafts(test_db):
     case_id = uuid4()
-    broker_id = uuid4()
-    local_user = make_user(broker_id)
-    test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Composite"))
+    local_user = make_user()
+    test_db.add(Case(id=str(case_id), title="Composite"))
     test_db.commit()
     result_service.save_extraction_result(
         test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 73168.00)]
@@ -103,7 +101,6 @@ def test_case_summary_does_not_add_tax_return_agi_to_rental_drafts(test_db):
     test_db.add(
         RentalCalculation(
             case_id=str(case_id),
-            broker_id=str(broker_id),
             label="Schedule E property",
             inputs={},
             qualifying_monthly=1500.0,
@@ -118,7 +115,7 @@ def test_case_summary_does_not_add_tax_return_agi_to_rental_drafts(test_db):
     )
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 18000.0
 
@@ -126,7 +123,7 @@ def test_case_summary_does_not_add_tax_return_agi_to_rental_drafts(test_db):
 def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test_db):
     case_id = uuid4()
     local_user = make_user()
-    case = Case(id=str(case_id), broker_id=local_user.id, title="No Double Count")
+    case = Case(id=str(case_id), title="No Double Count")
     test_db.add(case)
     test_db.add_all([
         _manual_result(case.id, 85000.0, "high"),
@@ -135,7 +132,6 @@ def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test
     test_db.add(
         IncomeStream(
             case_id=case.id,
-            broker_id=case.broker_id,
             name="Employment",
             stream_type="employment",
             annual_income=87000.0,
@@ -144,7 +140,7 @@ def test_case_summary_does_not_double_count_multiple_results_in_same_stream(test
     )
     test_db.commit()
 
-    summary = result_service.get_case_summary(test_db, case_id, local_user)
+    summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 87000.0
 

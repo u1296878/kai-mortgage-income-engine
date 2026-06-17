@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.dependencies import get_db
 from app.main import app
 from app.storage import local_storage
-from tests.local_user_helpers import local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def client(test_db, tmp_path, monkeypatch):
 
 
 def test_document_owner_can_fetch_document_file(client):
-    owner_headers, _ = local_user(client)
+    owner_headers = local_headers(client)
     expected_bytes = b"%PDF-1.4\nowner\n"
     upload = client.post(
         "/documents/upload",
@@ -39,8 +39,8 @@ def test_document_owner_can_fetch_document_file(client):
 
 
 def test_local_endpoint_returns_uploaded_document_file(client):
-    owner_headers, _ = local_user(client)
-    local_headers, _ = local_user(client)
+    owner_headers = local_headers(client)
+    headers = local_headers(client)
     expected_bytes = b"%PDF-1.4\nowner\n"
     upload = client.post(
         "/documents/upload",
@@ -51,7 +51,7 @@ def test_local_endpoint_returns_uploaded_document_file(client):
 
     response = client.get(
         f"/documents/{upload.json()['id']}/file",
-        headers=local_headers,
+        headers=headers,
     )
 
     assert response.status_code == 200

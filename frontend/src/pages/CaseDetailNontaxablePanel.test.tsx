@@ -79,7 +79,6 @@ describe("CaseDetailPage non-taxable panel", () => {
     caseApi.deleteCase.mockResolvedValue(undefined);
     caseApi.getCase.mockResolvedValue({
       id: "case-1",
-      broker_id: "broker-1",
       title: "Taylor Purchase",
       status: "open",
       created_at: "2026-05-31T00:00:00Z",

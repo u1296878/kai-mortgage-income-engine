@@ -5,7 +5,7 @@ from app.repositories import case_repo
 
 
 def test_find_case_returns_case_when_present(test_db):
-    case = Case(id=str(uuid4()), broker_id=str(uuid4()), title="Smith Purchase")
+    case = Case(id=str(uuid4()), title="Smith Purchase")
     test_db.add(case)
     test_db.commit()
 

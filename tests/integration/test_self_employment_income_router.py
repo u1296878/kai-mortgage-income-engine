@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.local_user_helpers import local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def _partnership_body():
 
 
 def test_self_employment_calculate_returns_personal_schedule_breakdown(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/income/self-employment/calculate",
@@ -84,7 +84,7 @@ def test_self_employment_calculate_returns_personal_schedule_breakdown(client):
 
 
 def test_self_employment_calculate_returns_entity_breakdown(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/income/self-employment/calculate",
@@ -100,7 +100,7 @@ def test_self_employment_calculate_returns_entity_breakdown(client):
 
 
 def test_self_employment_calculate_rejects_unknown_kind(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
 
     response = client.post(
         "/income/self-employment/calculate",
@@ -112,7 +112,7 @@ def test_self_employment_calculate_rejects_unknown_kind(client):
 
 
 def test_self_employment_calculate_rejects_missing_required_field(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     body = _schedule_c_body()
     del body["payload"]["years"][0]["net_profit"]
 

@@ -7,12 +7,10 @@ from tests.unit.income_stream_test_helpers import make_case, make_user
 
 
 def test_suggests_employment_match_for_shared_employer_name(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     stream = IncomeStream(
         case_id=case.id,
-        broker_id=case.broker_id,
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -20,7 +18,7 @@ def test_suggests_employment_match_for_shared_employer_name(test_db):
     test_db.add_all([case, stream])
     test_db.commit()
 
-    suggestions = income_stream_match_service.preview_case_matches(test_db, case.id, user)
+    suggestions = income_stream_match_service.preview_case_matches(test_db, case.id)
 
     assert str(suggestions[0].stream_id) == stream.id
     assert suggestions[0].confidence == "high"
@@ -28,12 +26,10 @@ def test_suggests_employment_match_for_shared_employer_name(test_db):
 
 
 def test_suggests_rental_match_for_shared_property_address(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     stream = IncomeStream(
         case_id=case.id,
-        broker_id=case.broker_id,
         name="Rental: 123 Sample Rental Ave",
         stream_type="rental",
     )
@@ -41,7 +37,7 @@ def test_suggests_rental_match_for_shared_property_address(test_db):
     test_db.add_all([case, stream])
     test_db.commit()
 
-    suggestion = income_stream_match_service.preview_case_matches(test_db, case.id, user)[0]
+    suggestion = income_stream_match_service.preview_case_matches(test_db, case.id)[0]
 
     assert str(suggestion.stream_id) == stream.id
     assert suggestion.confidence == "high"
@@ -49,9 +45,8 @@ def test_suggests_rental_match_for_shared_property_address(test_db):
 
 
 def test_suggests_self_employment_match_for_schedule_c_result(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     seed_result(
         test_db,
         case.id,
@@ -61,7 +56,7 @@ def test_suggests_self_employment_match_for_schedule_c_result(test_db):
     test_db.add(case)
     test_db.commit()
 
-    suggestion = income_stream_match_service.preview_case_matches(test_db, case.id, user)[0]
+    suggestion = income_stream_match_service.preview_case_matches(test_db, case.id)[0]
 
     assert suggestion.action == "create_stream"
     assert suggestion.stream_type.value == "self_employment"
@@ -69,28 +64,25 @@ def test_suggests_self_employment_match_for_schedule_c_result(test_db):
 
 
 def test_does_not_cross_match_results_across_cases(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case_a = make_case(broker_id)
-    case_b = make_case(broker_id)
+    user = make_user()
+    case_a = make_case()
+    case_b = make_case()
     seed_result(test_db, case_a.id, "w2", w2_fields("Acme Corp"))
     result_b = seed_result(test_db, case_b.id, "w2", w2_fields("Other Corp"))
     test_db.add_all([case_a, case_b])
     test_db.commit()
 
-    suggestions = income_stream_match_service.preview_case_matches(test_db, case_a.id, user)
+    suggestions = income_stream_match_service.preview_case_matches(test_db, case_a.id)
 
     assert len(suggestions) == 1
     assert str(suggestions[0].result_id) != result_b.id
 
 
 def test_does_not_reassign_manually_assigned_result_by_default(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     stream = IncomeStream(
         case_id=case.id,
-        broker_id=case.broker_id,
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -98,18 +90,16 @@ def test_does_not_reassign_manually_assigned_result_by_default(test_db):
     test_db.commit()
     seed_result(test_db, case.id, "w2", w2_fields("Acme Corp"), stream.id)
 
-    suggestions = income_stream_match_service.preview_case_matches(test_db, case.id, user)
+    suggestions = income_stream_match_service.preview_case_matches(test_db, case.id)
 
     assert suggestions == []
 
 
 def test_auto_match_is_deterministic_for_same_input(test_db):
-    broker_id = uuid4()
-    user = make_user(broker_id)
-    case = make_case(broker_id)
+    user = make_user()
+    case = make_case()
     stream = IncomeStream(
         case_id=case.id,
-        broker_id=case.broker_id,
         name="Employment: Acme Corp",
         stream_type="employment",
     )
@@ -117,7 +107,7 @@ def test_auto_match_is_deterministic_for_same_input(test_db):
     test_db.add_all([case, stream])
     test_db.commit()
 
-    first = income_stream_match_service.preview_case_matches(test_db, case.id, user)
-    second = income_stream_match_service.preview_case_matches(test_db, case.id, user)
+    first = income_stream_match_service.preview_case_matches(test_db, case.id)
+    second = income_stream_match_service.preview_case_matches(test_db, case.id)
 
     assert first == second

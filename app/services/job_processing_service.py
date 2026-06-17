@@ -34,18 +34,16 @@ def process_next_job(db: Session) -> bool:
             document.doc_type,
             fields,
         )
-        if document.doc_type == "tax_return" and document.case_id and document.broker_id:
+        if document.doc_type == "tax_return" and document.case_id:
             schedule_e_rental_service.create_drafts_from_fields(
                 db,
                 UUID(document.case_id),
-                UUID(document.broker_id),
                 UUID(document.id),
                 fields,
             )
             schedule_c_se_service.create_drafts_from_fields(
                 db,
                 UUID(document.case_id),
-                UUID(document.broker_id),
                 UUID(document.id),
                 fields,
             )

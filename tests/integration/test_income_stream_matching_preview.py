@@ -1,11 +1,9 @@
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.local_user_helpers import local_headers, local_user
+from tests.local_user_helpers import local_headers
 from tests.income_stream_match_helpers import seed_result, w2_fields
 
 
@@ -20,7 +18,7 @@ def client(test_db):
 
 
 def test_local_user_can_preview_matches_for_case(client, test_db):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Own"}, headers=headers).json()
     seed_result(test_db, case["id"], "w2", w2_fields("Acme Corp"))
 
@@ -31,12 +29,11 @@ def test_local_user_can_preview_matches_for_case(client, test_db):
     assert "reason" in response.json()[0]
 
 
-def test_local_user_can_preview_matches_for_case_with_legacy_broker_id(client, test_db):
+def test_local_user_can_preview_matches_for_another_case(client, test_db):
     headers = local_headers(client)
-    _, broker_id = local_user(client)
     case = client.post(
         "/cases",
-        json={"title": "Broker case", "broker_id": broker_id},
+        json={"title": "Second case"},
         headers=headers,
     ).json()
     seed_result(test_db, case["id"], "w2", w2_fields("Acme Corp"))

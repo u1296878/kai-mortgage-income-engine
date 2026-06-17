@@ -28,37 +28,33 @@ def test_create_job_sets_document_id(test_db):
 
 
 def test_get_job_status_returns_job(test_db):
-    broker_id = uuid4()
     document = Document(
         id=str(uuid4()),
         filename="w2.pdf",
         doc_type="w2",
         storage_path="storage/path/w2.pdf",
-        broker_id=str(broker_id),
     )
     job = Job(document_id=document.id)
     test_db.add_all([document, job])
     test_db.commit()
 
-    result = job_service.get_job_status(test_db, job.id, make_user(broker_id))
+    result = job_service.get_job_status(test_db, job.id)
 
     assert result.id == job.id
 
 
 def test_get_job_status_returns_progress_percent(test_db):
-    broker_id = uuid4()
     document = Document(
         id=str(uuid4()),
         filename="scan.pdf",
         doc_type="tax_return",
         storage_path="storage/path/scan.pdf",
-        broker_id=str(broker_id),
     )
     job = Job(document_id=document.id, pages_total=8, pages_done=2)
     test_db.add_all([document, job])
     test_db.commit()
 
-    result = job_service.get_job_status(test_db, job.id, make_user(broker_id))
+    result = job_service.get_job_status(test_db, job.id)
 
     assert result.percent == 25.0
 
@@ -67,7 +63,7 @@ def test_get_missing_job_raises(test_db):
     job_id = uuid4()
 
     with pytest.raises(JobNotFound):
-        job_service.get_job_status(test_db, job_id, make_user())
+        job_service.get_job_status(test_db, job_id)
 
 
 def test_recover_stuck_jobs_fails_processing_jobs_and_logs(test_db, monkeypatch):

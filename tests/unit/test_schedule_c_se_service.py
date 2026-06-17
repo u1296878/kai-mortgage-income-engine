@@ -21,13 +21,12 @@ def make_field(field: str, value: float, document_id) -> ExtractedField:
 
 def test_creates_schedule_c_draft_using_self_employment_engine(test_db):
     case_id = uuid4()
-    broker_id = uuid4()
     document_id = uuid4()
     fields = _schedule_c_fields(document_id)
     expected = run_self_employment_engine(_expected_request())
 
     drafts = schedule_c_se_service.create_drafts_from_fields(
-        test_db, case_id, broker_id, document_id, fields
+        test_db, case_id, document_id, fields
     )
 
     assert len(drafts) == 1
@@ -41,15 +40,14 @@ def test_creates_schedule_c_draft_using_self_employment_engine(test_db):
 
 def test_dedupes_schedule_c_drafts_by_source_document_and_business(test_db):
     case_id = uuid4()
-    broker_id = uuid4()
     document_id = uuid4()
     fields = _schedule_c_fields(document_id)
 
     first = schedule_c_se_service.create_drafts_from_fields(
-        test_db, case_id, broker_id, document_id, fields
+        test_db, case_id, document_id, fields
     )
     second = schedule_c_se_service.create_drafts_from_fields(
-        test_db, case_id, broker_id, document_id, fields
+        test_db, case_id, document_id, fields
     )
 
     assert len(first) == 1
@@ -58,19 +56,18 @@ def test_dedupes_schedule_c_drafts_by_source_document_and_business(test_db):
 
 def test_case_summary_counts_only_included_self_employment_drafts(test_db):
     case_id = uuid4()
-    broker_id = uuid4()
     document_id = uuid4()
-    local_user = make_user(broker_id)
-    test_db.add(Case(id=str(case_id), broker_id=str(broker_id), title="Composite"))
+    local_user = make_user()
+    test_db.add(Case(id=str(case_id), title="Composite"))
     test_db.commit()
     drafts = schedule_c_se_service.create_drafts_from_fields(
-        test_db, case_id, broker_id, document_id, _schedule_c_fields(document_id)
+        test_db, case_id, document_id, _schedule_c_fields(document_id)
     )
 
-    included_summary = result_service.get_case_summary(test_db, case_id, local_user)
+    included_summary = result_service.get_case_summary(test_db, case_id)
     drafts[0].included = False
     test_db.commit()
-    excluded_summary = result_service.get_case_summary(test_db, case_id, local_user)
+    excluded_summary = result_service.get_case_summary(test_db, case_id)
 
     assert included_summary.total_annual_income == drafts[0].annual_income
     assert excluded_summary.total_annual_income == 0.0

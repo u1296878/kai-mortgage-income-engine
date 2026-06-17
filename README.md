@@ -105,7 +105,7 @@ The current backend suite has 449 tests. The current frontend suite has 25 tests
 
 ## Local Access Model
 
-The app has one local identity for legacy `broker_id` columns while the schema is being simplified. API endpoints are open on localhost and do not require `Authorization` headers. The frontend opens directly into the case workflow.
+API endpoints are open on localhost and do not require `Authorization` headers. The frontend opens directly into the case workflow.
 
 ## Income Streams
 
@@ -155,4 +155,4 @@ upload -> store locally -> job created -> worker picks up -> extraction -> resul
 - `other` currently represents rental-income documents until a dedicated rental document type is introduced.
 - Local Ollama extraction wiring is still in progress.
 - Matching is rules-based and intentionally conservative; advanced borrower-level and underwriting logic is still future work.
-- Legacy `broker_id` columns remain temporarily and are populated with the fixed local identity.
+- If you have a database from an earlier local conversion step, delete the existing local database file from the app-data directory so the simplified schema is recreated on next start.

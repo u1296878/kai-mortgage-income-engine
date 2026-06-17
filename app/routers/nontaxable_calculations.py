@@ -10,7 +10,6 @@ from app.exceptions import (
     InvalidNonTaxableInput,
     NonTaxableCalculationNotFound,
 )
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.nontaxable_inputs import NonTaxableCalculationCreate
 from app.schemas.nontaxable_results import NonTaxableCalculationResponse
 from app.services import nontaxable_calculation_service
@@ -28,9 +27,7 @@ def create_nontaxable_calculation(
     db: Annotated[Session, Depends(get_db)],
 ) -> NonTaxableCalculationResponse:
     try:
-        return nontaxable_calculation_service.create_calculation(
-            db, case_id, payload, LOCAL_USER_ID
-        )
+        return nontaxable_calculation_service.create_calculation(db, case_id, payload)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except InvalidNonTaxableInput as error:
@@ -47,7 +44,7 @@ def list_nontaxable_calculations(
 ) -> list[NonTaxableCalculationResponse]:
     try:
         return nontaxable_calculation_service.list_calculations_by_case(
-            db, case_id, LOCAL_USER_ID
+            db, case_id
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -64,7 +61,7 @@ def get_nontaxable_calculation(
 ) -> NonTaxableCalculationResponse:
     try:
         return nontaxable_calculation_service.get_calculation(
-            db, case_id, calc_id, LOCAL_USER_ID
+            db, case_id, calc_id
         )
     except (CaseNotFound, NonTaxableCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -81,7 +78,7 @@ def delete_nontaxable_calculation(
 ) -> Response:
     try:
         nontaxable_calculation_service.delete_calculation(
-            db, case_id, calc_id, LOCAL_USER_ID
+            db, case_id, calc_id
         )
     except (CaseNotFound, NonTaxableCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

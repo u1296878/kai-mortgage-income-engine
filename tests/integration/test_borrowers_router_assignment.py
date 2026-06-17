@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from tests.local_user_helpers import local_user
+from tests.local_user_helpers import local_headers
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def client(test_db):
 
 
 def test_assign_stream_to_borrower(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     borrower = client.post(
         f"/cases/{case['id']}/borrowers",
@@ -40,7 +40,7 @@ def test_assign_stream_to_borrower(client):
 
 
 def test_unassign_stream_from_borrower(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     borrower = client.post(
         f"/cases/{case['id']}/borrowers",
@@ -67,7 +67,7 @@ def test_unassign_stream_from_borrower(client):
 
 
 def test_delete_borrower_does_not_delete_stream(client):
-    headers, _ = local_user(client)
+    headers = local_headers(client)
     case = client.post("/cases", json={"title": "Case"}, headers=headers).json()
     borrower = client.post(
         f"/cases/{case['id']}/borrowers",

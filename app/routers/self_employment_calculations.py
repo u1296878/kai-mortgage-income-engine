@@ -10,7 +10,6 @@ from app.exceptions import (
     InvalidSelfEmploymentInput,
     SelfEmploymentCalculationNotFound,
 )
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.self_employment_results import (
     SelfEmploymentCalculationCreate,
     SelfEmploymentCalculationResponse,
@@ -31,9 +30,7 @@ def create_self_employment_calculation(
     db: Annotated[Session, Depends(get_db)],
 ) -> SelfEmploymentCalculationResponse:
     try:
-        return self_employment_calculation_service.create_calculation(
-            db, case_id, payload, LOCAL_USER_ID
-        )
+        return self_employment_calculation_service.create_calculation(db, case_id, payload)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except InvalidSelfEmploymentInput as error:
@@ -50,7 +47,7 @@ def list_self_employment_calculations(
 ) -> list[SelfEmploymentCalculationResponse]:
     try:
         return self_employment_calculation_service.list_calculations_by_case(
-            db, case_id, LOCAL_USER_ID
+            db, case_id
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -67,7 +64,7 @@ def get_self_employment_calculation(
 ) -> SelfEmploymentCalculationResponse:
     try:
         return self_employment_calculation_service.get_calculation(
-            db, case_id, calc_id, LOCAL_USER_ID
+            db, case_id, calc_id
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -85,7 +82,7 @@ def update_self_employment_calculation(
 ) -> SelfEmploymentCalculationResponse:
     try:
         return self_employment_calculation_service.update_calculation(
-            db, case_id, calc_id, payload, LOCAL_USER_ID
+            db, case_id, calc_id, payload
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -102,7 +99,7 @@ def delete_self_employment_calculation(
 ) -> Response:
     try:
         self_employment_calculation_service.delete_calculation(
-            db, case_id, calc_id, LOCAL_USER_ID
+            db, case_id, calc_id
         )
     except (CaseNotFound, SelfEmploymentCalculationNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

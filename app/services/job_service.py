@@ -19,33 +19,26 @@ def create_job_for_document(db: Session, document_id: UUID) -> Job:
     return saved_job
 
 
-def get_job_status(db: Session, job_id: UUID, local_user_id: UUID) -> Job:
+def get_job_status(db: Session, job_id: UUID) -> Job:
     job = job_repo.get_job(db, job_id)
-    _ensure_job_document_access(db, job, local_user_id)
+    _ensure_job_document_exists(db, job)
     return job
 
 
-def get_job_for_document(
-    db: Session,
-    document_id: UUID,
-    local_user_id: UUID,
-) -> Job:
+def get_job_for_document(db: Session, document_id: UUID) -> Job:
     try:
-        document = document_repo.get_document(db, document_id)
+        document_repo.get_document(db, document_id)
     except DocumentNotFound as error:
         raise JobNotFound(f"Job not found for document: {document_id}") from error
-    # TODO step 2b: remove ownership plumbing.
-    if document.broker_id != str(local_user_id):
-        raise JobNotFound(f"Job not found for document: {document_id}")
     job = job_repo.get_job_by_document(db, document_id)
     if job is None:
         raise JobNotFound(f"Job not found for document: {document_id}")
     return job
 
 
-def retry_job(db: Session, job_id: UUID, local_user_id: UUID) -> Job:
+def retry_job(db: Session, job_id: UUID) -> Job:
     job = job_repo.get_job(db, job_id)
-    _ensure_job_document_access(db, job, local_user_id)
+    _ensure_job_document_exists(db, job)
     if job.status == JobStatus.complete.value:
         raise JobAlreadyProcessed(f"Job already processed: {job_id}")
     retried_job = job_repo.reset_job_to_pending(db, job_id)
@@ -62,11 +55,8 @@ def recover_stuck_jobs(db: Session) -> None:
         )
 
 
-def _ensure_job_document_access(db: Session, job: Job, local_user_id: UUID) -> None:
+def _ensure_job_document_exists(db: Session, job: Job) -> None:
     try:
-        document = document_repo.get_document(db, UUID(job.document_id))
+        document_repo.get_document(db, UUID(job.document_id))
     except DocumentNotFound as error:
         raise JobNotFound(f"Job not found: {job.id}") from error
-    # TODO step 2b: remove ownership plumbing.
-    if document.broker_id != str(local_user_id):
-        raise JobNotFound(f"Job not found: {job.id}")

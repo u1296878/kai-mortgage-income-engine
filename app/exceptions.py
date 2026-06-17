@@ -30,8 +30,6 @@ class ResultNotFound(Exception):
     pass
 
 
-class Unauthorized(Exception):
-    pass
 
 
 class IncomeStreamNotFound(Exception):

@@ -11,7 +11,6 @@ from app.exceptions import (
     InvalidIncomeStreamAssignment,
     ResultNotFound,
 )
-from app.runtime.local_user import LOCAL_USER_ID
 from app.schemas.income_stream import (
     IncomeStreamCreate,
     IncomeStreamResponse,
@@ -35,7 +34,6 @@ def create_income_stream(
             payload.name,
             payload.stream_type,
             payload.notes,
-            LOCAL_USER_ID,
         )
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -47,7 +45,7 @@ def list_income_streams(
     db: Annotated[Session, Depends(get_db)],
 ) -> list[IncomeStreamResponse]:
     try:
-        return income_stream_service.list_income_streams_by_case(db, case_id, LOCAL_USER_ID)
+        return income_stream_service.list_income_streams_by_case(db, case_id)
     except CaseNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -58,7 +56,7 @@ def get_income_stream(
     db: Annotated[Session, Depends(get_db)],
 ) -> IncomeStreamResponse:
     try:
-        return income_stream_service.get_income_stream(db, stream_id, LOCAL_USER_ID)
+        return income_stream_service.get_income_stream(db, stream_id)
     except IncomeStreamNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -71,7 +69,7 @@ def update_income_stream(
 ) -> IncomeStreamResponse:
     try:
         updates = payload.model_dump(exclude_none=True)
-        return income_stream_service.update_income_stream(db, stream_id, updates, LOCAL_USER_ID)
+        return income_stream_service.update_income_stream(db, stream_id, updates)
     except IncomeStreamNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -82,7 +80,7 @@ def delete_income_stream(
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
     try:
-        income_stream_service.delete_income_stream(db, stream_id, LOCAL_USER_ID)
+        income_stream_service.delete_income_stream(db, stream_id)
     except IncomeStreamNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return Response(status_code=204)
@@ -102,7 +100,6 @@ def assign_result_to_stream(
             db,
             stream_id,
             result_id,
-            LOCAL_USER_ID,
         )
     except (IncomeStreamNotFound, ResultNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
@@ -124,7 +121,6 @@ def unassign_result_from_stream(
             db,
             stream_id,
             result_id,
-            LOCAL_USER_ID,
         )
     except (IncomeStreamNotFound, ResultNotFound) as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

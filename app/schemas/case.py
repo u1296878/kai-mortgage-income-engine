@@ -9,7 +9,6 @@ from app.schemas.document import DocumentResponse
 
 class CaseCreate(BaseModel):
     title: str
-    broker_id: UUID | None = None
 
 
 class CaseUpdate(BaseModel):
@@ -21,7 +20,6 @@ class CaseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    broker_id: UUID
     title: str
     status: CaseStatus
     created_at: datetime
