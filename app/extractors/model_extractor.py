@@ -3,7 +3,15 @@ from uuid import UUID
 from app.extractors.block_utils import line_for_block, merge_blocks
 from app.extractors.extracted_field_factory import parse_float
 from app.extractors.model_backend import ModelBackend
-from app.extractors.model_field_schemas import field_descriptions_for, field_schema_for
+from app.extractors.model_field_schemas import (
+    FEDERAL_FIELDS,
+    SCHEDULE_C_FIELDS,
+    descriptions_for_fields,
+    field_descriptions_for,
+    schema_for_fields,
+)
+from app.extractors.model_prompt import build_prompt, field_context_blocks, tax_return_sections
+from app.extractors.model_value_guard import corrected_value
 from app.exceptions import ModelExtractionFailed
 from app.schemas.extraction import BoundingBox, ExtractedField
 
@@ -14,43 +22,43 @@ def extract_fields_with_model(
     doc_type: str,
     backend: ModelBackend,
 ) -> list[ExtractedField]:
-    schema = field_schema_for(doc_type)
-    descriptions = field_descriptions_for(doc_type)
-    response = backend.complete_json(_prompt(descriptions, blocks), schema)
-    payload = response.get("fields", response)
-    if not isinstance(payload, dict):
-        raise ModelExtractionFailed("Model extraction payload must be an object")
+    field_descriptions_for(doc_type)
+    sections = tax_return_sections(blocks)
     return [
-        _field_from_model(name, payload.get(name), blocks, document_id)
-        for name in descriptions
-        if name in payload
+        *_extract_group(FEDERAL_FIELDS, sections["federal"], document_id, backend),
+        *_extract_group(SCHEDULE_C_FIELDS, sections["schedule_c"], document_id, backend),
     ]
 
 
-def _prompt(descriptions: dict[str, str], blocks: list[dict]) -> str:
-    fields = "\n".join(f"- {name}: {description}" for name, description in descriptions.items())
-    return (
-        "Extract mortgage income document fields from the OCR/text below.\n"
-        "Return strict JSON matching the supplied schema. Use numbers only. "
-        "When a listed line label and adjacent number are visible, extract that "
-        "number and include the exact nearby source_text. If a field is absent "
-        "or the visible text is ambiguous, set its value to null. Never compute "
-        "income or infer missing values.\n\n"
-        f"Fields:\n{fields}\n\nDocument text:\n{_page_text(blocks)}"
+def _extract_group(
+    field_names: tuple[str, ...],
+    blocks: list[dict],
+    document_id: UUID,
+    backend: ModelBackend,
+) -> list[ExtractedField]:
+    if not blocks:
+        return [_null_field(name, document_id) for name in field_names]
+    return [_extract_one_field(name, blocks, document_id, backend) for name in field_names]
+
+
+def _extract_one_field(
+    name: str,
+    blocks: list[dict],
+    document_id: UUID,
+    backend: ModelBackend,
+) -> ExtractedField:
+    field_blocks = field_context_blocks(name, blocks)
+    if not field_blocks:
+        return _null_field(name, document_id)
+    field_names = (name,)
+    response = backend.complete_json(
+        build_prompt(descriptions_for_fields(field_names), field_blocks),
+        schema_for_fields(field_names),
     )
-
-
-def _page_text(blocks: list[dict]) -> str:
-    pages = sorted({block["page"] for block in blocks})
-    sections = []
-    for page in pages:
-        words = sorted(
-            (block for block in blocks if block["page"] == page),
-            key=lambda block: (block["y1"], block["x1"]),
-        )
-        text = " ".join(block["text"] for block in words)
-        sections.append(f"[page {page}]\n{text}")
-    return "\n\n".join(sections)
+    payload = response.get("fields", response)
+    if not isinstance(payload, dict):
+        raise ModelExtractionFailed("Model extraction payload must be an object")
+    return _field_from_model(name, payload.get(name), field_blocks, document_id)
 
 
 def _field_from_model(
@@ -60,6 +68,14 @@ def _field_from_model(
     document_id: UUID,
 ) -> ExtractedField:
     value, confidence, source_text = _entry_parts(entry)
+    original_value = value
+    value = corrected_value(name, value, blocks)
+    if original_value is None and value is not None:
+        confidence = max(confidence, 0.6)
+    if value is None:
+        confidence = min(confidence, 0.2)
+        if original_value is not None:
+            source_text = None
     source = _locate_source(blocks, value, source_text)
     if source is None:
         return ExtractedField(
@@ -84,6 +100,17 @@ def _field_from_model(
         ),
         raw_text=source.get("raw_text", source["text"]),
         confidence=confidence,
+    )
+
+
+def _null_field(name: str, document_id: UUID) -> ExtractedField:
+    return ExtractedField(
+        field=name,
+        value=None,
+        document_id=document_id,
+        page=None,
+        bounding_box=None,
+        confidence=0.0,
     )
 
 

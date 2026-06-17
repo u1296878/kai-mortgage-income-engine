@@ -17,6 +17,22 @@ TAX_RETURN_FIELDS = {
     ),
 }
 
+FEDERAL_FIELDS = ("tax_year", "total_income", "agi")
+SCHEDULE_C_FIELDS = tuple(
+    field for field in TAX_RETURN_FIELDS if field not in FEDERAL_FIELDS
+)
+LINE_NUMBER_FIELDS = {
+    "total_income": ("9", ("total", "income")),
+    "agi": ("11", ("adjusted", "gross", "income")),
+    "schedule_c_net_profit": ("31", ("net", "profit")),
+    "schedule_c_nonrecurring_income": ("6", ("other", "income")),
+    "schedule_c_depletion": ("12", ("depletion",)),
+    "schedule_c_depreciation": ("13", ("depreciation",)),
+    "schedule_c_meals_exclusion": ("24b", ("deductible", "meals")),
+    "schedule_c_business_use_of_home": ("30", ("business", "use", "home")),
+    "schedule_c_business_miles": ("44", ("miles", "drove")),
+}
+
 
 def field_schema_for(doc_type: str) -> dict:
     if doc_type != "tax_return":
@@ -28,6 +44,14 @@ def field_descriptions_for(doc_type: str) -> dict[str, str]:
     if doc_type != "tax_return":
         raise UnsupportedDocumentType(f"Model extraction is not configured for {doc_type}")
     return TAX_RETURN_FIELDS
+
+
+def schema_for_fields(field_names: tuple[str, ...]) -> dict:
+    return _json_schema({name: TAX_RETURN_FIELDS[name] for name in field_names})
+
+
+def descriptions_for_fields(field_names: tuple[str, ...]) -> dict[str, str]:
+    return {name: TAX_RETURN_FIELDS[name] for name in field_names}
 
 
 def _json_schema(fields: dict[str, str]) -> dict:
