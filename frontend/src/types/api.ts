@@ -81,11 +81,12 @@ export interface BoundingBox {
 
 export interface ExtractedField {
   field: string;
-  value: number;
+  value: number | null;
   document_id: string;
-  page: number;
-  bounding_box: BoundingBox;
+  page: number | null;
+  bounding_box: BoundingBox | null;
   raw_text?: string | null;
+  confidence?: number;
 }
 
 export interface ResultResponse {

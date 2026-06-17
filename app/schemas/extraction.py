@@ -12,8 +12,9 @@ class BoundingBox(BaseModel):
 
 class ExtractedField(BaseModel):
     field: str
-    value: float
+    value: float | None
     document_id: UUID
-    page: int
-    bounding_box: BoundingBox
+    page: int | None
+    bounding_box: BoundingBox | None
     raw_text: str | None = None
+    confidence: float = 1.0

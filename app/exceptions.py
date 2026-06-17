@@ -10,6 +10,10 @@ class ExtractionFailed(Exception):
     pass
 
 
+class ModelExtractionFailed(Exception):
+    pass
+
+
 class PageOcrTimeout(Exception):
     pass
 

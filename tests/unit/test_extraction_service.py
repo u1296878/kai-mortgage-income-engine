@@ -83,6 +83,39 @@ def test_extract_fields_w2_returns_correct_fields(monkeypatch):
     ]
 
 
+def test_extract_fields_default_rules_does_not_call_model(monkeypatch):
+    document_id = uuid4()
+    monkeypatch.setattr(extraction_service.settings, "extraction_backend", "rules")
+    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: w2_blocks())
+    monkeypatch.setattr(
+        extraction_service,
+        "extract_fields_with_model",
+        lambda *args: pytest.fail("model extractor should not run by default"),
+    )
+
+    fields = extraction_service.extract_fields(document_id, Path("w2.pdf"), "w2")
+
+    assert [field.field for field in fields] == [
+        "w2_wages",
+        "w2_federal_tax_withheld",
+    ]
+
+
+def test_extract_fields_model_backend_routes_to_model(monkeypatch):
+    document_id = uuid4()
+    monkeypatch.setattr(extraction_service.settings, "extraction_backend", "model")
+    monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: tax_return_blocks())
+
+    def fake_extract(blocks, doc_id, doc_type, backend):
+        assert doc_id == document_id
+        assert doc_type == "tax_return"
+        return []
+
+    monkeypatch.setattr(extraction_service, "extract_fields_with_model", fake_extract)
+
+    assert extraction_service.extract_fields(document_id, Path("tax.pdf"), "tax_return") == []
+
+
 def test_extract_fields_pay_stub_returns_correct_fields(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: paystub_blocks())

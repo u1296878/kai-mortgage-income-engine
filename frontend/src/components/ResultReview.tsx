@@ -28,15 +28,17 @@ export function ResultReview({ results, onViewSource }: ResultReviewProps): JSX.
           <ul className="space-y-2">
             {result.extracted_fields.map((field, index) => {
               const sourceUrl = `${apiBaseUrl}/documents/${field.document_id}`;
-              const value = field.raw_text ?? field.value.toString();
+              const value = field.raw_text ?? field.value?.toString() ?? "Not found";
+              const sourceText =
+                field.page && field.bounding_box
+                  ? `page ${field.page} (${formatBoundingBox(field.bounding_box)})`
+                  : "not located";
               return (
                 <li key={`${field.field}-${index}`} className="rounded border border-slate-200 bg-white p-2 text-sm">
                   <p className="font-medium">{field.field}</p>
                   <p>Value: {value}</p>
-                  <p>
-                    Source: page {field.page} ({formatBoundingBox(field.bounding_box)})
-                  </p>
-                  {onViewSource ? (
+                  <p>Source: {sourceText}</p>
+                  {onViewSource && field.page && field.bounding_box ? (
                     <button
                       className="mr-3 text-blue-700 underline"
                       onClick={() => onViewSource(field)}

@@ -77,6 +77,9 @@ export function DocumentViewer({ isOpen, documentId, source, onClose }: Document
     if (!source || !isOpen) {
       return;
     }
+    if (!source.page) {
+      return;
+    }
     const pageElement = pageRefs.current[source.page];
     if (pageElement && typeof pageElement.scrollIntoView === "function") {
       pageElement.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -93,7 +96,7 @@ export function DocumentViewer({ isOpen, documentId, source, onClose }: Document
 
   const pages = useMemo(() => Array.from({ length: numPages }, (_, index) => index + 1), [numPages]);
 
-  const highlight = source ? buildHighlight(source, pageMetrics[source.page]) : null;
+  const highlight = source?.page ? buildHighlight(source, pageMetrics[source.page]) : null;
   if (!isOpen) {
     return <></>;
   }
@@ -155,7 +158,7 @@ function setMetrics(
 }
 
 function buildHighlight(source: ExtractedField, metrics?: PageMetrics): CSSProperties | null {
-  if (!metrics) {
+  if (!metrics || !source.bounding_box) {
     return null;
   }
   return {

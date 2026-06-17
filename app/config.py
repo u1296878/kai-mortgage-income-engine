@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,6 +25,10 @@ class Settings(BaseSettings):
     ocr_max_workers: int = 4
     ocr_page_timeout_seconds: int = 60
     ocr_thread_limit: int = 1
+    extraction_backend: Literal["rules", "model"] = "rules"
+    ollama_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
+    ollama_temperature: float = 0.0
 
 
 settings = Settings()

@@ -1,7 +1,10 @@
 from pathlib import Path
 from uuid import UUID
 
+from app.config import settings
 from app.extractors.bank_statement_extractor import extract_bank_statement_fields
+from app.extractors.model_backend import OllamaBackend
+from app.extractors.model_extractor import extract_fields_with_model
 from app.extractors.paystub_extractor import extract_paystub_fields
 from app.extractors.rental_extractor import extract_rental_fields
 from app.extractors.tax_return_extractor import extract_tax_return_fields
@@ -23,28 +26,40 @@ def extract_fields(
     except ValueError as error:
         raise UnsupportedDocumentType(f"Unsupported document type: {doc_type}") from error
 
-    if valid_doc_type == DocumentType.w2:
-        blocks = parse_pdf(file_path)
-        if not blocks:
-            blocks = parse_with_ocr(file_path)
-        return extract_w2_fields(blocks, document_id)
-    if valid_doc_type == DocumentType.pay_stub:
-        blocks = parse_pdf(file_path)
-        if not blocks:
-            blocks = parse_with_ocr(file_path)
-        return extract_paystub_fields(blocks, document_id)
-    if valid_doc_type == DocumentType.tax_return:
-        blocks = parse_pdf(file_path)
-        if not blocks:
-            blocks = parse_with_ocr(file_path)
-        return extract_tax_return_fields(blocks, document_id)
-    if valid_doc_type == DocumentType.bank_statement:
-        blocks = parse_pdf(file_path)
-        if not blocks:
-            blocks = parse_with_ocr(file_path)
-        return extract_bank_statement_fields(blocks, document_id)
-    # other currently represents rental-income documents until a dedicated type exists.
+    blocks = _parse_document(file_path)
+    if settings.extraction_backend == "model":
+        return extract_fields_with_model(
+            blocks,
+            document_id,
+            valid_doc_type.value,
+            _model_backend(),
+        )
+    return _extract_with_rules(blocks, document_id, valid_doc_type)
+
+
+def _parse_document(file_path: Path) -> list[dict]:
     blocks = parse_pdf(file_path)
     if not blocks:
         blocks = parse_with_ocr(file_path)
+    return blocks
+
+
+def _extract_with_rules(
+    blocks: list[dict],
+    document_id: UUID,
+    doc_type: DocumentType,
+) -> list[ExtractedField]:
+    if doc_type == DocumentType.w2:
+        return extract_w2_fields(blocks, document_id)
+    if doc_type == DocumentType.pay_stub:
+        return extract_paystub_fields(blocks, document_id)
+    if doc_type == DocumentType.tax_return:
+        return extract_tax_return_fields(blocks, document_id)
+    if doc_type == DocumentType.bank_statement:
+        return extract_bank_statement_fields(blocks, document_id)
+    # other currently represents rental-income documents until a dedicated type exists.
     return extract_rental_fields(blocks, document_id)
+
+
+def _model_backend() -> OllamaBackend:
+    return OllamaBackend()

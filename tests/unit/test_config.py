@@ -15,6 +15,9 @@ def test_settings_constructs_without_env_file(monkeypatch):
     assert settings.database_url == "sqlite:///C:/Users/example/AppData/Local/KaiMortgageIncomeEngine/local.db"
     assert settings.storage_path == data_dir / "storage"
     assert settings.app_port == 8000
+    assert settings.extraction_backend == "rules"
+    assert settings.ollama_url == "http://localhost:11434"
+    assert settings.ollama_model == "llama3.1:8b"
 
 
 def test_default_data_paths_are_outside_repo(monkeypatch):
