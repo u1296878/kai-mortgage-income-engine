@@ -13,6 +13,7 @@ SINGLE_BUSINESS_KEY = "schedule_c_single_business"
 @dataclass(frozen=True)
 class ScheduleCBusinessIdentity:
     index: int
+    business_count: int
     source_key: str
     label: str
     business_name: str | None
@@ -42,6 +43,7 @@ def build_identity(
     label = business_name or f"Schedule C business {index}"
     return ScheduleCBusinessIdentity(
         index=index,
+        business_count=business_count,
         source_key=source_key,
         label=label,
         business_name=business_name,

@@ -10,6 +10,8 @@ from app.repositories import self_employment_calculation_repo
 from app.schemas.self_employment_inputs import ScheduleCInput, ScheduleCYear
 from app.schemas.self_employment_results import SelfEmploymentCalculationRequest
 from app.services.schedule_c_business_match import (
+    REVIEW_UNMATCHED_BUSINESS,
+    SINGLE_BUSINESS_KEY,
     ScheduleCBusinessIdentity,
     business_names_match,
     is_single_business_key,
@@ -33,7 +35,15 @@ def matching_calculation(
                 source_key_name(calculation.source_business_key),
             ):
                 return calculation
-    if identity.source_key == "schedule_c_single_business":
+        if (
+            identity.business_count == 1
+            and len(candidates) == 1
+            and is_single_business_key(candidates[0].source_business_key)
+        ):
+            return candidates[0]
+    if identity.source_key == SINGLE_BUSINESS_KEY:
+        if len(candidates) == 1:
+            return candidates[0]
         singles = [calc for calc in candidates if is_single_business_key(calc.source_business_key)]
         if len(singles) == 1:
             return singles[0]
@@ -58,7 +68,10 @@ def merge_year(
     calculation.qualifying_monthly = result.qualifying_monthly
     calculation.annual_income = result.annual_income
     calculation.breakdown = with_review_flags(result.breakdown, identity.review_flags)
-    calculation.source_business_key = identity.source_key
+    calculation.source_business_key = _merged_source_key(
+        calculation.source_business_key,
+        identity.source_key,
+    )
     if calculation.label is None or calculation.label.startswith("Schedule C business"):
         calculation.label = identity.label
     saved = self_employment_calculation_repo.update(db, calculation)
@@ -81,7 +94,38 @@ def with_review_flags(
     return merged
 
 
+def unmatched_review_flags(
+    existing: list[SelfEmploymentCalculation],
+    identity: ScheduleCBusinessIdentity,
+    year: ScheduleCYear,
+) -> list[str]:
+    flags = set(identity.review_flags)
+    if _has_other_tax_year(existing, year.tax_year):
+        flags.add(REVIEW_UNMATCHED_BUSINESS)
+    return sorted(flags)
+
+
 def _has_year(source: ScheduleCInput, tax_year: int | None) -> bool:
     if tax_year is None:
         return False
     return any(year.tax_year == tax_year for year in source.years)
+
+
+def _has_other_tax_year(
+    existing: list[SelfEmploymentCalculation],
+    tax_year: int | None,
+) -> bool:
+    for calculation in existing:
+        if calculation.kind != "schedule_c":
+            continue
+        source = ScheduleCInput.model_validate(calculation.inputs["payload"])
+        for source_year in source.years:
+            if tax_year is None or source_year.tax_year != tax_year:
+                return True
+    return False
+
+
+def _merged_source_key(existing_key: str | None, incoming_key: str) -> str:
+    if incoming_key == SINGLE_BUSINESS_KEY and existing_key:
+        return existing_key
+    return incoming_key

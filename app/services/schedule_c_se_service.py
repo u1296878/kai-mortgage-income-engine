@@ -46,6 +46,11 @@ def create_drafts_from_fields(
             if saved is not None:
                 calculations.append(saved)
             continue
+        review_flags = schedule_c_draft_merge.unmatched_review_flags(
+            existing,
+            identity,
+            year,
+        )
         request = _build_request(year)
         result = run_self_employment_engine(request)
         calculation = SelfEmploymentCalculation(
@@ -57,7 +62,7 @@ def create_drafts_from_fields(
             annual_income=result.annual_income,
             breakdown=schedule_c_draft_merge.with_review_flags(
                 result.breakdown,
-                identity.review_flags,
+                review_flags,
             ),
             included=True,
             source_document_id=str(document_id),
