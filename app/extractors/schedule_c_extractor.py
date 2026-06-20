@@ -1,15 +1,16 @@
 from uuid import UUID
 
+from app.extractors.block_utils import merge_blocks
 from app.extractors.schedule_c_columns import line_amount_value
 from app.extractors.tax_return_block_index import TaxReturnBlockIndex, as_tax_return_index
-from app.extractors.extracted_field_factory import make_numeric_field, parse_float
+from app.extractors.extracted_field_factory import make_numeric_field, make_text_field, parse_float
 from app.extractors.tax_return_locator import (
     grouped_lines,
     line_anchors,
     nearby_value,
     value_candidate,
 )
-from app.extractors.tax_return_text import is_money, normalized_line_text
+from app.extractors.tax_return_text import is_money, normalize, normalized_line_text
 from app.schemas.extraction import ExtractedField
 
 PART_V_ADDBACK_TOKENS = ("amortization", "amortiz", "casualty")
@@ -25,6 +26,11 @@ MONEY_LINES = {
 
 NUMERIC_LINES = {
     "business_miles": ("44a", ("business", "miles")),
+}
+
+IDENTITY_LINES = {
+    "business_name": ("c", ("business", "name")),
+    "ein": ("d", ("employer", "id", "number")),
 }
 
 
@@ -48,6 +54,10 @@ def _business_fields(
 ) -> list[ExtractedField]:
     prefix = f"schedule_c_business_{index}"
     fields = []
+    for name, (line_number, tokens) in IDENTITY_LINES.items():
+        value = _line_text_value(blocks, page, line_number, tokens)
+        if value:
+            fields.append(make_text_field(f"{prefix}_{name}", value, document_id))
     for name, (line_number, tokens) in MONEY_LINES.items():
         value = _line_money_value(blocks, page, line_number, tokens)
         if value:
@@ -68,6 +78,34 @@ def _line_money_value(
     _tokens: tuple[str, ...],
 ) -> dict | None:
     return line_amount_value(blocks, page, line_number)
+
+
+def _line_text_value(
+    blocks: TaxReturnBlockIndex,
+    page: int,
+    line_number: str,
+    tokens: tuple[str, ...],
+) -> dict | None:
+    for line in blocks.unique_lines({page}):
+        words = sorted(line, key=lambda block: block["x1"])
+        normalized = [normalize(block["text"]) for block in words]
+        if line_number not in normalized or not all(token in normalized for token in tokens):
+            continue
+        token_indexes = [normalized.index(token) for token in tokens]
+        value_blocks = words[max(token_indexes) + 1 :]
+        if value := _merge_text_value(value_blocks):
+            return value
+    return None
+
+
+def _merge_text_value(value_blocks: list[dict]) -> dict | None:
+    clean_blocks = [block for block in value_blocks if block["text"].strip()]
+    if not clean_blocks:
+        return None
+    raw_text = " ".join(block["text"] for block in clean_blocks).strip()
+    if "if no separate" in raw_text.casefold() or "leave blank" in raw_text.casefold():
+        return None
+    return {**merge_blocks(clean_blocks), "text": raw_text, "raw_text": raw_text}
 
 
 def _line_numeric_value(

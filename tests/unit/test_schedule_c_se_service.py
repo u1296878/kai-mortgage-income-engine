@@ -34,7 +34,7 @@ def test_creates_schedule_c_draft_using_self_employment_engine(test_db):
     assert drafts[0].annual_income == expected.annual_income
     assert drafts[0].included is True
     assert drafts[0].source_document_id == str(document_id)
-    assert drafts[0].source_business_key == "business_1"
+    assert drafts[0].source_business_key == "schedule_c_single_business"
 
 
 def test_dedupes_schedule_c_drafts_by_source_document_and_business(test_db):

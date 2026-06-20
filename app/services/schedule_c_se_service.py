@@ -9,6 +9,8 @@ from app.repositories import self_employment_calculation_repo
 from app.schemas.extraction import ExtractedField
 from app.schemas.self_employment_inputs import ScheduleCInput, ScheduleCYear
 from app.schemas.self_employment_results import SelfEmploymentCalculationRequest
+from app.services import schedule_c_draft_merge
+from app.services.schedule_c_business_match import build_identity
 from app.services.self_employment_income_service import run_self_employment_engine
 
 MODEL_FIELD_ALIASES = {
@@ -30,44 +32,58 @@ def create_drafts_from_fields(
     fields: list[ExtractedField],
 ) -> list[SelfEmploymentCalculation]:
     by_name = {field.field: field for field in fields}
+    indexes = _business_indexes(by_name)
+    existing = self_employment_calculation_repo.list_by_case(db, case_id)
     calculations = []
-    for index in _business_indexes(by_name):
-        source_key = f"business_{index}"
-        if self_employment_calculation_repo.get_by_source(db, document_id, source_key):
+    for index in indexes:
+        identity = build_identity(by_name, index, len(indexes))
+        year = _build_year(by_name, index)
+        if year is None:
             continue
-        request = _build_request(by_name, index)
-        if request is None:
+        matched = schedule_c_draft_merge.matching_calculation(existing, identity)
+        if matched is not None:
+            saved = schedule_c_draft_merge.merge_year(db, matched, identity, year)
+            if saved is not None:
+                calculations.append(saved)
             continue
+        request = _build_request(year)
         result = run_self_employment_engine(request)
         calculation = SelfEmploymentCalculation(
             case_id=str(case_id),
-            label=f"Schedule C business {index}",
+            label=identity.label,
             kind=result.kind,
             inputs=request.model_dump(mode="json"),
             qualifying_monthly=result.qualifying_monthly,
             annual_income=result.annual_income,
-            breakdown=result.breakdown,
+            breakdown=schedule_c_draft_merge.with_review_flags(
+                result.breakdown,
+                identity.review_flags,
+            ),
             included=True,
             source_document_id=str(document_id),
-            source_business_key=source_key,
+            source_business_key=identity.source_key,
         )
         saved = self_employment_calculation_repo.create(db, calculation)
+        existing.append(saved)
         log_event(
             "schedule_c_self_employment_draft_created",
-            {"calculation_id": saved.id, "document_id": str(document_id), "source_key": source_key},
+            {
+                "calculation_id": saved.id,
+                "document_id": str(document_id),
+                "source_key": identity.source_key,
+            },
         )
         calculations.append(saved)
     return calculations
 
 
-def _build_request(
+def _build_year(
     by_name: dict[str, ExtractedField],
     index: int,
-) -> SelfEmploymentCalculationRequest | None:
-    prefix = f"schedule_c_business_{index}"
+) -> ScheduleCYear | None:
     if _schedule_c_value(by_name, index, "net_profit") is None:
         return None
-    year = ScheduleCYear(
+    return ScheduleCYear(
         months=12.0,
         tax_year=_tax_year(by_name),
         net_profit=_schedule_c_value(by_name, index, "net_profit"),
@@ -79,6 +95,9 @@ def _build_request(
         business_miles=_schedule_c_value(by_name, index, "business_miles") or 0.0,
         amortization_casualty=_schedule_c_value(by_name, index, "amortization_casualty") or 0.0,
     )
+
+
+def _build_request(year: ScheduleCYear) -> SelfEmploymentCalculationRequest:
     return SelfEmploymentCalculationRequest(
         kind="schedule_c",
         payload=ScheduleCInput(years=[year]).model_dump(mode="json"),

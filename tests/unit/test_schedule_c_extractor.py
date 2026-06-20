@@ -30,6 +30,13 @@ def test_extract_schedule_c_addback_source_boxes_use_values():
     assert fields["schedule_c_business_1_business_use_of_home"].bounding_box.x1 == 500.0
 
 
+def test_extract_schedule_c_business_identity_fields():
+    fields = field_map(tax_return_blocks() + _schedule_c_page_with_identity())
+
+    assert fields["schedule_c_business_1_business_name"].raw_text == "Law Offices of David S. Hendrickson"
+    assert fields["schedule_c_business_1_ein"].raw_text == "12-3456789"
+
+
 def test_wrapped_line_13_uses_depreciation_amount_not_line_23_taxes():
     fields = fields_for(schedule_c_page(depreciation="3,633.00", taxes="10,959.00"))
 
@@ -104,4 +111,34 @@ def _simple_schedule_c_page(page: int, net: str, depreciation: str = "8,000.00",
         block("Business", 72, 420, 130, 432, page=page),
         block("miles", 134, 420, 170, 432, page=page),
         block(miles, 500, 420, 540, 432, page=page),
+    ]
+
+
+def _schedule_c_page_with_identity():
+    return [
+        block("Schedule", 50, 50, 110, 62, page=2),
+        block("C", 114, 50, 124, 62, page=2),
+        block("Profit", 128, 50, 166, 62, page=2),
+        block("or", 170, 50, 184, 62, page=2),
+        block("Loss", 188, 50, 220, 62, page=2),
+        block("From", 224, 50, 256, 62, page=2),
+        block("Business", 260, 50, 320, 62, page=2),
+        block("C", 50, 90, 60, 102, page=2),
+        block("Business", 72, 90, 130, 102, page=2),
+        block("name", 134, 90, 170, 102, page=2),
+        block("Law", 220, 90, 244, 102, page=2),
+        block("Offices", 248, 90, 298, 102, page=2),
+        block("of", 302, 90, 316, 102, page=2),
+        block("David", 320, 90, 356, 102, page=2),
+        block("S.", 360, 90, 374, 102, page=2),
+        block("Hendrickson", 378, 90, 460, 102, page=2),
+        block("D", 50, 110, 60, 122, page=2),
+        block("Employer", 72, 110, 132, 122, page=2),
+        block("ID", 136, 110, 152, 122, page=2),
+        block("number", 156, 110, 206, 122, page=2),
+        block("12-3456789", 220, 110, 292, 122, page=2),
+        block("31", 50, 340, 66, 352, page=2),
+        block("Net", 72, 340, 96, 352, page=2),
+        block("profit", 100, 340, 136, 352, page=2),
+        block("50,000.00", 500, 340, 570, 352, page=2),
     ]
