@@ -93,6 +93,29 @@ def test_model_extractor_recovers_visible_amount_when_model_returns_line_label()
     assert home.confidence == 0.9
 
 
+def test_model_extractor_does_not_recover_amount_from_next_line():
+    document_id = uuid4()
+    backend = FakeBackend(
+        {
+            "fields": {
+                "schedule_c_business_use_of_home": {
+                    "value": 30,
+                    "confidence": 0.9,
+                    "source_text": "line 30",
+                }
+            }
+        }
+    )
+
+    fields = extract_fields_with_model(_blank_home_blocks(), document_id, "tax_return", backend)
+
+    home = next(field for field in fields if field.field == "schedule_c_business_use_of_home")
+    assert home.value is None
+    assert home.page is None
+    assert home.bounding_box is None
+    assert home.confidence == 0.2
+
+
 def _blocks():
     return [
         *_line(1, 10, "Form 1040 2023 U.S. Individual Income Tax Return"),
@@ -114,3 +137,12 @@ def _line(page: int, y: float, text: str) -> list[dict]:
         blocks.append({"text": word, "page": page, "x1": x, "y1": y, "x2": x + 10, "y2": y + 10})
         x += 20
     return blocks
+
+
+def _blank_home_blocks():
+    return [
+        *_line(1, 10, "Form 1040 2023 U.S. Individual Income Tax Return"),
+        *_line(8, 10, "SCHEDULE C Profit or Loss From Business"),
+        *_line(8, 60, "30 business use of home line 30"),
+        *_line(8, 80, "31 Net profit or loss Line 31 94,380"),
+    ]

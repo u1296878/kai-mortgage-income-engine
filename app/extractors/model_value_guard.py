@@ -8,13 +8,13 @@ def corrected_value(field_name: str, value: float | None, blocks: list[dict]) ->
     if field_name == "schedule_c_amortization_casualty" and not _mentions_amortization_or_casualty(blocks):
         return None
     if value is None:
-        return _fallback_visible_value(field_name, blocks)
+        return _line_anchored_value(field_name, blocks)
     if value is None or field_name not in LINE_NUMBER_FIELDS:
         return value
     line_number, tokens = LINE_NUMBER_FIELDS[field_name]
     if not _same_value(value, line_number):
         return value
-    fallback = _fallback_visible_value(field_name, blocks)
+    fallback = _line_anchored_value(field_name, blocks)
     if fallback is not None and not _same_value(fallback, line_number):
         return fallback
     # Known model failure: blank form lines can be mistaken for their printed line label.
@@ -38,7 +38,7 @@ def _mentions_amortization_or_casualty(blocks: list[dict]) -> bool:
     return "amortization" in text or "casualty" in text
 
 
-def _fallback_visible_value(field_name: str, blocks: list[dict]) -> float | None:
+def _line_anchored_value(field_name: str, blocks: list[dict]) -> float | None:
     if field_name == "tax_year":
         return _first_year(blocks)
     if field_name == "schedule_c_business_miles":
@@ -50,7 +50,7 @@ def _fallback_visible_value(field_name: str, blocks: list[dict]) -> float | None
         "schedule_c_depreciation",
         "schedule_c_business_use_of_home",
     }:
-        return _line_money_value(field_name, blocks) or _last_money_value(blocks)
+        return _line_money_value(field_name, blocks)
     return None
 
 
@@ -68,17 +68,6 @@ def _business_miles(blocks: list[dict]) -> float | None:
                 if value is not None:
                     return value
     return None
-
-
-def _last_money_value(blocks: list[dict]) -> float | None:
-    values = [
-        value
-        for block in blocks
-        if "," in block["text"]
-        for value in [parse_float(block["text"])]
-        if value is not None
-    ]
-    return values[-1] if values else None
 
 
 def _line_money_value(field_name: str, blocks: list[dict]) -> float | None:
