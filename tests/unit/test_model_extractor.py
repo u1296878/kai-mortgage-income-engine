@@ -35,7 +35,8 @@ def test_model_extractor_returns_fields_with_source_refs():
     by_name = {field.field: field for field in fields}
     assert by_name["schedule_c_net_profit"].value == 94380
     assert by_name["schedule_c_net_profit"].page == 8
-    assert by_name["schedule_c_net_profit"].bounding_box.x1 == 20
+    assert by_name["schedule_c_net_profit"].bounding_box.x1 == 230
+    assert by_name["schedule_c_net_profit"].raw_text == "94,380"
     assert by_name["schedule_c_net_profit"].confidence == 0.91
     assert any("schedule_c_net_profit" in prompt for prompt in backend.prompts)
     assert "unrelated page" not in "\n".join(backend.prompts)
@@ -124,7 +125,7 @@ def _blocks():
         *_line(8, 10, "SCHEDULE C Profit or Loss From Business"),
         *_line(8, 30, "12 Depletion 12"),
         *_line(8, 40, "13 Depreciation and section 179 13 3,633"),
-        *_line(8, 60, "30 business use of home line 30 4,628 profit,"),
+        *_line(8, 60, "30 business use of home line 30 4,628"),
         *_line(8, 80, "31 Net profit or loss Line 31 94,380"),
         *_line(99, 10, "unrelated page 12345"),
     ]
@@ -135,7 +136,7 @@ def _line(page: int, y: float, text: str) -> list[dict]:
     x = 20
     for word in text.split():
         blocks.append({"text": word, "page": page, "x1": x, "y1": y, "x2": x + 10, "y2": y + 10})
-        x += 20
+        x += 30
     return blocks
 
 

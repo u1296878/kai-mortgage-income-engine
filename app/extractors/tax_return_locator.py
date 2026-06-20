@@ -16,9 +16,10 @@ def line_anchors(
     seen = set()
     for _line, label_words, text in as_tax_return_index(blocks).label_lines(pages):
         if line_matches(text, line_number, tokens):
-            key = (label_words[0]["page"], round(label_words[0]["y1"], 1), line_number)
+            anchor_words = _anchor_label_words(label_words, line_number)
+            key = (anchor_words[0]["page"], round(anchor_words[0]["y1"], 1), line_number)
             if key not in seen:
-                anchors.append(merge_blocks(label_words))
+                anchors.append(merge_blocks(anchor_words))
                 seen.add(key)
     return anchors
 
@@ -138,6 +139,20 @@ def page_has_line_anchor(lines: list[list[dict]], line_number: str, tokens: tupl
 def line_matches(text: str, line_number: str, tokens: tuple[str, ...]) -> bool:
     words = text.split()
     return line_number in words and all(token in words for token in tokens)
+
+
+def _anchor_label_words(label_words: list[dict], line_number: str) -> list[dict]:
+    selected = []
+    found_line = False
+    for word in sorted(label_words, key=lambda block: block["x1"]):
+        text = normalize(word["text"])
+        if text == line_number:
+            found_line = True
+        elif found_line and text[:1].isdigit() and text != line_number:
+            break
+        if found_line:
+            selected.append(word)
+    return selected or label_words
 
 
 def status_block(line: list[dict], status: str) -> dict:

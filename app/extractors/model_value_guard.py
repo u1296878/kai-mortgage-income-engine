@@ -43,13 +43,7 @@ def _line_anchored_value(field_name: str, blocks: list[dict]) -> float | None:
         return _first_year(blocks)
     if field_name == "schedule_c_business_miles":
         return _business_miles(blocks)
-    if field_name in {
-        "total_income",
-        "agi",
-        "schedule_c_net_profit",
-        "schedule_c_depreciation",
-        "schedule_c_business_use_of_home",
-    }:
+    if field_name in LINE_NUMBER_FIELDS:
         return _line_money_value(field_name, blocks)
     return None
 
@@ -71,30 +65,10 @@ def _business_miles(blocks: list[dict]) -> float | None:
 
 
 def _line_money_value(field_name: str, blocks: list[dict]) -> float | None:
-    line_number = LINE_NUMBER_FIELDS[field_name][0]
-    values = []
-    matched = False
-    for line in TaxReturnBlockIndex(blocks).unique_lines():
-        first = _line_first_token(line)
-        if matched and first and first != line_number:
-            break
-        if first == line_number:
-            matched = True
-        if matched:
-            values.extend(_money_values(line))
-    return values[-1] if values else None
-
-
-def _line_first_token(line: list[dict]) -> str | None:
-    text = sorted(line, key=lambda block: block["x1"])[0]["text"].lower().rstrip(".")
-    return text if text[:1].isdigit() else None
-
-
-def _money_values(blocks: list[dict]) -> list[float]:
-    return [
-        value
-        for block in blocks
-        if "," in block["text"]
-        for value in [parse_float(block["text"])]
-        if value is not None
-    ]
+    line_number, tokens = LINE_NUMBER_FIELDS[field_name]
+    index = TaxReturnBlockIndex(blocks)
+    for anchor in line_anchors(index, line_number, tokens):
+        value = nearest_money_value(anchor, index, line_number)
+        if value is not None:
+            return parse_float(value["text"])
+    return None

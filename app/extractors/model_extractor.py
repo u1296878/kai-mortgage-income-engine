@@ -119,10 +119,13 @@ def _entry_parts(entry) -> tuple[float | None, float, str | None]:
         return None, 0.0, None
     if isinstance(entry, int | float):
         return float(entry), 0.8, None
-    value = entry.get("value") if isinstance(entry, dict) else None
+    raw_value = entry.get("value") if isinstance(entry, dict) else None
     confidence = entry.get("confidence", 0.8) if isinstance(entry, dict) else 0.0
     source_text = entry.get("source_text") if isinstance(entry, dict) else None
-    return _float_or_none(value), _confidence(confidence), source_text
+    value = _float_or_none(raw_value)
+    if raw_value is not None and value is None:
+        source_text = None
+    return value, _confidence(confidence), source_text
 
 
 def _locate_source(
@@ -130,15 +133,16 @@ def _locate_source(
     value: float | None,
     source_text: str | None,
 ) -> dict | None:
+    if value is not None:
+        if source := next(
+            (block for block in blocks if _same_number(parse_float(block["text"]), value)),
+            None,
+        ):
+            return source
     if source_text:
         if source := _find_text_source(blocks, source_text):
             return source
-    if value is None:
-        return None
-    return next(
-        (block for block in blocks if _same_number(parse_float(block["text"]), value)),
-        None,
-    )
+    return None
 
 
 def _find_text_source(blocks: list[dict], source_text: str) -> dict | None:

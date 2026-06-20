@@ -119,6 +119,7 @@ def _load_ocr_dependencies():
     from pdf2image import convert_from_path as imported_convert_from_path
     import pytesseract as imported_pytesseract
 
+    _configure_tesseract_command(imported_pytesseract)
     return imported_convert_from_path, imported_pytesseract
 
 
@@ -130,6 +131,15 @@ def _ensure_ocr_runtime_available() -> None:
         ocr_pytesseract.get_tesseract_version()
     except Exception as error:
         raise ExtractionFailed("Tesseract OCR is not installed or is not on PATH") from error
+
+
+def _configure_tesseract_command(ocr_pytesseract) -> None:
+    if settings.tesseract_cmd:
+        ocr_pytesseract.pytesseract.tesseract_cmd = str(settings.tesseract_cmd)
+        return
+    default_path = Path("C:/Program Files/Tesseract-OCR/tesseract.exe")
+    if os.name == "nt" and default_path.exists():
+        ocr_pytesseract.pytesseract.tesseract_cmd = str(default_path)
 
 
 def _count_pdf_pages(file_path: Path) -> int:

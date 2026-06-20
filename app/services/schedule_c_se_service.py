@@ -11,6 +11,17 @@ from app.schemas.self_employment_inputs import ScheduleCInput, ScheduleCYear
 from app.schemas.self_employment_results import SelfEmploymentCalculationRequest
 from app.services.self_employment_income_service import run_self_employment_engine
 
+MODEL_FIELD_ALIASES = {
+    "net_profit": "schedule_c_net_profit",
+    "nonrecurring_income": "schedule_c_nonrecurring_income",
+    "depletion": "schedule_c_depletion",
+    "depreciation": "schedule_c_depreciation",
+    "meals_entertainment_exclusion": "schedule_c_meals_exclusion",
+    "business_use_of_home": "schedule_c_business_use_of_home",
+    "business_miles": "schedule_c_business_miles",
+    "amortization_casualty": "schedule_c_amortization_casualty",
+}
+
 
 def create_drafts_from_fields(
     db: Session,
@@ -54,19 +65,19 @@ def _build_request(
     index: int,
 ) -> SelfEmploymentCalculationRequest | None:
     prefix = f"schedule_c_business_{index}"
-    if f"{prefix}_net_profit" not in by_name:
+    if _schedule_c_value(by_name, index, "net_profit") is None:
         return None
     year = ScheduleCYear(
         months=12.0,
         tax_year=_tax_year(by_name),
-        net_profit=_value(by_name, f"{prefix}_net_profit"),
-        nonrecurring_income=_value(by_name, f"{prefix}_nonrecurring_income") or 0.0,
-        depletion=_value(by_name, f"{prefix}_depletion") or 0.0,
-        depreciation=_value(by_name, f"{prefix}_depreciation") or 0.0,
-        meals_entertainment_exclusion=_value(by_name, f"{prefix}_meals_entertainment_exclusion") or 0.0,
-        business_use_of_home=_value(by_name, f"{prefix}_business_use_of_home") or 0.0,
-        business_miles=_value(by_name, f"{prefix}_business_miles") or 0.0,
-        amortization_casualty=_value(by_name, f"{prefix}_amortization_casualty") or 0.0,
+        net_profit=_schedule_c_value(by_name, index, "net_profit"),
+        nonrecurring_income=_schedule_c_value(by_name, index, "nonrecurring_income") or 0.0,
+        depletion=_schedule_c_value(by_name, index, "depletion") or 0.0,
+        depreciation=_schedule_c_value(by_name, index, "depreciation") or 0.0,
+        meals_entertainment_exclusion=_schedule_c_value(by_name, index, "meals_entertainment_exclusion") or 0.0,
+        business_use_of_home=_schedule_c_value(by_name, index, "business_use_of_home") or 0.0,
+        business_miles=_schedule_c_value(by_name, index, "business_miles") or 0.0,
+        amortization_casualty=_schedule_c_value(by_name, index, "amortization_casualty") or 0.0,
     )
     return SelfEmploymentCalculationRequest(
         kind="schedule_c",
@@ -80,6 +91,8 @@ def _business_indexes(by_name: dict[str, ExtractedField]) -> list[int]:
         match = re.fullmatch(r"schedule_c_business_(\d+)_net_profit", field_name)
         if match:
             indexes.add(int(match.group(1)))
+    if "schedule_c_net_profit" in by_name:
+        indexes.add(1)
     return sorted(indexes)
 
 
@@ -91,3 +104,14 @@ def _tax_year(by_name: dict[str, ExtractedField]) -> int | None:
 def _value(by_name: dict[str, ExtractedField], field_name: str) -> float | None:
     field = by_name.get(field_name)
     return field.value if field else None
+
+
+def _schedule_c_value(
+    by_name: dict[str, ExtractedField],
+    index: int,
+    suffix: str,
+) -> float | None:
+    indexed = _value(by_name, f"schedule_c_business_{index}_{suffix}")
+    if indexed is not None or index != 1:
+        return indexed
+    return _value(by_name, MODEL_FIELD_ALIASES[suffix])

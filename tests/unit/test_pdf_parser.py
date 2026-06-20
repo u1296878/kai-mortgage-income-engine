@@ -159,3 +159,14 @@ def test_parse_with_ocr_preflights_missing_tesseract(monkeypatch):
 
     with pytest.raises(ExtractionFailed, match="Tesseract OCR"):
         ocr_parser.parse_with_ocr(Path("scan.pdf"))
+
+
+def test_configure_tesseract_command_uses_setting(monkeypatch):
+    fake_pytesseract = SimpleNamespace(
+        pytesseract=SimpleNamespace(tesseract_cmd="tesseract"),
+    )
+    monkeypatch.setattr(ocr_parser.settings, "tesseract_cmd", Path("C:/OCR/tesseract.exe"))
+
+    ocr_parser._configure_tesseract_command(fake_pytesseract)
+
+    assert fake_pytesseract.pytesseract.tesseract_cmd == "C:\\OCR\\tesseract.exe"

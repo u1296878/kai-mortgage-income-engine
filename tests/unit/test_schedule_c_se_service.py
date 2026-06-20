@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 from app.models.case import Case
-from tests.local_user_helpers import make_user
 from app.schemas.extraction import BoundingBox, ExtractedField
 from app.schemas.self_employment_inputs import ScheduleCInput, ScheduleCYear
 from app.schemas.self_employment_results import SelfEmploymentCalculationRequest
@@ -54,10 +53,23 @@ def test_dedupes_schedule_c_drafts_by_source_document_and_business(test_db):
     assert second == []
 
 
+def test_creates_schedule_c_draft_from_model_field_names(test_db):
+    case_id = uuid4()
+    document_id = uuid4()
+
+    drafts = schedule_c_se_service.create_drafts_from_fields(
+        test_db, case_id, document_id, _model_schedule_c_fields(document_id)
+    )
+
+    assert len(drafts) == 1
+    assert drafts[0].breakdown["years"][0]["annual_subtotal"] == 102641.0
+    assert drafts[0].annual_income == 102641.04
+    assert drafts[0].qualifying_monthly == 8553.42
+
+
 def test_case_summary_counts_only_included_self_employment_drafts(test_db):
     case_id = uuid4()
     document_id = uuid4()
-    local_user = make_user()
     test_db.add(Case(id=str(case_id), title="Composite"))
     test_db.commit()
     drafts = schedule_c_se_service.create_drafts_from_fields(
@@ -84,6 +96,20 @@ def _schedule_c_fields(document_id):
         make_field("schedule_c_business_1_business_use_of_home", 3000.0, document_id),
         make_field("schedule_c_business_1_business_miles", 1000.0, document_id),
         make_field("schedule_c_business_1_amortization_casualty", 700.0, document_id),
+    ]
+
+
+def _model_schedule_c_fields(document_id):
+    return [
+        make_field("tax_year", 2023.0, document_id),
+        make_field("schedule_c_net_profit", 94380.0, document_id),
+        make_field("schedule_c_nonrecurring_income", None, document_id),
+        make_field("schedule_c_depletion", None, document_id),
+        make_field("schedule_c_depreciation", 3633.0, document_id),
+        make_field("schedule_c_meals_exclusion", None, document_id),
+        make_field("schedule_c_business_use_of_home", 4628.0, document_id),
+        make_field("schedule_c_business_miles", 0.0, document_id),
+        make_field("schedule_c_amortization_casualty", None, document_id),
     ]
 
 

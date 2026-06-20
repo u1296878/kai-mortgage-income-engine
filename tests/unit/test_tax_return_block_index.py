@@ -27,6 +27,25 @@ def test_preindexed_lookup_matches_raw_block_lookup():
     assert indexed_value == raw_value
 
 
+def test_line_anchor_stops_before_next_numbered_column():
+    blocks = [
+        block("13", 40, 100, 52, 112, page=8),
+        block("Depreciation", 60, 100, 140, 112, page=8),
+        block("and", 144, 100, 166, 112, page=8),
+        block("section", 170, 100, 214, 112, page=8),
+        block("22", 360, 100, 374, 112, page=8),
+        block("Supplies", 380, 100, 430, 112, page=8),
+        block("13", 230, 120, 242, 132, page=8),
+        block("3,633.", 260, 120, 310, 132, page=8),
+    ]
+
+    anchor = line_anchors(blocks, "13", ("depreciation",))[0]
+    value = nearest_money_value(anchor, blocks, "13")
+
+    assert anchor["x2"] < 360
+    assert value["text"] == "3,633."
+
+
 def test_shared_index_reuses_line_grouping_for_repeated_anchor_lookups():
     blocks = _large_tax_return_blocks()
     index = TaxReturnBlockIndex(blocks)

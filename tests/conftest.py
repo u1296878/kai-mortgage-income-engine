@@ -6,6 +6,13 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 
 
+@pytest.fixture(autouse=True)
+def default_rules_extraction(monkeypatch):
+    from app.services import extraction_service
+
+    monkeypatch.setattr(extraction_service.settings, "extraction_backend", "rules")
+
+
 @pytest.fixture(scope="session")
 def test_engine():
     engine = create_engine(
