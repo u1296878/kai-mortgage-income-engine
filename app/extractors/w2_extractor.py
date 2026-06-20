@@ -42,15 +42,24 @@ def extract_w2_fields(blocks: list[dict], document_id: UUID) -> list[ExtractedFi
 
 
 def _form_blocks(blocks: list[dict]) -> list[dict]:
-    pages = {
-        block["page"]
-        for block in blocks
-        if "wages" in line_text(blocks, block)
-        and "federal income tax withheld" in line_text(blocks, block)
-    }
+    pages = _form_pages(blocks)
     if not pages:
         return blocks
-    return [block for block in blocks if block["page"] in pages]
+    first_page = min(pages)
+    return [block for block in blocks if block["page"] == first_page]
+
+
+def _form_pages(blocks: list[dict]) -> set[int]:
+    pages = set()
+    for page in {block["page"] for block in blocks}:
+        text = " ".join(block["text"].lower() for block in blocks if block["page"] == page)
+        if (
+            "wages" in text
+            and "federal income tax withheld" in text
+            and "medicare wages" in text
+        ):
+            pages.add(page)
+    return pages
 
 
 def _find_value_for_label(blocks: list[dict], tokens: tuple[str, ...]) -> dict | None:

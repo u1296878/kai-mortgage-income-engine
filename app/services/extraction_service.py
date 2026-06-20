@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.config import settings
 from app.extractors.bank_statement_extractor import extract_bank_statement_fields
+from app.extractors.block_utils import is_amount
 from app.extractors.model_backend import OllamaBackend
 from app.extractors.model_extractor import extract_fields_with_model
 from app.extractors.paystub_extractor import extract_paystub_fields
@@ -26,7 +27,7 @@ def extract_fields(
     except ValueError as error:
         raise UnsupportedDocumentType(f"Unsupported document type: {doc_type}") from error
 
-    blocks = _parse_document(file_path)
+    blocks = _parse_document(file_path, valid_doc_type)
     if settings.extraction_backend == "model":
         return extract_fields_with_model(
             blocks,
@@ -37,11 +38,19 @@ def extract_fields(
     return _extract_with_rules(blocks, document_id, valid_doc_type)
 
 
-def _parse_document(file_path: Path) -> list[dict]:
+def _parse_document(file_path: Path, doc_type: DocumentType) -> list[dict]:
     blocks = parse_pdf(file_path)
-    if not blocks:
+    if not blocks or _needs_model_w2_ocr(blocks, doc_type):
         blocks = parse_with_ocr(file_path)
     return blocks
+
+
+def _needs_model_w2_ocr(blocks: list[dict], doc_type: DocumentType) -> bool:
+    if settings.extraction_backend != "model" or doc_type != DocumentType.w2:
+        return False
+    text = " ".join(block["text"].lower() for block in blocks)
+    has_w2_labels = "wages" in text and "federal income tax withheld" in text
+    return not has_w2_labels or not any(is_amount(block["text"]) for block in blocks)
 
 
 def _extract_with_rules(

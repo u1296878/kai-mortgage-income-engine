@@ -18,18 +18,25 @@ class OllamaBackend:
         url: str | None = None,
         model: str | None = None,
         temperature: float | None = None,
+        num_ctx: int | None = None,
+        num_gpu: int | None = None,
     ) -> None:
         self.url = (url or settings.ollama_url).rstrip("/")
         self.model = model or settings.ollama_model
         self.temperature = settings.ollama_temperature if temperature is None else temperature
+        self.num_ctx = settings.ollama_num_ctx if num_ctx is None else num_ctx
+        self.num_gpu = settings.ollama_num_gpu if num_gpu is None else num_gpu
 
     def complete_json(self, prompt: str, schema: dict) -> dict:
+        options = {"temperature": self.temperature, "num_ctx": self.num_ctx}
+        if self.num_gpu is not None:
+            options["num_gpu"] = self.num_gpu
         payload = {
             "model": self.model,
             "prompt": prompt,
             "format": schema,
             "stream": False,
-            "options": {"temperature": self.temperature},
+            "options": options,
         }
         try:
             response = httpx.post(f"{self.url}/api/generate", json=payload, timeout=120)

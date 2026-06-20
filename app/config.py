@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1:8b"
     ollama_temperature: float = 0.0
+    ollama_num_ctx: int = 4096
+    ollama_num_gpu: int | None = None
 
 
 settings = Settings()

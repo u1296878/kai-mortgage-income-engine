@@ -17,10 +17,21 @@ TAX_RETURN_FIELDS = {
     ),
 }
 
+W2_FIELDS = {
+    "tax_year": "W-2 tax year printed on the form.",
+    "w2_wages": "W-2 Box 1 wages, tips, other compensation.",
+    "w2_federal_tax_withheld": "W-2 Box 2 federal income tax withheld.",
+    "w2_social_security_wages": "W-2 Box 3 social security wages.",
+    "w2_medicare_wages": "W-2 Box 5 Medicare wages and tips.",
+    "w2_employer_name": "Employer name. Return value as null and put the text in source_text.",
+    "w2_employee_name": "Employee name. Return value as null and put the text in source_text.",
+}
+
 FEDERAL_FIELDS = ("tax_year", "total_income", "agi")
 SCHEDULE_C_FIELDS = tuple(
     field for field in TAX_RETURN_FIELDS if field not in FEDERAL_FIELDS
 )
+W2_MODEL_FIELDS = tuple(W2_FIELDS)
 LINE_NUMBER_FIELDS = {
     "total_income": ("9", ("total", "income")),
     "agi": ("11", ("adjusted", "gross", "income")),
@@ -32,26 +43,42 @@ LINE_NUMBER_FIELDS = {
     "schedule_c_business_use_of_home": ("30", ("business", "use", "home")),
     "schedule_c_business_miles": ("44", ("miles", "drove")),
 }
+W2_BOX_FIELDS = {
+    "w2_wages": "1",
+    "w2_federal_tax_withheld": "2",
+    "w2_social_security_wages": "3",
+    "w2_medicare_wages": "5",
+}
 
 
 def field_schema_for(doc_type: str) -> dict:
-    if doc_type != "tax_return":
-        raise UnsupportedDocumentType(f"Model extraction is not configured for {doc_type}")
-    return _json_schema(TAX_RETURN_FIELDS)
+    return _json_schema(_fields_for_doc_type(doc_type))
 
 
 def field_descriptions_for(doc_type: str) -> dict[str, str]:
-    if doc_type != "tax_return":
-        raise UnsupportedDocumentType(f"Model extraction is not configured for {doc_type}")
-    return TAX_RETURN_FIELDS
+    return _fields_for_doc_type(doc_type)
 
 
 def schema_for_fields(field_names: tuple[str, ...]) -> dict:
-    return _json_schema({name: TAX_RETURN_FIELDS[name] for name in field_names})
+    return _json_schema({name: _field_description(name) for name in field_names})
 
 
 def descriptions_for_fields(field_names: tuple[str, ...]) -> dict[str, str]:
-    return {name: TAX_RETURN_FIELDS[name] for name in field_names}
+    return {name: _field_description(name) for name in field_names}
+
+
+def _fields_for_doc_type(doc_type: str) -> dict[str, str]:
+    if doc_type == "tax_return":
+        return TAX_RETURN_FIELDS
+    if doc_type == "w2":
+        return W2_FIELDS
+    raise UnsupportedDocumentType(f"Model extraction is not configured for {doc_type}")
+
+
+def _field_description(name: str) -> str:
+    if name in W2_FIELDS:
+        return W2_FIELDS[name]
+    return TAX_RETURN_FIELDS[name]
 
 
 def _json_schema(fields: dict[str, str]) -> dict:

@@ -6,12 +6,15 @@ from app.extractors.model_backend import ModelBackend
 from app.extractors.model_field_schemas import (
     FEDERAL_FIELDS,
     SCHEDULE_C_FIELDS,
+    W2_MODEL_FIELDS,
     descriptions_for_fields,
     field_descriptions_for,
     schema_for_fields,
 )
 from app.extractors.model_prompt import build_prompt, field_context_blocks, tax_return_sections
 from app.extractors.model_value_guard import corrected_value
+from app.extractors.model_w2_context import w2_context_blocks
+from app.extractors.w2_extractor import _form_blocks as w2_form_blocks
 from app.exceptions import ModelExtractionFailed
 from app.schemas.extraction import BoundingBox, ExtractedField
 
@@ -23,6 +26,14 @@ def extract_fields_with_model(
     backend: ModelBackend,
 ) -> list[ExtractedField]:
     field_descriptions_for(doc_type)
+    if doc_type == "w2":
+        return _extract_group(
+            W2_MODEL_FIELDS,
+            w2_form_blocks(blocks),
+            document_id,
+            backend,
+            w2_context_blocks,
+        )
     sections = tax_return_sections(blocks)
     return [
         *_extract_group(FEDERAL_FIELDS, sections["federal"], document_id, backend),
@@ -35,10 +46,11 @@ def _extract_group(
     blocks: list[dict],
     document_id: UUID,
     backend: ModelBackend,
+    context_blocks=field_context_blocks,
 ) -> list[ExtractedField]:
     if not blocks:
         return [_null_field(name, document_id) for name in field_names]
-    return [_extract_one_field(name, blocks, document_id, backend) for name in field_names]
+    return [_extract_one_field(name, blocks, document_id, backend, context_blocks) for name in field_names]
 
 
 def _extract_one_field(
@@ -46,8 +58,9 @@ def _extract_one_field(
     blocks: list[dict],
     document_id: UUID,
     backend: ModelBackend,
+    context_blocks,
 ) -> ExtractedField:
-    field_blocks = field_context_blocks(name, blocks)
+    field_blocks = context_blocks(name, blocks)
     if not field_blocks:
         return _null_field(name, document_id)
     field_names = (name,)

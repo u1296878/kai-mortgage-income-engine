@@ -31,6 +31,7 @@ def test_ollama_backend_parses_json_response(monkeypatch):
 
     assert result["fields"]["agi"]["value"] == 79000
     assert calls[0].json["options"]["temperature"] == 0
+    assert calls[0].json["options"]["num_ctx"] == 4096
     assert calls[0].json["model"] == "test-model"
 
 

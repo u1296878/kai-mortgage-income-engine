@@ -1,14 +1,18 @@
 from app.extractors.extracted_field_factory import parse_float
-from app.extractors.model_field_schemas import LINE_NUMBER_FIELDS
+from app.extractors.model_field_schemas import LINE_NUMBER_FIELDS, W2_BOX_FIELDS
 from app.extractors.tax_return_block_index import TaxReturnBlockIndex
 from app.extractors.tax_return_locator import line_anchors, nearest_money_value
+from app.extractors.w2_extractor import FIELD_PATTERNS, _find_value_for_label
 
 
 def corrected_value(field_name: str, value: float | None, blocks: list[dict]) -> float | None:
     if field_name == "schedule_c_amortization_casualty" and not _mentions_amortization_or_casualty(blocks):
         return None
     if value is None:
-        return _line_anchored_value(field_name, blocks)
+        return _anchored_value(field_name, blocks)
+    if field_name in W2_BOX_FIELDS and _same_value(value, W2_BOX_FIELDS[field_name]):
+        fallback = _w2_box_value(field_name, blocks)
+        return fallback if fallback is not None else None
     if value is None or field_name not in LINE_NUMBER_FIELDS:
         return value
     line_number, tokens = LINE_NUMBER_FIELDS[field_name]
@@ -46,6 +50,17 @@ def _line_anchored_value(field_name: str, blocks: list[dict]) -> float | None:
     if field_name in LINE_NUMBER_FIELDS:
         return _line_money_value(field_name, blocks)
     return None
+
+
+def _anchored_value(field_name: str, blocks: list[dict]) -> float | None:
+    if field_name in W2_BOX_FIELDS:
+        return _w2_box_value(field_name, blocks)
+    return _line_anchored_value(field_name, blocks)
+
+
+def _w2_box_value(field_name: str, blocks: list[dict]) -> float | None:
+    value = _find_value_for_label(blocks, FIELD_PATTERNS[field_name])
+    return parse_float(value["text"]) if value else None
 
 
 def _first_year(blocks: list[dict]) -> float | None:

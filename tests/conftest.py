@@ -11,6 +11,7 @@ def default_rules_extraction(monkeypatch):
     from app.services import extraction_service
 
     monkeypatch.setattr(extraction_service.settings, "extraction_backend", "rules")
+    monkeypatch.setattr(extraction_service.settings, "ocr_dpi", 150)
 
 
 @pytest.fixture(scope="session")
