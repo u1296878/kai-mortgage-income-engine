@@ -33,6 +33,25 @@ def test_init_db_adds_progress_to_existing_jobs_table(monkeypatch):
     assert tuple(row) == (0, 0, None)
 
 
+def test_init_db_removes_hosted_auth_artifacts(monkeypatch):
+    engine = _create_test_engine()
+    _create_legacy_auth_tables(engine)
+    monkeypatch.setattr(init_db_module, "engine", engine)
+
+    init_db_module.init_db()
+
+    assert "broker_id" not in _column_names(engine, "cases")
+    assert "broker_id" not in _column_names(engine, "documents")
+    assert "users" not in inspect(engine).get_table_names()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO cases (id, title, status, created_at, updated_at) "
+                "VALUES ('case-1', 'Smoke', 'open', '2026-06-20', '2026-06-20')"
+            ),
+        )
+
+
 def _create_test_engine():
     return create_engine(
         "sqlite:///:memory:",
@@ -64,6 +83,38 @@ def _create_legacy_jobs_table(engine) -> None:
                 created_at=datetime.now(timezone.utc),
             ),
         )
+
+
+def _create_legacy_auth_tables(engine) -> None:
+    metadata = MetaData()
+    Table(
+        "cases",
+        metadata,
+        Column("id", String(36), primary_key=True),
+        Column("broker_id", String(36), nullable=False),
+        Column("title", String, nullable=False),
+        Column("status", String, nullable=False),
+        Column("created_at", DateTime(timezone=True), nullable=False),
+        Column("updated_at", DateTime(timezone=True), nullable=False),
+    )
+    Table(
+        "documents",
+        metadata,
+        Column("id", String(36), primary_key=True),
+        Column("filename", String, nullable=False),
+        Column("doc_type", String, nullable=False),
+        Column("storage_path", String, nullable=False),
+        Column("case_id", String(36), nullable=True),
+        Column("broker_id", String(36), nullable=True),
+        Column("uploaded_at", DateTime(timezone=True), nullable=False),
+    )
+    Table(
+        "users",
+        metadata,
+        Column("id", String(36), primary_key=True),
+        Column("email", String, nullable=False),
+    )
+    metadata.create_all(bind=engine)
 
 
 def _column_names(engine, table_name: str) -> set[str]:

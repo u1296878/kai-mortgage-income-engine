@@ -3,9 +3,92 @@ from sqlalchemy.engine import Engine
 
 
 def ensure_schema_compatibility(engine: Engine) -> None:
+    _remove_hosted_auth_artifacts(engine)
     _ensure_job_progress_columns(engine)
     _ensure_rental_calculation_review_columns(engine)
     _ensure_self_employment_review_columns(engine)
+
+
+def _remove_hosted_auth_artifacts(engine: Engine) -> None:
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    if "cases" in table_names and _has_column(inspector, "cases", "broker_id"):
+        _remove_cases_broker_id(engine)
+    if "documents" in table_names and _has_column(inspector, "documents", "broker_id"):
+        _remove_documents_broker_id(engine)
+    if "users" in table_names:
+        _execute_statements(engine, ["DROP TABLE users"])
+
+
+def _remove_cases_broker_id(engine: Engine) -> None:
+    if engine.dialect.name == "sqlite":
+        _rebuild_sqlite_table(
+            engine,
+            "cases",
+            """
+            CREATE TABLE __cases_local (
+                id VARCHAR(36) NOT NULL,
+                title VARCHAR NOT NULL,
+                status VARCHAR NOT NULL,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
+                PRIMARY KEY (id)
+            )
+            """,
+            ("id", "title", "status", "created_at", "updated_at"),
+        )
+        return
+    _execute_statements(engine, ["ALTER TABLE cases DROP COLUMN broker_id"])
+
+
+def _remove_documents_broker_id(engine: Engine) -> None:
+    if engine.dialect.name == "sqlite":
+        _rebuild_sqlite_table(
+            engine,
+            "documents",
+            """
+            CREATE TABLE __documents_local (
+                id VARCHAR(36) NOT NULL,
+                filename VARCHAR NOT NULL,
+                doc_type VARCHAR NOT NULL,
+                storage_path VARCHAR NOT NULL,
+                case_id VARCHAR(36),
+                uploaded_at DATETIME NOT NULL,
+                PRIMARY KEY (id)
+            )
+            """,
+            ("id", "filename", "doc_type", "storage_path", "case_id", "uploaded_at"),
+        )
+        return
+    _execute_statements(engine, ["ALTER TABLE documents DROP COLUMN broker_id"])
+
+
+def _rebuild_sqlite_table(
+    engine: Engine,
+    table_name: str,
+    create_statement: str,
+    columns: tuple[str, ...],
+) -> None:
+    temp_name = f"__{table_name}_local"
+    column_list = ", ".join(columns)
+    statements = [
+        f"DROP TABLE IF EXISTS {temp_name}",
+        create_statement,
+        f"INSERT INTO {temp_name} ({column_list}) SELECT {column_list} FROM {table_name}",
+        f"DROP TABLE {table_name}",
+        f"ALTER TABLE {temp_name} RENAME TO {table_name}",
+    ]
+    _execute_statements(engine, statements)
+
+
+def _execute_statements(engine: Engine, statements: list[str]) -> None:
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.execute(text(statement))
+
+
+def _has_column(inspector, table_name: str, column_name: str) -> bool:
+    return column_name in {column["name"] for column in inspector.get_columns(table_name)}
 
 
 def _ensure_job_progress_columns(engine: Engine) -> None:
