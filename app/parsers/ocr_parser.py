@@ -16,9 +16,12 @@ pytesseract = SimpleNamespace(
 
 def parse_with_ocr(file_path: Path) -> list[dict]:
     try:
+        _ensure_ocr_runtime_available()
         page_count = _count_pdf_pages(file_path)
         return _parse_pages(file_path, page_count)
     except PageOcrTimeout:
+        raise
+    except ExtractionFailed:
         raise
     except Exception as error:
         raise ExtractionFailed(f"Could not OCR document: {file_path}") from error
@@ -117,6 +120,16 @@ def _load_ocr_dependencies():
     import pytesseract as imported_pytesseract
 
     return imported_convert_from_path, imported_pytesseract
+
+
+def _ensure_ocr_runtime_available() -> None:
+    if _using_test_hooks() or ProcessPoolExecutor.__module__ != "concurrent.futures.process":
+        return
+    _convert, ocr_pytesseract = _load_ocr_dependencies()
+    try:
+        ocr_pytesseract.get_tesseract_version()
+    except Exception as error:
+        raise ExtractionFailed("Tesseract OCR is not installed or is not on PATH") from error
 
 
 def _count_pdf_pages(file_path: Path) -> int:

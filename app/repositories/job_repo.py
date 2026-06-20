@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.exceptions import JobNotFound
@@ -78,18 +78,28 @@ def update_job_status(
     status: str,
     error: str | None = None,
 ) -> Job:
-    job = get_job(db, job_id)
-    job.status = status
-    job.error = error
+    values = {"status": status, "error": error}
     if status in {JobStatus.complete.value, JobStatus.failed.value}:
-        job.completed_at = datetime.now(timezone.utc)
+        values["completed_at"] = datetime.now(timezone.utc)
     if status == JobStatus.complete.value:
-        job.current_stage = "complete"
+        values["current_stage"] = "complete"
+        job = get_job(db, job_id)
         if job.pages_total > 0:
-            job.pages_done = job.pages_total
+            values["pages_done"] = job.pages_total
     if status == JobStatus.failed.value:
-        job.current_stage = "failed"
+        values["current_stage"] = "failed"
+    result = db.execute(
+        update(Job)
+        .where(Job.id == str(job_id))
+        .values(**values)
+        .execution_options(synchronize_session=False),
+    )
+    if result.rowcount == 0:
+        db.rollback()
+        raise JobNotFound(f"Job not found: {job_id}")
     db.commit()
+    db.expire_all()
+    job = get_job(db, job_id)
     db.refresh(job)
     return job
 

@@ -143,3 +143,19 @@ def test_parse_with_ocr_raises_when_tesseract_missing(monkeypatch):
 
     with pytest.raises(ExtractionFailed):
         ocr_parser.parse_with_ocr(Path("scan.pdf"))
+
+
+def test_parse_with_ocr_preflights_missing_tesseract(monkeypatch):
+    fake_pytesseract = SimpleNamespace(
+        get_tesseract_version=lambda: (_ for _ in ()).throw(RuntimeError("missing")),
+    )
+    monkeypatch.setattr(ocr_parser, "convert_from_path", None)
+    monkeypatch.setattr(ocr_parser.pytesseract, "image_to_data", None)
+    monkeypatch.setattr(
+        ocr_parser,
+        "_load_ocr_dependencies",
+        lambda: (lambda file_path: ["image"], fake_pytesseract),
+    )
+
+    with pytest.raises(ExtractionFailed, match="Tesseract OCR"):
+        ocr_parser.parse_with_ocr(Path("scan.pdf"))

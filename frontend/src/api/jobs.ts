@@ -17,14 +17,14 @@ export function retryJob(jobId: string): Promise<JobStatusResponse> {
 
 export async function waitForJobCompletion(
   jobId: string,
-  timeoutMs = 120000,
+  timeoutMs = 600000,
 ): Promise<JobStatusResponse> {
   const startedAt = Date.now();
   let job = await getJob(jobId);
 
   while (!TERMINAL_STATUSES.has(job.status)) {
     if (Date.now() - startedAt > timeoutMs) {
-      throw new Error("Job processing timed out");
+      throw new Error("Job is still processing. Check the job status panel or try again later.");
     }
     await sleep(2000);
     job = await getJob(jobId);
