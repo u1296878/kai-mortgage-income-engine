@@ -81,7 +81,10 @@ def _validate_tax_return(by_name: dict[str, ExtractedField]) -> list[ValidationI
 
 def _validate_schedule_c(by_name: dict[str, ExtractedField]) -> list[ValidationIssue]:
     issues = []
-    net_profit = _value(by_name, "schedule_c_net_profit")
+    net_profit = _first_value(
+        by_name,
+        ("schedule_c_net_profit", "schedule_c_business_1_net_profit"),
+    )
     indexed_net_profit = _value(by_name, "schedule_c_business_1_net_profit")
     has_schedule_c = any(
         field.startswith("schedule_c") and item.value is not None
@@ -104,16 +107,33 @@ def _validate_schedule_c(by_name: dict[str, ExtractedField]) -> list[ValidationI
             )
         )
     if net_profit is not None:
-        for field_name in ("schedule_c_depreciation", "schedule_c_business_use_of_home"):
-            if _value(by_name, field_name) is None:
+        for field_name in ("depreciation", "business_use_of_home"):
+            field_aliases = (
+                f"schedule_c_{field_name}",
+                f"schedule_c_business_1_{field_name}",
+            )
+            if _first_value(by_name, field_aliases) is None:
+                missing_field = field_aliases[0]
+                if any(alias in by_name for alias in field_aliases):
+                    missing_field = next(alias for alias in field_aliases if alias in by_name)
                 issues.append(
                     _issue(
-                        [field_name],
-                        f"{field_name} may be a missing Schedule C add-back; verify against the form.",
+                        [missing_field],
+                        f"{missing_field} may be a missing Schedule C add-back; verify against the form.",
                         "low",
                     )
                 )
     return issues
+
+
+def _first_value(
+    by_name: dict[str, ExtractedField],
+    field_names: tuple[str, ...],
+) -> float | None:
+    for field_name in field_names:
+        if (value := _value(by_name, field_name)) is not None:
+            return value
+    return None
 
 
 def _value(by_name: dict[str, ExtractedField], field_name: str) -> float | None:

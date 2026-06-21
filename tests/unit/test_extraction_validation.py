@@ -93,6 +93,25 @@ def test_scanned_style_missing_addback_is_low_flag():
     ]
 
 
+def test_indexed_schedule_c_missing_addback_is_low_flag():
+    issues = extraction_validation.validate_extraction(
+        "tax_return",
+        [
+            field("schedule_c_business_1_net_profit", 85247.0),
+            field("schedule_c_business_1_depreciation", None),
+            field("schedule_c_business_1_business_use_of_home", 3173.0),
+        ],
+    )
+
+    assert issues == [
+        {
+            "fields": ["schedule_c_business_1_depreciation"],
+            "message": "schedule_c_business_1_depreciation may be a missing Schedule C add-back; verify against the form.",
+            "severity": "low",
+        }
+    ]
+
+
 def test_clean_2023_style_return_has_no_flags():
     issues = extraction_validation.validate_extraction(
         "tax_return",
