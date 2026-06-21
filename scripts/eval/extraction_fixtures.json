@@ -1,0 +1,68 @@
+[
+  {
+    "id": "hendrickson_2023_tax_return",
+    "path": "test_documents/hendrickson_2023_tax_return.pdf",
+    "doc_type": "tax_return",
+    "expected_fields": {
+      "tax_year": 2023,
+      "total_income": 94380,
+      "agi": 87638,
+      "schedule_c_net_profit": 94380,
+      "schedule_c_depreciation": 3633,
+      "schedule_c_business_use_of_home": 4628,
+      "schedule_c_business_miles": 0,
+      "schedule_c_nonrecurring_income": null,
+      "schedule_c_depletion": null,
+      "schedule_c_meals_exclusion": null,
+      "schedule_c_amortization_casualty": null
+    },
+    "expected_monthly_income": 8553.42,
+    "expect_high_review": false
+  },
+  {
+    "id": "hendrickson_2024_tax_return",
+    "path": "test_documents/hendrickson_2024_tax_return.pdf",
+    "doc_type": "tax_return",
+    "expected_fields": {
+      "tax_year": 2024,
+      "total_income": 85247,
+      "agi": 77555,
+      "schedule_c_net_profit": 85247,
+      "schedule_c_depreciation": 659,
+      "schedule_c_business_use_of_home": 3173,
+      "schedule_c_business_miles": 0
+    },
+    "expected_monthly_income": 7423.25,
+    "expect_high_review": false
+  },
+  {
+    "id": "w2_fake_clean",
+    "path": "test_documents/w2_fake_clean.pdf",
+    "doc_type": "w2",
+    "expected_fields": {
+      "w2_wages": 85000,
+      "w2_federal_tax_withheld": 12000,
+      "tax_year": null,
+      "w2_social_security_wages": null,
+      "w2_medicare_wages": null,
+      "w2_employer_name": null,
+      "w2_employee_name": null
+    },
+    "expect_high_review": false
+  },
+  {
+    "id": "w2_fake_filled",
+    "path": "test_documents/w2_fake_filled.pdf",
+    "doc_type": "w2",
+    "expected_fields": {
+      "tax_year": 2023,
+      "w2_wages": 85000,
+      "w2_federal_tax_withheld": 12500,
+      "w2_social_security_wages": 85000,
+      "w2_medicare_wages": 85000,
+      "w2_employer_name": "Acme Corp",
+      "w2_employee_name": null
+    },
+    "expect_high_review": false
+  }
+]
