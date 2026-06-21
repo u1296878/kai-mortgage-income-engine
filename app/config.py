@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     ocr_thread_limit: int = 1
     tesseract_cmd: Path | None = None
     extraction_backend: Literal["rules", "model"] = "rules"
+    extraction_confidence_threshold: float = 0.5
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.1:8b"
     ollama_temperature: float = 0.0

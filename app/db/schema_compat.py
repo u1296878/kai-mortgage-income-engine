@@ -5,6 +5,7 @@ from sqlalchemy.engine import Engine
 def ensure_schema_compatibility(engine: Engine) -> None:
     _remove_hosted_auth_artifacts(engine)
     _ensure_job_progress_columns(engine)
+    _ensure_result_review_flags(engine)
     _ensure_rental_calculation_review_columns(engine)
     _ensure_self_employment_review_columns(engine)
 
@@ -106,6 +107,16 @@ def _ensure_job_progress_columns(engine: Engine) -> None:
     with engine.begin() as connection:
         for statement in statements:
             connection.execute(text(statement))
+
+
+def _ensure_result_review_flags(engine: Engine) -> None:
+    inspector = inspect(engine)
+    if "results" not in inspector.get_table_names():
+        return
+    if "review_flags" in {column["name"] for column in inspector.get_columns("results")}:
+        return
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE results ADD COLUMN review_flags JSON NOT NULL DEFAULT '[]'"))
 
 
 def _ensure_rental_calculation_review_columns(engine: Engine) -> None:

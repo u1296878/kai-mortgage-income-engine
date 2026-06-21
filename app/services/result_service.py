@@ -19,7 +19,7 @@ from app.repositories import (
 )
 from app.schemas.extraction import ExtractedField
 from app.schemas.result import CaseSummaryResponse
-from app.services import case_summary_builder, income_service
+from app.services import case_summary_builder, extraction_validation, income_service
 
 
 def save_extraction_result(
@@ -30,10 +30,13 @@ def save_extraction_result(
     doc_type: str,
     fields: list[ExtractedField],
 ) -> Result:
+    review_flags = extraction_validation.validate_extraction(doc_type, fields)
     annual_income, confidence, notes = income_service.compute_annual_income(
         fields,
         doc_type,
     )
+    if extraction_validation.has_high_issue(review_flags):
+        confidence = "low"
     result = Result(
         job_id=str(job_id),
         document_id=str(document_id),
@@ -43,6 +46,7 @@ def save_extraction_result(
         annual_income=annual_income,
         confidence=confidence,
         notes=notes,
+        review_flags=review_flags,
     )
     saved_result = result_repo.save_result(db, result)
     log_event(

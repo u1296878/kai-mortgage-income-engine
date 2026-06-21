@@ -55,6 +55,7 @@ def merge_year(
     calculation: SelfEmploymentCalculation,
     identity: ScheduleCBusinessIdentity,
     year: ScheduleCYear,
+    review_flags: list[str] | None = None,
 ) -> SelfEmploymentCalculation | None:
     source = ScheduleCInput.model_validate(calculation.inputs["payload"])
     if _has_year(source, year.tax_year) or len(source.years) >= 2:
@@ -67,7 +68,10 @@ def merge_year(
     calculation.inputs = request.model_dump(mode="json")
     calculation.qualifying_monthly = result.qualifying_monthly
     calculation.annual_income = result.annual_income
-    calculation.breakdown = with_review_flags(result.breakdown, identity.review_flags)
+    calculation.breakdown = with_review_flags(
+        result.breakdown,
+        [*identity.review_flags, *(review_flags or [])],
+    )
     calculation.source_business_key = _merged_source_key(
         calculation.source_business_key,
         identity.source_key,

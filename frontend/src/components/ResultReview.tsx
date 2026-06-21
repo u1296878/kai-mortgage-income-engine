@@ -22,9 +22,23 @@ export function ResultReview({ results, onViewSource }: ResultReviewProps): JSX.
             <strong>{result.doc_type}</strong>
             <span>Annual Income: {toCurrency(result.annual_income)}</span>
             <span>Confidence: {result.confidence ?? "n/a"}</span>
+            {result.review_flags.length > 0 ? (
+              <span className="rounded bg-amber-100 px-2 py-0.5 font-medium text-amber-900">
+                Needs review
+              </span>
+            ) : null}
             <span>Created: {toDate(result.created_at)}</span>
           </div>
           {result.notes ? <p className="mb-2 text-sm text-slate-700">{result.notes}</p> : null}
+          {result.review_flags.length > 0 ? (
+            <ul className="mb-2 space-y-1 text-sm text-amber-900">
+              {result.review_flags.map((flag, index) => (
+                <li key={`${flag.message}-${index}`}>
+                  <strong>{flag.severity === "high" ? "High" : "Low"}:</strong> {flag.message}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <ul className="space-y-2">
             {result.extracted_fields.map((field, index) => {
               const sourceUrl = `${apiBaseUrl}/documents/${field.document_id}`;

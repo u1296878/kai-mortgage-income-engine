@@ -59,6 +59,13 @@ vi.mock("../api/results", () => ({
         annual_income: null,
         confidence: "medium",
         notes: "Income derived from per-schedule drafts; AGI shown for reference only.",
+        review_flags: [
+          {
+            fields: ["agi", "total_income"],
+            message: "AGI exceeds total income.",
+            severity: "high",
+          },
+        ],
         created_at: "2026-05-31T00:00:00Z",
       },
     ],
@@ -125,6 +132,8 @@ describe("CaseDetailPage", () => {
 
     expect(await screen.findByText("Taylor Purchase")).toBeInTheDocument();
     expect(screen.getByText("agi")).toBeInTheDocument();
+    expect(screen.getByText("Needs review")).toBeInTheDocument();
+    expect(screen.getByText(/AGI exceeds total income/)).toBeInTheDocument();
     expect(screen.getByText(/Source: page 1/)).toBeInTheDocument();
     const calls = vi.mocked(getDocumentJob).mock.calls;
     expect(calls).toHaveLength(1);

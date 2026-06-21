@@ -45,3 +45,28 @@ def test_save_extraction_result_sets_annual_income(test_db):
     )
 
     assert result.annual_income == 85000.00
+
+
+def test_save_extraction_result_flags_bad_w2_for_review(test_db):
+    fields = [
+        make_field("w2_wages", 1234.0),
+        make_field("w2_federal_tax_withheld", 23500.0),
+    ]
+
+    result = result_service.save_extraction_result(
+        test_db,
+        uuid4(),
+        uuid4(),
+        None,
+        "w2",
+        fields,
+    )
+
+    assert result.confidence == "low"
+    assert result.review_flags == [
+        {
+            "fields": ["w2_federal_tax_withheld", "w2_wages"],
+            "message": "W-2 Box 2 federal withholding exceeds Box 1 wages.",
+            "severity": "high",
+        }
+    ]

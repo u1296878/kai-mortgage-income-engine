@@ -24,6 +24,7 @@ class Result(Base):
     annual_income: Mapped[float | None] = mapped_column(Float, nullable=True)
     confidence: Mapped[str | None] = mapped_column(String, nullable=True)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
+    review_flags: Mapped[list[dict]] = mapped_column(JSON, default=list, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

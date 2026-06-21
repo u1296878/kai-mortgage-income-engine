@@ -12,6 +12,12 @@ from app.schemas.self_employment_results import SelfEmploymentCalculationRespons
 from app.schemas.extraction import ExtractedField
 
 
+class ReviewFlag(BaseModel):
+    fields: list[str]
+    message: str
+    severity: str
+
+
 class ResultResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -25,6 +31,7 @@ class ResultResponse(BaseModel):
     annual_income: float | None
     confidence: str | None
     notes: str | None
+    review_flags: list[ReviewFlag] = Field(default_factory=list)
     created_at: datetime
 
 

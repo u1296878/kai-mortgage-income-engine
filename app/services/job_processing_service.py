@@ -7,6 +7,7 @@ from app.audit.logger import log_event
 from app.models.job_status import JobStatus
 from app.repositories import document_repo, job_repo
 from app.services import (
+    extraction_validation,
     extraction_service,
     result_service,
     schedule_c_se_service,
@@ -46,6 +47,7 @@ def process_next_job(db: Session) -> bool:
                 UUID(document.case_id),
                 UUID(document.id),
                 fields,
+                extraction_validation.schedule_c_issue_messages(result.review_flags),
             )
         job_repo.update_job_status(db, UUID(job.id), JobStatus.complete.value)
         log_event(

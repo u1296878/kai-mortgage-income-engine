@@ -100,7 +100,14 @@ export interface ResultResponse {
   annual_income: number | null;
   confidence: "low" | "medium" | "high" | null;
   notes: string | null;
+  review_flags: ReviewFlag[];
   created_at: string;
+}
+
+export interface ReviewFlag {
+  fields: string[];
+  message: string;
+  severity: "high" | "low";
 }
 
 export interface BorrowerResponse {

@@ -67,6 +67,28 @@ def test_creates_schedule_c_draft_from_model_field_names(test_db):
     assert drafts[0].qualifying_monthly == 8553.42
 
 
+def test_adds_validation_review_flags_to_schedule_c_draft(test_db):
+    case_id = uuid4()
+    document_id = uuid4()
+    review_message = "schedule_c_depreciation may be a missing Schedule C add-back; verify against the form."
+
+    drafts = schedule_c_se_service.create_drafts_from_fields(
+        test_db,
+        case_id,
+        document_id,
+        [
+            make_field("tax_year", 2024.0, document_id),
+            make_field("schedule_c_net_profit", 85247.0, document_id),
+            make_field("schedule_c_business_use_of_home", 3173.0, document_id),
+        ],
+        [review_message],
+    )
+
+    assert len(drafts) == 1
+    assert drafts[0].annual_income == 88419.96
+    assert drafts[0].breakdown["review_flags"] == [review_message]
+
+
 def test_case_summary_counts_only_included_self_employment_drafts(test_db):
     case_id = uuid4()
     document_id = uuid4()

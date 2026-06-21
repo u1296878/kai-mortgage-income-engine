@@ -30,6 +30,7 @@ def create_drafts_from_fields(
     case_id: UUID,
     document_id: UUID,
     fields: list[ExtractedField],
+    review_flags: list[str] | None = None,
 ) -> list[SelfEmploymentCalculation]:
     by_name = {field.field: field for field in fields}
     indexes = _business_indexes(by_name)
@@ -42,11 +43,17 @@ def create_drafts_from_fields(
             continue
         matched = schedule_c_draft_merge.matching_calculation(existing, identity)
         if matched is not None:
-            saved = schedule_c_draft_merge.merge_year(db, matched, identity, year)
+            saved = schedule_c_draft_merge.merge_year(
+                db,
+                matched,
+                identity,
+                year,
+                review_flags,
+            )
             if saved is not None:
                 calculations.append(saved)
             continue
-        review_flags = schedule_c_draft_merge.unmatched_review_flags(
+        calculation_flags = schedule_c_draft_merge.unmatched_review_flags(
             existing,
             identity,
             year,
@@ -62,7 +69,7 @@ def create_drafts_from_fields(
             annual_income=result.annual_income,
             breakdown=schedule_c_draft_merge.with_review_flags(
                 result.breakdown,
-                review_flags,
+                [*calculation_flags, *(review_flags or [])],
             ),
             included=True,
             source_document_id=str(document_id),
