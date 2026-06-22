@@ -47,6 +47,21 @@ def test_schedule_c_sole_prop_subtotal_adds_back_allowed_items():
     assert result.qualifying_monthly == 4391.67
 
 
+def test_schedule_c_blank_addbacks_default_to_zero():
+    source = ScheduleCInput(years=[ScheduleCYear(net_profit=50000)])
+
+    result = compute_schedule_c(source)
+
+    assert result.years[0].annual_subtotal == 50000.00
+
+
+def test_schedule_c_missing_net_profit_still_raises_invalid_input():
+    source = ScheduleCInput(years=[ScheduleCYear()])
+
+    with pytest.raises(InvalidSelfEmploymentInput, match="net_profit"):
+        compute_schedule_c(source)
+
+
 def test_schedule_c_single_member_llc_adds_w2_self_employment_income():
     source = ScheduleCInput(
         years=[schedule_c_year(w2_self_employment_income=12000)]

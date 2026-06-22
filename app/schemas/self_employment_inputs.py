@@ -16,13 +16,13 @@ class ScheduleBYear(SelfEmploymentYear):
 class ScheduleCYear(SelfEmploymentYear):
     tax_year: int | None = None
     net_profit: float | None = None
-    nonrecurring_income: float | None = None
-    depletion: float | None = None
-    depreciation: float | None = None
-    meals_entertainment_exclusion: float | None = None
-    business_use_of_home: float | None = None
-    business_miles: float | None = None
-    amortization_casualty: float | None = None
+    nonrecurring_income: float = 0.0
+    depletion: float = 0.0
+    depreciation: float = 0.0
+    meals_entertainment_exclusion: float = 0.0
+    business_use_of_home: float = 0.0
+    business_miles: float = 0.0
+    amortization_casualty: float = 0.0
     w2_self_employment_income: float | None = None
 
 
