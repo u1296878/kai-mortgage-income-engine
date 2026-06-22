@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]*
+.venv/
 local.db
 local.db-journal
 manual_test.db
@@ -7,7 +8,17 @@ manual_test.db-journal
 manual_server*.log
 .pytest_cache/
 /storage/
+*.pdf
+*.xlsx
 test_documents/*.pdf
+eval/extraction/documents/
+eval/extraction/results/
+result_2024.json
+PROMPT.md
+docs/prompts/local-*.md
+docs/prompts/phase14-*.md
+docs/prompts/phase15-*.md
+docs/prompts/phase16-*.md
 .env
 .env.local
 .env.*

@@ -173,6 +173,16 @@ Income engine, Phase 13 (column-aware Schedule C extraction) is complete:
 - Schedule C money fields now use a contained column-aware reader that anchors on left-margin line numbers and derives the amount column from line 31.
 - Adversarial digital and OCR-style fixtures guard against line 23 taxes, Form 8829 references, gross receipts near line 6, and 27a over-add regressions.
 
+Income engine, Phase 14 (Claude vision backend) is complete:
+- Extraction reading is provider-swappable: Claude vision uses rendered page images, and Ollama remains selectable for local text-model extraction.
+- OCR/text blocks still supply source locations for PDF highlighting.
+- `extraction_backend` stays on `rules` until the labeled eval clears the Claude path.
+
+Income engine, Phase 15 (extraction eval harness) is complete:
+- `python -m eval.extraction.run --provider anthropic|ollama --runs N` measures field accuracy, run-to-run variance, and labeled income-subtotal tie-out per backend.
+- Labels are committed without PDFs; local documents and JSON result files live under gitignored `eval/extraction/documents/` and `eval/extraction/results/`.
+- First Sonnet-vs-Haiku numbers are pending the local labeled PDFs and Anthropic API configuration.
+
 Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - `app/income/nontaxable.py` is a pure engine: one source in (`NonTaxableSource` / `SocialSecuritySource` in `app/schemas/nontaxable_inputs.py`), one qualifying monthly figure out, plus a small taxable/eligible breakdown where the method splits the amount — mirroring the rental engine's shape.
 - Three non-taxable methods (spec 3): `gross_100` (`gross/12`), `total_adjusted` (taxable not grossed up + non-taxable slice grossed up 25%, each term rounded then summed), `current_monthly` (the return's taxable ratio applied to the current monthly amount, then the eligible slice grossed up). Two Social Security methods: `gross_100` and `adjusted` (`(gross + gross*0.15*0.25)/12`). Gross-up rate is a parameter defaulting to 0.25 (spec 1.3).

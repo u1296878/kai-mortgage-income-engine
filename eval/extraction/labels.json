@@ -1,0 +1,54 @@
+{
+  "documents": [
+    {
+      "id": "hendrickson_2023_schedule_c",
+      "path": "eval/extraction/documents/hendrickson_2023_tax_return.pdf",
+      "doc_type": "tax_return",
+      "expected_fields": {
+        "tax_year": 2023,
+        "schedule_c_net_profit": 94380,
+        "schedule_c_depreciation": 3633,
+        "schedule_c_business_use_of_home": 4628,
+        "schedule_c_amortization_casualty": 0
+      },
+      "subtotal": {"type": "schedule_c", "expected": 102641}
+    },
+    {
+      "id": "hendrickson_2024_schedule_c",
+      "path": "eval/extraction/documents/hendrickson_2024_tax_return.pdf",
+      "doc_type": "tax_return",
+      "expected_fields": {
+        "tax_year": 2024,
+        "schedule_c_net_profit": 85247,
+        "schedule_c_depreciation": 659,
+        "schedule_c_business_use_of_home": 3173,
+        "schedule_c_amortization_casualty": 0
+      },
+      "subtotal": {"type": "schedule_c", "expected": 89079}
+    },
+    {
+      "id": "saunders_schedule_e",
+      "path": "eval/extraction/documents/saunders_schedule_e.pdf",
+      "doc_type": "tax_return",
+      "expected_fields": {
+        "schedule_e_property_a_rents_received": 12000,
+        "schedule_e_property_a_total_expenses": 20000,
+        "schedule_e_property_a_depreciation_depletion": 2000
+      },
+      "subtotal": {"type": "schedule_e_property", "expected": -6000}
+    },
+    {
+      "id": "w2_fake_filled",
+      "path": "eval/extraction/documents/w2_fake_filled.pdf",
+      "doc_type": "w2",
+      "expected_fields": {
+        "tax_year": 2023,
+        "w2_wages": 85000,
+        "w2_federal_tax_withheld": 12500,
+        "w2_social_security_wages": 85000,
+        "w2_medicare_wages": 85000,
+        "w2_employer_name": "Acme Corp"
+      }
+    }
+  ]
+}

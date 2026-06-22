@@ -23,6 +23,10 @@
 - [x] Phase 11: tax returns are composite sources; AGI-as-income retired and Schedule C now feeds self-employment drafts
 - [x] Phase 12: Schedule C extraction defects fixed; line 13 depreciation captured on wrapped labels, and 27a no longer over-adds other expenses
 - [x] Phase 13: Schedule C extraction is column-aware and gated by adversarial digital/OCR fixtures; shared 1040 locator baseline restored
+- [x] Phase 14: extraction is provider-swappable; Claude vision is available, Ollama remains optional, and `extraction_backend=model` is gated on phase-15 eval results
+- [x] Phase 15: extraction accuracy/variance is measurable per backend with local gitignored PDFs and JSON result output
+- [ ] Run Sonnet-vs-Haiku extraction eval on the local labeled PDF set and record the first comparison numbers
+- [ ] Before live Anthropic use: confirm zero-retention/data-processing requirements for borrower NPI and set `ANTHROPIC_API_KEY` on the account/environment
 - [x] Income engine, Step 3: non-taxable + Social Security calc engine (`app/income/nontaxable.py` — 3 non-taxable methods + 2 SS methods, 25% gross-up) ties out to the worksheet
 - [x] Income engine, Step 3b: wire + persist non-taxable; Income-Worksheet and Rental-Worksheet are now fully covered
 - [x] Income engine, Step 3c: transcribe SAM rows 113-443 into spec section 5
