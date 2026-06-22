@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BoundingBox(BaseModel):
@@ -18,3 +18,4 @@ class ExtractedField(BaseModel):
     bounding_box: BoundingBox | None
     raw_text: str | None = None
     confidence: float = 1.0
+    review_flags: list[dict] = Field(default_factory=list)

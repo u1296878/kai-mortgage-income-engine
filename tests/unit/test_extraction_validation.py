@@ -127,5 +127,20 @@ def test_clean_2023_style_return_has_no_flags():
     assert issues == []
 
 
+def test_field_level_reconciliation_issue_reaches_validation_flags():
+    issue = {
+        "fields": ["schedule_c_net_profit"],
+        "message": "schedule_c_net_profit: model read 1 but Form line 31 shows 85,247; used the form value; verify.",
+        "severity": "high",
+    }
+    flagged = field("schedule_c_net_profit", 85247.0)
+    flagged.review_flags.append(issue)
+
+    issues = extraction_validation.validate_extraction("tax_return", [flagged])
+
+    assert issue in issues
+    assert extraction_validation.has_high_issue(issues)
+
+
 def _messages(issues):
     return [issue["message"] for issue in issues]

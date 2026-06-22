@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from app.extractors.model_extractor import extract_fields_with_model
+from app.services import extraction_validation
 
 
 class FakeBackend:
@@ -117,6 +118,79 @@ def test_model_extractor_does_not_recover_amount_from_next_line():
     assert home.confidence == 0.2
 
 
+def test_model_extractor_reconciles_net_profit_against_form_line():
+    document_id = uuid4()
+    backend = FakeBackend(
+        {
+            "fields": {
+                "schedule_c_net_profit": {
+                    "value": 1,
+                    "confidence": 0.95,
+                    "source_text": "Line 31 1",
+                }
+            }
+        }
+    )
+
+    fields = extract_fields_with_model(_mismatched_net_profit_blocks(), document_id, "tax_return", backend)
+
+    net_profit = next(field for field in fields if field.field == "schedule_c_net_profit")
+    issues = extraction_validation.validate_extraction("tax_return", fields)
+    high_issue = next(issue for issue in issues if issue["severity"] == "high")
+    assert net_profit.value == 85247
+    assert net_profit.raw_text == "85,247"
+    assert extraction_validation.has_high_issue(issues)
+    assert high_issue == {
+        "fields": ["schedule_c_net_profit"],
+        "message": "schedule_c_net_profit: model read 1 but Form line 31 shows 85,247; used the form value; verify.",
+        "severity": "high",
+    }
+
+
+def test_model_extractor_keeps_agreeing_anchor_clean():
+    document_id = uuid4()
+    backend = FakeBackend(
+        {
+            "fields": {
+                "schedule_c_net_profit": {
+                    "value": 94380,
+                    "confidence": 0.95,
+                    "source_text": "Line 31 94,380",
+                }
+            }
+        }
+    )
+
+    fields = extract_fields_with_model(_blocks(), document_id, "tax_return", backend)
+
+    net_profit = next(field for field in fields if field.field == "schedule_c_net_profit")
+    issues = extraction_validation.validate_extraction("tax_return", fields)
+    assert net_profit.value == 94380
+    assert not any("model read" in issue["message"] for issue in issues)
+
+
+def test_model_extractor_keeps_model_value_when_anchor_missing():
+    document_id = uuid4()
+    backend = FakeBackend(
+        {
+            "fields": {
+                "schedule_c_net_profit": {
+                    "value": 50000,
+                    "confidence": 0.95,
+                    "source_text": None,
+                }
+            }
+        }
+    )
+
+    fields = extract_fields_with_model(_missing_net_profit_anchor_blocks(), document_id, "tax_return", backend)
+
+    net_profit = next(field for field in fields if field.field == "schedule_c_net_profit")
+    issues = extraction_validation.validate_extraction("tax_return", fields)
+    assert net_profit.value == 50000
+    assert not any("model read" in issue["message"] for issue in issues)
+
+
 def _blocks():
     return [
         *_line(1, 10, "Form 1040 2023 U.S. Individual Income Tax Return"),
@@ -146,4 +220,23 @@ def _blank_home_blocks():
         *_line(8, 10, "SCHEDULE C Profit or Loss From Business"),
         *_line(8, 60, "30 business use of home line 30"),
         *_line(8, 80, "31 Net profit or loss Line 31 94,380"),
+    ]
+
+
+def _mismatched_net_profit_blocks():
+    return [
+        *_line(1, 10, "Form 1040 2024 U.S. Individual Income Tax Return"),
+        *_line(1, 30, "9 Total income 85,247"),
+        *_line(1, 50, "11 Adjusted gross income 85,247"),
+        *_line(8, 10, "SCHEDULE C Profit or Loss From Business"),
+        *_line(8, 80, "31 Net profit or loss Line 31 85,247"),
+    ]
+
+
+def _missing_net_profit_anchor_blocks():
+    return [
+        *_line(1, 10, "Form 1040 2024 U.S. Individual Income Tax Return"),
+        *_line(1, 30, "9 Total income 50,000"),
+        *_line(8, 10, "SCHEDULE C Profit or Loss From Business"),
+        *_line(8, 80, "31 Net profit or loss Line 31"),
     ]

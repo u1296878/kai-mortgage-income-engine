@@ -1,18 +1,12 @@
 from uuid import UUID
 
-from app.extractors.block_utils import line_for_block, merge_blocks
-from app.extractors.extracted_field_factory import parse_float
 from app.extractors.model_backend import ModelBackend
-from app.extractors.model_field_schemas import (
-    FEDERAL_FIELDS,
-    SCHEDULE_C_FIELDS,
-    W2_MODEL_FIELDS,
-    descriptions_for_fields,
-    field_descriptions_for,
-    schema_for_fields,
-)
+from app.extractors.model_field_schemas import FEDERAL_FIELDS, SCHEDULE_C_FIELDS, W2_MODEL_FIELDS
+from app.extractors.model_field_schemas import descriptions_for_fields, field_descriptions_for
+from app.extractors.model_field_schemas import schema_for_fields
 from app.extractors.model_prompt import build_prompt, field_context_blocks, tax_return_sections
-from app.extractors.model_value_guard import corrected_value
+from app.extractors.model_source_locator import locate_source
+from app.extractors.model_value_guard import guarded_value
 from app.extractors.model_w2_context import w2_context_blocks
 from app.extractors.w2_extractor import _form_blocks as w2_form_blocks
 from app.exceptions import ModelExtractionFailed
@@ -68,10 +62,15 @@ def _extract_one_field(
         build_prompt(descriptions_for_fields(field_names), field_blocks),
         schema_for_fields(field_names),
     )
+    payload = _payload_from_response(response)
+    return _field_from_model(name, payload.get(name), field_blocks, document_id)
+
+
+def _payload_from_response(response: dict) -> dict:
     payload = response.get("fields", response)
     if not isinstance(payload, dict):
         raise ModelExtractionFailed("Model extraction payload must be an object")
-    return _field_from_model(name, payload.get(name), field_blocks, document_id)
+    return payload
 
 
 def _field_from_model(
@@ -82,14 +81,15 @@ def _field_from_model(
 ) -> ExtractedField:
     value, confidence, source_text = _entry_parts(entry)
     original_value = value
-    value = corrected_value(name, value, blocks)
+    guarded = guarded_value(name, value, blocks)
+    value = guarded.value
     if original_value is None and value is not None:
         confidence = max(confidence, 0.6)
     if value is None:
         confidence = min(confidence, 0.2)
         if original_value is not None:
             source_text = None
-    source = _locate_source(blocks, value, source_text)
+    source = locate_source(blocks, value, source_text)
     if source is None:
         return ExtractedField(
             field=name,
@@ -99,6 +99,7 @@ def _field_from_model(
             bounding_box=None,
             raw_text=source_text,
             confidence=min(confidence, 0.2),
+            review_flags=guarded.review_flags,
         )
     return ExtractedField(
         field=name,
@@ -113,6 +114,7 @@ def _field_from_model(
         ),
         raw_text=source.get("raw_text", source["text"]),
         confidence=confidence,
+        review_flags=guarded.review_flags,
     )
 
 
@@ -141,33 +143,6 @@ def _entry_parts(entry) -> tuple[float | None, float, str | None]:
     return value, _confidence(confidence), source_text
 
 
-def _locate_source(
-    blocks: list[dict],
-    value: float | None,
-    source_text: str | None,
-) -> dict | None:
-    if value is not None:
-        if source := next(
-            (block for block in blocks if _same_number(parse_float(block["text"]), value)),
-            None,
-        ):
-            return source
-    if source_text:
-        if source := _find_text_source(blocks, source_text):
-            return source
-    return None
-
-
-def _find_text_source(blocks: list[dict], source_text: str) -> dict | None:
-    needle = source_text.lower()
-    for block in blocks:
-        line = line_for_block(blocks, block)
-        text = " ".join(word["text"] for word in line).lower()
-        if needle in text:
-            return {**merge_blocks(line), "raw_text": source_text}
-    return None
-
-
 def _float_or_none(value) -> float | None:
     if value is None:
         return None
@@ -182,7 +157,3 @@ def _confidence(value) -> float:
     if numeric is None:
         return 0.8
     return max(0.0, min(1.0, numeric))
-
-
-def _same_number(left: float | None, right: float) -> bool:
-    return left is not None and abs(left - right) < 0.01

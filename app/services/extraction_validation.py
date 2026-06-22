@@ -18,11 +18,16 @@ def validate_extraction(
 ) -> list[ValidationIssue]:
     by_name = {field.field: field for field in fields}
     issues = [
+        _coerce_issue(issue)
+        for field in fields
+        for issue in field.review_flags
+    ]
+    issues.extend([
         _issue([field.field], f"{field.field} has low model confidence.", "low")
         for field in fields
         if field.confidence < settings.extraction_confidence_threshold
         and field.value is not None
-    ]
+    ])
     if doc_type == "w2":
         issues.extend(_validate_w2(by_name))
     if doc_type == "tax_return":
@@ -143,3 +148,12 @@ def _value(by_name: dict[str, ExtractedField], field_name: str) -> float | None:
 
 def _issue(fields: list[str], message: str, severity: Severity) -> ValidationIssue:
     return {"fields": fields, "message": message, "severity": severity}
+
+
+def _coerce_issue(issue: dict) -> ValidationIssue:
+    severity = issue.get("severity")
+    return _issue(
+        list(issue.get("fields", [])),
+        str(issue.get("message", "")),
+        severity if severity in ("high", "low") else "low",
+    )
