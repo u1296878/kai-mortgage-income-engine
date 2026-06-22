@@ -104,6 +104,7 @@ def test_extract_fields_default_rules_does_not_call_model(monkeypatch):
 def test_extract_fields_model_backend_routes_to_model(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service.settings, "extraction_backend", "model")
+    monkeypatch.setattr(extraction_service.settings, "extraction_provider", "ollama")
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: tax_return_blocks())
 
     def fake_extract(blocks, doc_id, doc_type, backend):

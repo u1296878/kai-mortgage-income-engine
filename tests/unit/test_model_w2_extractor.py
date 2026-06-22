@@ -79,6 +79,7 @@ def test_model_w2_extractor_recovers_missing_tax_year_from_w2_context():
 def test_extraction_service_model_backend_routes_w2_to_model(monkeypatch):
     document_id = uuid4()
     monkeypatch.setattr(extraction_service.settings, "extraction_backend", "model")
+    monkeypatch.setattr(extraction_service.settings, "extraction_provider", "ollama")
     monkeypatch.setattr(extraction_service, "parse_pdf", lambda file_path: _w2_blocks())
     monkeypatch.setattr(extraction_service, "_model_backend", lambda: object())
 

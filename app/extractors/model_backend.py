@@ -8,7 +8,12 @@ from app.exceptions import ModelExtractionFailed
 
 
 class ModelBackend(Protocol):
-    def complete_json(self, prompt: str, schema: dict) -> dict:
+    def complete_json(
+        self,
+        prompt: str,
+        schema: dict,
+        images: list[bytes] | None = None,
+    ) -> dict:
         """Return model output parsed as JSON."""
 
 
@@ -27,7 +32,12 @@ class OllamaBackend:
         self.num_ctx = settings.ollama_num_ctx if num_ctx is None else num_ctx
         self.num_gpu = settings.ollama_num_gpu if num_gpu is None else num_gpu
 
-    def complete_json(self, prompt: str, schema: dict) -> dict:
+    def complete_json(
+        self,
+        prompt: str,
+        schema: dict,
+        images: list[bytes] | None = None,
+    ) -> dict:
         options = {"temperature": self.temperature, "num_ctx": self.num_ctx}
         if self.num_gpu is not None:
             options["num_gpu"] = self.num_gpu

@@ -2,10 +2,13 @@ from pathlib import Path
 from uuid import UUID
 
 from app.config import settings
+from app.extractors.anthropic_backend import AnthropicBackend
 from app.extractors.bank_statement_extractor import extract_bank_statement_fields
 from app.extractors.block_utils import is_amount
-from app.extractors.model_backend import OllamaBackend
+from app.extractors.model_backend import ModelBackend, OllamaBackend
 from app.extractors.model_extractor import extract_fields_with_model
+from app.extractors.model_prompt import tax_return_sections
+from app.extractors.model_vision_extractor import extract_fields_with_vision
 from app.extractors.paystub_extractor import extract_paystub_fields
 from app.extractors.rental_extractor import extract_rental_fields
 from app.extractors.tax_return_extractor import extract_tax_return_fields
@@ -13,6 +16,7 @@ from app.extractors.w2_extractor import extract_w2_fields
 from app.exceptions import UnsupportedDocumentType
 from app.models.document_type import DocumentType
 from app.parsers.ocr_parser import parse_with_ocr
+from app.parsers.pdf_image_renderer import render_pdf_pages
 from app.parsers.pdf_parser import parse_pdf
 from app.schemas.extraction import ExtractedField
 
@@ -29,12 +33,7 @@ def extract_fields(
 
     blocks = _parse_document(file_path, valid_doc_type)
     if settings.extraction_backend == "model":
-        return extract_fields_with_model(
-            blocks,
-            document_id,
-            valid_doc_type.value,
-            _model_backend(),
-        )
+        return _extract_with_model_backend(file_path, blocks, document_id, valid_doc_type)
     return _extract_with_rules(blocks, document_id, valid_doc_type)
 
 
@@ -70,5 +69,33 @@ def _extract_with_rules(
     return extract_rental_fields(blocks, document_id)
 
 
-def _model_backend() -> OllamaBackend:
+def _extract_with_model_backend(
+    file_path: Path,
+    blocks: list[dict],
+    document_id: UUID,
+    doc_type: DocumentType,
+) -> list[ExtractedField]:
+    backend = _model_backend()
+    if settings.extraction_provider == "anthropic":
+        image_pages = render_pdf_pages(file_path, _model_page_numbers(blocks, doc_type))
+        return extract_fields_with_vision(
+            image_pages,
+            blocks,
+            document_id,
+            doc_type.value,
+            backend,
+        )
+    return extract_fields_with_model(blocks, document_id, doc_type.value, backend)
+
+
+def _model_page_numbers(blocks: list[dict], doc_type: DocumentType) -> list[int]:
+    if doc_type != DocumentType.tax_return:
+        return sorted({block["page"] for block in blocks})
+    sections = tax_return_sections(blocks)
+    return sorted({block["page"] for block in [*sections["federal"], *sections["schedule_c"]]})
+
+
+def _model_backend() -> ModelBackend:
+    if settings.extraction_provider == "anthropic":
+        return AnthropicBackend()
     return OllamaBackend()
