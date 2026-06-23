@@ -27,7 +27,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
     test_db.add(Case(id=str(case_id), title="Smith Purchase"))
     test_db.commit()
     first = result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 85000.00)]
+        test_db, uuid4(), uuid4(), case_id, "other", [make_field("reported_income", 85000.00)]
     )
     second = result_service.save_extraction_result(
         test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 79000.00)]
@@ -39,7 +39,7 @@ def test_get_case_summary_returns_total_and_sources(test_db):
     summary = result_service.get_case_summary(test_db, case_id)
 
     assert summary.total_annual_income == 85000.00
-    assert [source.field for source in summary.sources] == ["w2_wages", "agi"]
+    assert [source.field for source in summary.sources] == ["reported_income", "agi"]
 
 
 def test_case_summary_uses_stream_totals_when_streams_exist(test_db):
@@ -78,7 +78,7 @@ def test_case_summary_falls_back_to_result_totals_when_no_streams_exist(test_db)
     test_db.add(case)
     test_db.commit()
     result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "w2", [make_field("w2_wages", 60000.00)]
+        test_db, uuid4(), uuid4(), case_id, "other", [make_field("reported_income", 60000.00)]
     )
     result_service.save_extraction_result(
         test_db, uuid4(), uuid4(), case_id, "tax_return", [make_field("agi", 50000.00)]

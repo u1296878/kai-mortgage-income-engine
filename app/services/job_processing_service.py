@@ -9,6 +9,7 @@ from app.repositories import document_repo, job_repo
 from app.services import (
     extraction_validation,
     extraction_service,
+    employment_w2_service,
     result_service,
     schedule_c_se_service,
     schedule_e_rental_service,
@@ -48,6 +49,14 @@ def process_next_job(db: Session) -> bool:
                 UUID(document.id),
                 fields,
                 extraction_validation.schedule_c_issue_messages(result.review_flags),
+            )
+        if document.doc_type == "w2" and document.case_id:
+            employment_w2_service.create_drafts_from_fields(
+                db,
+                UUID(document.case_id),
+                UUID(document.id),
+                fields,
+                extraction_validation.w2_issue_messages(result.review_flags),
             )
         job_repo.update_job_status(db, UUID(job.id), JobStatus.complete.value)
         log_event(

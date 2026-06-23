@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.dependencies import get_db
 from app.main import app
-from app.repositories import job_repo, result_repo
+from app.repositories import employment_calculation_repo, job_repo, result_repo
 from app.storage import local_storage
 from app.workers.job_worker import process_next_job
 from tests.local_user_helpers import local_headers
@@ -39,10 +39,45 @@ def test_w2_upload_produces_real_fields(test_db, tmp_path, monkeypatch):
         app.dependency_overrides.clear()
 
 
+def test_w2_upload_with_case_creates_employment_draft(test_db, tmp_path, monkeypatch):
+    def override_db():
+        yield test_db
+
+    app.dependency_overrides[get_db] = override_db
+    monkeypatch.setattr(local_storage.settings, "storage_path", str(tmp_path))
+    client = TestClient(app)
+    headers = local_headers(client)
+
+    try:
+        case = client.post("/cases", json={"title": "W-2 Case"}, headers=headers).json()
+        response = client.post(
+            "/documents/upload",
+            files={"file": ("w2.pdf", _w2_pdf_bytes(), "application/pdf")},
+            data={"doc_type": "w2", "case_id": case["id"]},
+            headers=headers,
+        )
+
+        processed = process_next_job(test_db)
+        calculations = employment_calculation_repo.list_by_case(test_db, case["id"])
+        summary = client.get(f"/cases/{case['id']}/summary", headers=headers)
+
+        assert processed is True
+        assert len(calculations) == 1
+        assert calculations[0].total_monthly == 7083.33
+        assert calculations[0].annual_income == 85000.0
+        assert summary.json()["total_annual_income"] == 85000.0
+        assert len(summary.json()["employment_calculations"]) == 1
+    finally:
+        app.dependency_overrides.clear()
+
+
 def _w2_pdf_bytes() -> bytes:
     stream = (
         "BT /F1 12 Tf "
-        "50 700 Td (Wages, tips, other compensation) Tj "
+        "50 740 Td (2023 Form W-2 Wage and Tax Statement) Tj "
+        "0 -40 Td (Employer name) Tj "
+        "150 0 Td (Acme Corp) Tj "
+        "-150 -40 Td (Wages, tips, other compensation) Tj "
         "200 0 Td (85000.00) Tj "
         "-200 -40 Td (Federal income tax withheld) Tj "
         "200 0 Td (12000.00) Tj ET"

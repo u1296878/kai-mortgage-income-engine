@@ -10,9 +10,7 @@ def compute_annual_income(
 ) -> tuple[float | None, str, str | None]:
     values = {field.field: field.value for field in fields}
     if doc_type == "w2":
-        if values.get("w2_wages") is None:
-            return None, "low", "W-2 Box 1 wages not found."
-        return values["w2_wages"], "high", None
+        return None, "medium", "Income derived from employment draft; W-2 boxes shown for reference only."
     if doc_type == "pay_stub":
         return _compute_pay_stub_income(fields, values)
     if doc_type == "tax_return":

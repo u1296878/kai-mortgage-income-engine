@@ -47,6 +47,14 @@ def schedule_c_issue_messages(issues: list[ValidationIssue]) -> list[str]:
     ]
 
 
+def w2_issue_messages(issues: list[ValidationIssue]) -> list[str]:
+    return [
+        issue["message"]
+        for issue in issues
+        if any(field.startswith("w2_") for field in issue["fields"])
+    ]
+
+
 def _validate_w2(by_name: dict[str, ExtractedField]) -> list[ValidationIssue]:
     issues = []
     wages = _value(by_name, "w2_wages")

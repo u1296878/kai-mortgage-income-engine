@@ -11,7 +11,7 @@ from app.services import result_service
 
 
 
-def make_field(field: str = "w2_wages", value: float = 85000.00) -> ExtractedField:
+def make_field(field: str = "reported_income", value: float = 85000.00) -> ExtractedField:
     return ExtractedField(
         field=field,
         value=value,
@@ -92,7 +92,7 @@ def _case_with_result(test_db, annual_income):
     test_db.add(Case(id=str(case_id), title="Add-on"))
     test_db.commit()
     result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "w2", [make_field(value=annual_income)]
+        test_db, uuid4(), uuid4(), case_id, "other", [make_field(value=annual_income)]
     )
     return case_id
 

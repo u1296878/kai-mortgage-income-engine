@@ -30,6 +30,16 @@ def list_by_case(db: Session, case_id: UUID) -> list[EmploymentCalculation]:
     return list(db.scalars(statement).all())
 
 
+def update(
+    db: Session,
+    calculation: EmploymentCalculation,
+) -> EmploymentCalculation:
+    db.add(calculation)
+    db.commit()
+    db.refresh(calculation)
+    return calculation
+
+
 def delete(db: Session, calc_id: UUID) -> None:
     calculation = get(db, calc_id)
     db.delete(calculation)

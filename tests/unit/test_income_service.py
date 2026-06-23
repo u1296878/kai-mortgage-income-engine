@@ -15,12 +15,13 @@ def make_field(field: str, value: float) -> ExtractedField:
     )
 
 
-def test_compute_annual_income_w2_returns_wages():
+def test_compute_annual_income_w2_is_reference_only():
     fields = [make_field("w2_wages", 85000.00)]
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "w2")
 
-    assert annual_income == 85000.00
+    assert annual_income is None
+    assert "employment draft" in notes
 
 
 def test_compute_annual_income_bank_statement_annualizes():
@@ -74,12 +75,12 @@ def test_compute_annual_income_tax_return_never_adds_gross_rents():
     assert "per-schedule drafts" in notes
 
 
-def test_compute_annual_income_w2_confidence_is_high():
+def test_compute_annual_income_w2_confidence_is_medium():
     fields = [make_field("w2_wages", 85000.00)]
 
     annual_income, confidence, notes = income_service.compute_annual_income(fields, "w2")
 
-    assert confidence == "high"
+    assert confidence == "medium"
 
 
 def test_compute_annual_income_bank_statement_confidence_is_low():

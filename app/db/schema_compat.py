@@ -6,6 +6,7 @@ def ensure_schema_compatibility(engine: Engine) -> None:
     _remove_hosted_auth_artifacts(engine)
     _ensure_job_progress_columns(engine)
     _ensure_result_review_flags(engine)
+    _ensure_employment_review_columns(engine)
     _ensure_rental_calculation_review_columns(engine)
     _ensure_self_employment_review_columns(engine)
 
@@ -120,21 +121,7 @@ def _ensure_result_review_flags(engine: Engine) -> None:
 
 
 def _ensure_rental_calculation_review_columns(engine: Engine) -> None:
-    inspector = inspect(engine)
-    if "rental_calculations" not in inspector.get_table_names():
-        return
-    column_names = {column["name"] for column in inspector.get_columns("rental_calculations")}
-    statements = []
-    if "included" not in column_names:
-        default = "TRUE" if engine.dialect.name == "postgresql" else "1"
-        statements.append(f"ALTER TABLE rental_calculations ADD COLUMN included BOOLEAN NOT NULL DEFAULT {default}")
-    if "source_document_id" not in column_names:
-        statements.append("ALTER TABLE rental_calculations ADD COLUMN source_document_id VARCHAR(36)")
-    if "source_property_key" not in column_names:
-        statements.append("ALTER TABLE rental_calculations ADD COLUMN source_property_key VARCHAR")
-    with engine.begin() as connection:
-        for statement in statements:
-            connection.execute(text(statement))
+    _ensure_calculation_review_columns(engine, "rental_calculations", "source_property_key")
 
 
 def _add_column(engine: Engine, table: str, column_definition: str) -> str:
@@ -143,19 +130,31 @@ def _add_column(engine: Engine, table: str, column_definition: str) -> str:
     return f"ALTER TABLE {table} ADD COLUMN {column_definition}"
 
 
+def _ensure_employment_review_columns(engine: Engine) -> None:
+    _ensure_calculation_review_columns(engine, "employment_calculations", "source_employer_key")
+
+
 def _ensure_self_employment_review_columns(engine: Engine) -> None:
+    _ensure_calculation_review_columns(engine, "self_employment_calculations", "source_business_key")
+
+
+def _ensure_calculation_review_columns(
+    engine: Engine,
+    table_name: str,
+    source_column: str,
+) -> None:
     inspector = inspect(engine)
-    if "self_employment_calculations" not in inspector.get_table_names():
+    if table_name not in inspector.get_table_names():
         return
-    column_names = {column["name"] for column in inspector.get_columns("self_employment_calculations")}
+    column_names = {column["name"] for column in inspector.get_columns(table_name)}
     statements = []
     if "included" not in column_names:
         default = "TRUE" if engine.dialect.name == "postgresql" else "1"
-        statements.append(f"ALTER TABLE self_employment_calculations ADD COLUMN included BOOLEAN NOT NULL DEFAULT {default}")
+        statements.append(f"ALTER TABLE {table_name} ADD COLUMN included BOOLEAN NOT NULL DEFAULT {default}")
     if "source_document_id" not in column_names:
-        statements.append("ALTER TABLE self_employment_calculations ADD COLUMN source_document_id VARCHAR(36)")
-    if "source_business_key" not in column_names:
-        statements.append("ALTER TABLE self_employment_calculations ADD COLUMN source_business_key VARCHAR")
+        statements.append(f"ALTER TABLE {table_name} ADD COLUMN source_document_id VARCHAR(36)")
+    if source_column not in column_names:
+        statements.append(f"ALTER TABLE {table_name} ADD COLUMN {source_column} VARCHAR")
     with engine.begin() as connection:
         for statement in statements:
             connection.execute(text(statement))

@@ -36,7 +36,8 @@ def test_full_pipeline_upload_to_result(test_db, tmp_path, monkeypatch):
         assert original_status == "pending"
         assert processed is True
         assert updated_job.status == "complete"
-        assert result.annual_income is not None
+        assert result.annual_income is None
+        assert "employment draft" in result.notes
         assert result.extracted_fields[0]["document_id"] == document_id
         assert result.extracted_fields[0]["page"] == 1
         assert "bounding_box" in result.extracted_fields[0]

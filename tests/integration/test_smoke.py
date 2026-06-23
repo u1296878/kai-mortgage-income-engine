@@ -55,12 +55,13 @@ def test_user_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatch)
 
         result_response = client.get(f"/jobs/{job_id}/result", headers=headers)
         assert result_response.status_code == 200
-        assert result_response.json()["annual_income"] is not None
+        assert result_response.json()["annual_income"] is None
         assert result_response.json()["extracted_fields"]
 
         summary_response = client.get(f"/cases/{case_id}/summary", headers=headers)
         assert summary_response.status_code == 200
-        assert summary_response.json()["total_annual_income"] is not None
+        assert summary_response.json()["total_annual_income"] == 85000.0
+        assert len(summary_response.json()["employment_calculations"]) == 1
         sources = summary_response.json()["sources"]
         assert sources
         assert all(source["document_id"] == document_id for source in sources)
@@ -72,7 +73,9 @@ def test_user_workflow_upload_to_verified_income(test_db, tmp_path, monkeypatch)
 
 def _w2_pdf_bytes() -> bytes:
     stream = (
-        "BT /F1 12 Tf 50 700 Td (Wages, tips, other compensation) Tj "
+        "BT /F1 12 Tf 50 740 Td (2023 Form W-2 Wage and Tax Statement) Tj "
+        "0 -40 Td (Employer name) Tj 150 0 Td (Acme Corp) Tj "
+        "-150 -40 Td (Wages, tips, other compensation) Tj "
         "200 0 Td (85000.00) Tj -200 -40 Td "
         "(Federal income tax withheld) Tj 200 0 Td (12000.00) Tj ET"
     )

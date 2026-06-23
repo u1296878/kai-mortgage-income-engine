@@ -22,6 +22,8 @@ class BucketResult(BaseModel):
 
 
 class EmploymentResult(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     base_pay: BucketResult
     overtime: BucketResult
     bonus: BucketResult
@@ -39,5 +41,8 @@ class EmploymentCalculationResponse(BaseModel):
     label: str | None
     total_monthly: float
     annual_income: float
+    included: bool
+    source_document_id: UUID | None
+    source_employer_key: str | None
     breakdown: EmploymentResult
     created_at: datetime

@@ -32,7 +32,7 @@ def test_save_extraction_result_persists_record(test_db):
     assert result.document_id == str(document_id)
 
 
-def test_save_extraction_result_sets_annual_income(test_db):
+def test_save_extraction_result_keeps_w2_income_reference_only(test_db):
     fields = [make_field()]
 
     result = result_service.save_extraction_result(
@@ -44,7 +44,8 @@ def test_save_extraction_result_sets_annual_income(test_db):
         fields,
     )
 
-    assert result.annual_income == 85000.00
+    assert result.annual_income is None
+    assert "employment draft" in result.notes
 
 
 def test_save_extraction_result_flags_bad_w2_for_review(test_db):
