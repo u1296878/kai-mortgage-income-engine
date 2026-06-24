@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.extractors.model_backend import ModelBackend
-from app.extractors.model_field_schemas import FEDERAL_FIELDS, SCHEDULE_C_FIELDS, W2_MODEL_FIELDS
+from app.extractors.model_field_schemas import FEDERAL_FIELDS, PAYSTUB_MODEL_FIELDS, SCHEDULE_C_FIELDS, W2_MODEL_FIELDS
 from app.extractors.model_field_schemas import descriptions_for_fields, field_descriptions_for
 from app.extractors.model_field_schemas import schema_for_fields
 from app.extractors.model_prompt import build_prompt, field_context_blocks, tax_return_sections
@@ -28,6 +28,8 @@ def extract_fields_with_model(
             backend,
             w2_context_blocks,
         )
+    if doc_type == "pay_stub":
+        return _extract_group(PAYSTUB_MODEL_FIELDS, blocks, document_id, backend)
     sections = tax_return_sections(blocks)
     return [
         *_extract_group(FEDERAL_FIELDS, sections["federal"], document_id, backend),
@@ -136,11 +138,17 @@ def _entry_parts(entry) -> tuple[float | None, float, str | None]:
         return float(entry), 0.8, None
     raw_value = entry.get("value") if isinstance(entry, dict) else None
     confidence = entry.get("confidence", 0.8) if isinstance(entry, dict) else 0.0
-    source_text = entry.get("source_text") if isinstance(entry, dict) else None
+    source_text = _source_text(entry)
     value = _float_or_none(raw_value)
-    if raw_value is not None and value is None:
-        source_text = None
+    if raw_value is not None and value is None and source_text is None:
+        source_text = str(raw_value)
     return value, _confidence(confidence), source_text
+
+
+def _source_text(entry) -> str | None:
+    if not isinstance(entry, dict):
+        return None
+    return entry.get("source_text") or entry.get("text_value")
 
 
 def _float_or_none(value) -> float | None:

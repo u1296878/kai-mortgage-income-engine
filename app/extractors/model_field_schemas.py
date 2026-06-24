@@ -27,11 +27,21 @@ W2_FIELDS = {
     "w2_employee_name": "Employee name. Return value as null and put the text in source_text.",
 }
 
+PAYSTUB_FIELDS = {
+    "paystub_gross_ytd": "Pay stub year-to-date gross earnings.",
+    "paystub_gross_current": "Pay stub current pay-period gross earnings.",
+    "paystub_period_end": "Pay period end date. Return value as null and put the date text in source_text.",
+    "paystub_pay_frequency": "Pay frequency such as weekly, bi-weekly, semi-monthly, or monthly. Return text in source_text.",
+    "paystub_employer_name": "Employer name. Return value as null and put the text in source_text.",
+    "paystub_employee_name": "Employee name. Return value as null and put the text in source_text.",
+}
+
 FEDERAL_FIELDS = ("tax_year", "total_income", "agi")
 SCHEDULE_C_FIELDS = tuple(
     field for field in TAX_RETURN_FIELDS if field not in FEDERAL_FIELDS
 )
 W2_MODEL_FIELDS = tuple(W2_FIELDS)
+PAYSTUB_MODEL_FIELDS = tuple(PAYSTUB_FIELDS)
 LINE_NUMBER_FIELDS = {
     "total_income": ("9", ("total", "income")),
     "agi": ("11", ("adjusted", "gross", "income")),
@@ -72,12 +82,16 @@ def _fields_for_doc_type(doc_type: str) -> dict[str, str]:
         return TAX_RETURN_FIELDS
     if doc_type == "w2":
         return W2_FIELDS
+    if doc_type == "pay_stub":
+        return PAYSTUB_FIELDS
     raise UnsupportedDocumentType(f"Model extraction is not configured for {doc_type}")
 
 
 def _field_description(name: str) -> str:
     if name in W2_FIELDS:
         return W2_FIELDS[name]
+    if name in PAYSTUB_FIELDS:
+        return PAYSTUB_FIELDS[name]
     return TAX_RETURN_FIELDS[name]
 
 
@@ -90,6 +104,7 @@ def _json_schema(fields: dict[str, str]) -> dict:
                 "value": {"type": ["number", "null"]},
                 "confidence": {"type": ["number", "null"]},
                 "source_text": {"type": ["string", "null"]},
+                "text_value": {"type": ["string", "null"]},
             },
             "required": ["value", "confidence", "source_text"],
         }

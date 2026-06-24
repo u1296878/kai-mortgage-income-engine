@@ -34,6 +34,8 @@ def extract_fields_with_vision(
 def _vision_blocks(blocks: list[dict], doc_type: str) -> list[dict]:
     if doc_type == "w2":
         return w2_form_blocks(blocks)
+    if doc_type == "pay_stub":
+        return blocks
     sections = tax_return_sections(blocks)
     return [*sections["federal"], *sections["schedule_c"]]
 
@@ -41,6 +43,8 @@ def _vision_blocks(blocks: list[dict], doc_type: str) -> list[dict]:
 def _field_blocks(name: str, blocks: list[dict], doc_type: str) -> list[dict]:
     if doc_type == "w2":
         return w2_context_blocks(name, blocks) or blocks
+    if doc_type == "pay_stub":
+        return field_context_blocks(name, blocks) or blocks
     return field_context_blocks(name, blocks) or blocks
 
 
