@@ -81,10 +81,11 @@ def _field_from_model(
     blocks: list[dict],
     document_id: UUID,
     preserve_confidence_without_source: bool = False,
+    prefer_model_on_mismatch: bool = False,
 ) -> ExtractedField:
     value, confidence, source_text = _entry_parts(entry)
     original_value = value
-    guarded = guarded_value(name, value, blocks)
+    guarded = guarded_value(name, value, blocks, prefer_model_on_mismatch)
     value = guarded.value
     if original_value is None and value is not None:
         confidence = max(confidence, 0.6)

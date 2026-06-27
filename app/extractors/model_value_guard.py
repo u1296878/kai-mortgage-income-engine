@@ -4,6 +4,7 @@ from app.extractors.extracted_field_factory import parse_float
 from app.extractors.model_field_schemas import LINE_NUMBER_FIELDS, W2_BOX_FIELDS
 from app.extractors.tax_return_block_index import TaxReturnBlockIndex
 from app.extractors.tax_return_locator import line_anchors, nearest_money_value
+from app.extractors.tax_return_text import normalize
 from app.extractors.w2_extractor import FIELD_PATTERNS, _find_value_for_label
 
 RECONCILED_LINE_FIELDS = {
@@ -21,17 +22,18 @@ class GuardedValue:
     review_flags: list[dict]
 
 
-def corrected_value(field_name: str, value: float | None, blocks: list[dict]) -> float | None:
-    return guarded_value(field_name, value, blocks).value
-
-
-def guarded_value(field_name: str, value: float | None, blocks: list[dict]) -> GuardedValue:
+def guarded_value(
+    field_name: str,
+    value: float | None,
+    blocks: list[dict],
+    prefer_model_on_mismatch: bool = False,
+) -> GuardedValue:
     if field_name == "schedule_c_amortization_casualty" and not _mentions_amortization_or_casualty(blocks):
         return GuardedValue(None, [])
     if value is None:
         return GuardedValue(_anchored_value(field_name, blocks), [])
     if field_name in RECONCILED_LINE_FIELDS:
-        return _reconciled_line_value(field_name, value, blocks)
+        return _reconciled_line_value(field_name, value, blocks, prefer_model_on_mismatch)
     if field_name in W2_BOX_FIELDS and _same_value(value, W2_BOX_FIELDS[field_name]):
         fallback = _w2_box_value(field_name, blocks)
         return GuardedValue(fallback if fallback is not None else None, [])
@@ -47,26 +49,41 @@ def guarded_value(field_name: str, value: float | None, blocks: list[dict]) -> G
     return GuardedValue(None if _line_is_blank(blocks, line_number, tokens) else value, [])
 
 
-def _reconciled_line_value(field_name: str, value: float, blocks: list[dict]) -> GuardedValue:
+def _reconciled_line_value(
+    field_name: str,
+    value: float,
+    blocks: list[dict],
+    prefer_model_on_mismatch: bool,
+) -> GuardedValue:
     line_number, _tokens = LINE_NUMBER_FIELDS[field_name]
     anchored = _line_money_value(field_name, blocks)
     if anchored is None:
         return GuardedValue(_legacy_line_value(field_name, value, blocks), [])
     if abs(anchored - value) <= 1:
         return GuardedValue(value, [])
-    return GuardedValue(
-        anchored,
-        [
-            {
-                "fields": [field_name],
-                "message": (
-                    f"{field_name}: model read {_format_amount(value)} but Form line "
-                    f"{line_number} shows {_format_amount(anchored)}; used the form value; verify."
-                ),
-                "severity": "high",
-            }
-        ],
-    )
+    if prefer_model_on_mismatch:
+        return GuardedValue(value, [_mismatch_issue(field_name, value, anchored, line_number, True)])
+    return GuardedValue(anchored, [_mismatch_issue(field_name, value, anchored, line_number, False)])
+
+
+def _mismatch_issue(
+    field_name: str,
+    model_value: float,
+    anchored: float,
+    line_number: str,
+    used_model: bool,
+) -> dict:
+    if used_model:
+        message = (
+            f"{field_name}: model read {_format_amount(model_value)}; form line "
+            f"{line_number} OCR read {_format_amount(anchored)}; used the model value; verify."
+        )
+    else:
+        message = (
+            f"{field_name}: model read {_format_amount(model_value)} but Form line "
+            f"{line_number} shows {_format_amount(anchored)}; used the form value; verify."
+        )
+    return {"fields": [field_name], "message": message, "severity": "high"}
 
 
 def _legacy_line_value(field_name: str, value: float, blocks: list[dict]) -> float | None:
@@ -124,13 +141,15 @@ def _first_year(blocks: list[dict]) -> float | None:
 
 
 def _business_miles(blocks: list[dict]) -> float | None:
-    words = [block["text"] for block in blocks]
-    for index, word in enumerate(words):
-        if word.lower().strip(":") == "business":
-            for candidate in words[index + 1 : index + 3]:
-                value = parse_float(candidate)
-                if value is not None:
-                    return value
+    index = TaxReturnBlockIndex(blocks)
+    for line in index.unique_lines():
+        words = [normalize(block["text"]) for block in sorted(line, key=lambda item: item["x1"])]
+        if "44a" not in words or "business" not in words or "miles" not in words:
+            continue
+        for block in reversed(sorted(line, key=lambda item: item["x1"])):
+            value = parse_float(block["text"])
+            if value is not None and not _same_value(value, "44a"):
+                return value
     return None
 
 
