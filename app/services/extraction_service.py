@@ -17,7 +17,7 @@ from app.exceptions import UnsupportedDocumentType
 from app.models.document_type import DocumentType
 from app.parsers.ocr_parser import parse_with_ocr
 from app.parsers.pdf_image_renderer import render_pdf_pages
-from app.parsers.pdf_parser import parse_pdf
+from app.parsers.pdf_parser import page_dimensions, parse_pdf
 from app.schemas.extraction import ExtractedField
 
 
@@ -77,13 +77,16 @@ def _extract_with_model_backend(
 ) -> list[ExtractedField]:
     backend = _model_backend()
     if settings.extraction_provider == "anthropic":
-        image_pages = render_pdf_pages(file_path, _model_page_numbers(blocks, doc_type))
+        pages = _model_page_numbers(blocks, doc_type)
+        image_pages = render_pdf_pages(file_path, pages)
         return extract_fields_with_vision(
             image_pages,
             blocks,
             document_id,
             doc_type.value,
             backend,
+            pages,
+            page_dimensions(file_path, pages),
         )
     return extract_fields_with_model(blocks, document_id, doc_type.value, backend)
 

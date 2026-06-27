@@ -1,6 +1,6 @@
 # PROGRESS
 
-Last updated: 2026-06-09
+Last updated: 2026-06-27
 
 Current status: Backend extraction, auth, scoping, income-stream modeling, and borrower ownership are complete. React frontend now supports source-click review, case lifecycle management, broker self-registration, document management actions, failed-job retry, and manager broker activation controls. Tax returns are now composite sources: Schedule E and Schedule C create reviewable drafts, while AGI/total income are reference-only and never added directly. Responsive document processing is in progress; the tax-return extractor hot path now reuses indexed per-page line grouping, multi-page OCR is bounded per page, and job status responses expose persisted progress.
 No document types currently use the extraction stub.
@@ -175,7 +175,7 @@ Income engine, Phase 13 (column-aware Schedule C extraction) is complete:
 
 Income engine, Phase 14 (Claude vision backend) is complete:
 - Extraction reading is provider-swappable: Claude vision uses rendered page images, and Ollama remains selectable for local text-model extraction.
-- OCR/text blocks still supply source locations for PDF highlighting.
+- Vision source locations now come from model-provided approximate normalized boxes converted to PDF points, with OCR/text matching kept as the fallback for clean digital docs.
 - `extraction_backend` stays on `rules` until the labeled eval clears the Claude path.
 
 Income engine, Phase 15 (extraction eval harness) is complete:

@@ -69,8 +69,11 @@ def field_descriptions_for(doc_type: str) -> dict[str, str]:
     return _fields_for_doc_type(doc_type)
 
 
-def schema_for_fields(field_names: tuple[str, ...]) -> dict:
-    return _json_schema({name: _field_description(name) for name in field_names})
+def schema_for_fields(field_names: tuple[str, ...], include_source_box: bool = False) -> dict:
+    return _json_schema(
+        {name: _field_description(name) for name in field_names},
+        include_source_box,
+    )
 
 
 def descriptions_for_fields(field_names: tuple[str, ...]) -> dict[str, str]:
@@ -95,7 +98,7 @@ def _field_description(name: str) -> str:
     return TAX_RETURN_FIELDS[name]
 
 
-def _json_schema(fields: dict[str, str]) -> dict:
+def _json_schema(fields: dict[str, str], include_source_box: bool = False) -> dict:
     field_properties = {
         name: {
             "type": ["object", "null"],
@@ -105,6 +108,7 @@ def _json_schema(fields: dict[str, str]) -> dict:
                 "confidence": {"type": ["number", "null"]},
                 "source_text": {"type": ["string", "null"]},
                 "text_value": {"type": ["string", "null"]},
+                **_source_box_properties(include_source_box),
             },
             "required": ["value", "confidence", "source_text"],
         }
@@ -122,4 +126,18 @@ def _json_schema(fields: dict[str, str]) -> dict:
             }
         },
         "required": ["fields"],
+    }
+
+
+def _source_box_properties(include_source_box: bool) -> dict:
+    if not include_source_box:
+        return {}
+    return {
+        "box": {
+            "type": ["array", "null"],
+            "items": {"type": "number"},
+            "minItems": 4,
+            "maxItems": 4,
+        },
+        "page_index": {"type": ["integer", "null"]},
     }
