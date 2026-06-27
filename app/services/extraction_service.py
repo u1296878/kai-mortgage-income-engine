@@ -11,6 +11,7 @@ from app.extractors.model_prompt import tax_return_sections
 from app.extractors.model_vision_extractor import extract_fields_with_vision
 from app.extractors.paystub_extractor import extract_paystub_fields
 from app.extractors.rental_extractor import extract_rental_fields
+from app.extractors.schedule_e_extractor import schedule_e_pages
 from app.extractors.tax_return_extractor import extract_tax_return_fields
 from app.extractors.w2_extractor import extract_w2_fields
 from app.exceptions import UnsupportedDocumentType
@@ -95,7 +96,8 @@ def _model_page_numbers(blocks: list[dict], doc_type: DocumentType) -> list[int]
     if doc_type != DocumentType.tax_return:
         return sorted({block["page"] for block in blocks})
     sections = tax_return_sections(blocks)
-    return sorted({block["page"] for block in [*sections["federal"], *sections["schedule_c"]]})
+    pages = {block["page"] for block in [*sections["federal"], *sections["schedule_c"]]}
+    return sorted(pages | schedule_e_pages(blocks))
 
 
 def _model_backend() -> ModelBackend:

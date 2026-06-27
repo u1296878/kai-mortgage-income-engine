@@ -5,6 +5,7 @@ from app.extractors.model_extractor import _field_from_model, _payload_from_resp
 from app.extractors.model_field_schemas import descriptions_for_fields, field_descriptions_for
 from app.extractors.model_field_schemas import schema_for_fields
 from app.extractors.model_prompt import field_context_blocks, page_text, tax_return_sections
+from app.extractors.model_schedule_e_vision import extract_schedule_e_with_vision
 from app.extractors.model_vision_value_cleaner import clean_vision_entry
 from app.extractors.model_w2_context import w2_context_blocks
 from app.extractors.w2_extractor import _form_blocks as w2_form_blocks
@@ -29,7 +30,7 @@ def extract_fields_with_vision(
         images=image_pages,
     )
     payload = _payload_from_response(response)
-    return [
+    fields = [
         _field_from_vision(
             name,
             clean_vision_entry(name, payload.get(name)),
@@ -40,6 +41,9 @@ def extract_fields_with_vision(
         )
         for name in field_names
     ]
+    if doc_type == "tax_return":
+        fields.extend(extract_schedule_e_with_vision(image_pages, blocks, document_id, backend, ordered_pages, page_sizes or {}))
+    return fields
 
 
 def _vision_blocks(blocks: list[dict], doc_type: str) -> list[dict]:
