@@ -32,6 +32,7 @@ def extract_fields_with_vision(
             clean_vision_entry(name, payload.get(name)),
             _field_blocks(name, group_blocks, doc_type),
             document_id,
+            preserve_confidence_without_source=True,
         )
         for name in field_names
     ]

@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from app.extractors.model_vision_extractor import extract_fields_with_vision
+from app.services import extraction_validation
 
 
 class FakeVisionBackend:
@@ -76,6 +77,58 @@ def test_vision_extractor_cleans_w2_label_polluted_numeric_values():
     assert "good w2_wages=57278.79" in backend.prompts[0]
 
 
+def test_vision_extractor_keeps_confidence_when_source_is_not_located():
+    document_id = uuid4()
+    backend = FakeVisionBackend(
+        {
+            "fields": {
+                "w2_wages": {"value": 57278.79, "confidence": 0.9, "source_text": "unmatched"},
+            }
+        }
+    )
+
+    fields = extract_fields_with_vision([b"page"], _w2_label_only_blocks(), document_id, "w2", backend)
+
+    wages = next(field for field in fields if field.field == "w2_wages")
+    issues = extraction_validation.validate_extraction("w2", fields)
+    assert wages.bounding_box is None
+    assert wages.confidence == 0.9
+    assert "w2_wages has low model confidence." not in _messages(issues)
+
+
+def test_vision_extractor_still_flags_low_model_confidence():
+    document_id = uuid4()
+    backend = FakeVisionBackend(
+        {
+            "fields": {
+                "w2_wages": {"value": 57278.79, "confidence": 0.4, "source_text": "unmatched"},
+            }
+        }
+    )
+
+    fields = extract_fields_with_vision([b"page"], _w2_label_only_blocks(), document_id, "w2", backend)
+
+    issues = extraction_validation.validate_extraction("w2", fields)
+    assert "w2_wages has low model confidence." in _messages(issues)
+
+
+def test_vision_extractor_still_flags_w2_value_cross_check():
+    document_id = uuid4()
+    backend = FakeVisionBackend(
+        {
+            "fields": {
+                "w2_wages": {"value": 1000, "confidence": 0.9, "source_text": "unmatched"},
+                "w2_federal_tax_withheld": {"value": 2000, "confidence": 0.9, "source_text": "unmatched"},
+            }
+        }
+    )
+
+    fields = extract_fields_with_vision([b"page"], _w2_label_only_blocks(), document_id, "w2", backend)
+
+    issues = extraction_validation.validate_extraction("w2", fields)
+    assert "W-2 Box 2 federal withholding exceeds Box 1 wages." in _messages(issues)
+
+
 def _blocks():
     return [
         *_line(1, 10, "Form 1040 2023 U.S. Individual Income Tax Return"),
@@ -94,6 +147,14 @@ def _w2_blocks():
     ]
 
 
+def _w2_label_only_blocks():
+    return [
+        *_line(1, 10, "2025 Form W-2 Wage and Tax Statement"),
+        *_line(1, 30, "1 Wages tips other compensation"),
+        *_line(1, 50, "2 Federal income tax withheld"),
+    ]
+
+
 def _line(page: int, y: float, text: str) -> list[dict]:
     blocks = []
     x = 20
@@ -101,3 +162,7 @@ def _line(page: int, y: float, text: str) -> list[dict]:
         blocks.append({"text": word, "page": page, "x1": x, "y1": y, "x2": x + 10, "y2": y + 10})
         x += 30
     return blocks
+
+
+def _messages(issues):
+    return [issue["message"] for issue in issues]

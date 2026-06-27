@@ -80,6 +80,7 @@ def _field_from_model(
     entry,
     blocks: list[dict],
     document_id: UUID,
+    preserve_confidence_without_source: bool = False,
 ) -> ExtractedField:
     value, confidence, source_text = _entry_parts(entry)
     original_value = value
@@ -93,6 +94,7 @@ def _field_from_model(
             source_text = None
     source = locate_source(blocks, value, source_text)
     if source is None:
+        source_confidence = confidence if preserve_confidence_without_source else min(confidence, 0.2)
         return ExtractedField(
             field=name,
             value=value,
@@ -100,7 +102,7 @@ def _field_from_model(
             page=None,
             bounding_box=None,
             raw_text=source_text,
-            confidence=min(confidence, 0.2),
+            confidence=source_confidence,
             review_flags=guarded.review_flags,
         )
     return ExtractedField(

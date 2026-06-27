@@ -22,6 +22,7 @@ docs/prompts/phase16-*.md
 docs/prompts/phase17-*.md
 docs/prompts/phase18-*.md
 docs/prompts/phase19-*.md
+docs/prompts/phase20-*.md
 .env
 .env.local
 .env.*
