@@ -18,6 +18,8 @@ def test_settings_constructs_without_env_file(monkeypatch):
     assert settings.extraction_backend == "rules"
     assert settings.extraction_provider == "anthropic"
     assert settings.anthropic_model == "claude-sonnet-4-6"
+    assert settings.vision_dpi == 150
+    assert settings.vision_image_max_px == 1568
     assert settings.ollama_url == "http://localhost:11434"
     assert settings.ollama_model == "llama3.1:8b"
 

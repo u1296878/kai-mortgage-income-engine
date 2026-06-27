@@ -1,6 +1,8 @@
 from io import BytesIO
 from pathlib import Path
 
+from PIL import Image
+
 from app.config import settings
 from app.exceptions import ExtractionFailed
 
@@ -23,16 +25,38 @@ def _render_page(converter, file_path: Path, page_number: int) -> bytes:
     images = _convert_page(converter, file_path, page_number)
     if not images:
         raise ExtractionFailed(f"Could not render page {page_number}")
+    image = _bounded_image(images[0], page_number)
     output = BytesIO()
-    images[0].save(output, format="PNG")
+    image.save(output, format="PNG")
     return output.getvalue()
+
+
+def _bounded_image(image, page_number: int):
+    try:
+        _allow_load_then_shrink()
+        image.load()
+        max_px = settings.vision_image_max_px
+        if max(image.size) <= max_px:
+            return image
+        resized = image.copy()
+        resized.thumbnail((max_px, max_px), Image.Resampling.LANCZOS)
+        return resized
+    except Image.DecompressionBombError as error:
+        raise ExtractionFailed(f"Rendered page {page_number} is too large to process safely") from error
+
+
+def _allow_load_then_shrink() -> None:
+    target = settings.vision_image_max_px * settings.vision_image_max_px * 64
+    current = Image.MAX_IMAGE_PIXELS or 0
+    if current < target:
+        Image.MAX_IMAGE_PIXELS = target
 
 
 def _convert_page(converter, file_path: Path, page_number: int):
     try:
         return converter(
             file_path,
-            dpi=settings.ocr_dpi,
+            dpi=settings.vision_dpi,
             first_page=page_number,
             last_page=page_number,
         )
