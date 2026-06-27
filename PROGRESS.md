@@ -183,6 +183,11 @@ Income engine, Phase 15 (extraction eval harness) is complete:
 - Labels are committed without PDFs; local documents and JSON result files live under gitignored `eval/extraction/documents/` and `eval/extraction/results/`.
 - First Sonnet-vs-Haiku numbers are pending the local labeled PDFs and Anthropic API configuration.
 
+Income engine, Phase 22 (vision/OCR reconciliation) is complete:
+- Claude vision keeps the model value when OCR line anchors disagree, while still adding a high review flag naming both readings.
+- The Ollama text path keeps the older anchor-preferred reconcile behavior.
+- Vision Schedule C guards now reject label-only business miles and non-amortization Part V amounts.
+
 Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - `app/income/nontaxable.py` is a pure engine: one source in (`NonTaxableSource` / `SocialSecuritySource` in `app/schemas/nontaxable_inputs.py`), one qualifying monthly figure out, plus a small taxable/eligible breakdown where the method splits the amount — mirroring the rental engine's shape.
 - Three non-taxable methods (spec 3): `gross_100` (`gross/12`), `total_adjusted` (taxable not grossed up + non-taxable slice grossed up 25%, each term rounded then summed), `current_monthly` (the return's taxable ratio applied to the current monthly amount, then the eligible slice grossed up). Two Social Security methods: `gross_100` and `adjusted` (`(gross + gross*0.15*0.25)/12`). Gross-up rate is a parameter defaulting to 0.25 (spec 1.3).
