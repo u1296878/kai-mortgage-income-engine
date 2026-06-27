@@ -99,6 +99,8 @@ def _field_from_vision(
         preserve_confidence_without_source=True,
         prefer_model_on_mismatch=True,
     )
+    if field.page is not None and field.bounding_box is not None:
+        return field
     model_source = _model_source(entry, page_numbers, page_sizes)
     if model_source is None:
         return field
