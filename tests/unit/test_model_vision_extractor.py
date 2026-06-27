@@ -44,6 +44,38 @@ def test_vision_extractor_returns_fields_with_located_source_refs():
     assert "Image page order: 1, 8" in backend.prompts[0]
 
 
+def test_vision_extractor_cleans_w2_label_polluted_numeric_values():
+    document_id = uuid4()
+    backend = FakeVisionBackend(
+        {
+            "fields": {
+                "tax_year": {
+                    "value": "W-2 Wage and Tax Statement 2025",
+                    "confidence": 0.97,
+                    "source_text": "W-2 Wage and Tax Statement 2025",
+                },
+                "w2_wages": {
+                    "value": "1 Wages, tips, other compensation 57278.79",
+                    "confidence": 0.93,
+                    "source_text": "1 Wages, tips, other compensation 57278.79",
+                },
+                "w2_medicare_wages": {"value": 57278.79, "confidence": 0.94, "source_text": "57278.79"},
+            }
+        }
+    )
+
+    fields = extract_fields_with_vision([b"page"], _w2_blocks(), document_id, "w2", backend)
+
+    by_name = {field.field: field for field in fields}
+    assert by_name["tax_year"].value == 2025
+    assert by_name["tax_year"].raw_text == "2025"
+    assert by_name["w2_wages"].value == 57278.79
+    assert by_name["w2_wages"].raw_text == "57278.79"
+    assert by_name["w2_wages"].bounding_box is not None
+    assert by_name["w2_medicare_wages"].value == 57278.79
+    assert "good w2_wages=57278.79" in backend.prompts[0]
+
+
 def _blocks():
     return [
         *_line(1, 10, "Form 1040 2023 U.S. Individual Income Tax Return"),
@@ -51,6 +83,14 @@ def _blocks():
         *_line(1, 50, "11 Adjusted gross income 87,638"),
         *_line(8, 10, "SCHEDULE C Profit or Loss From Business"),
         *_line(8, 80, "31 Net profit or loss Line 31 94,380"),
+    ]
+
+
+def _w2_blocks():
+    return [
+        *_line(1, 10, "2025 Form W-2 Wage and Tax Statement"),
+        *_line(1, 30, "1 Wages tips other compensation 57278.79"),
+        *_line(1, 50, "5 Medicare wages and tips 57278.79"),
     ]
 
 

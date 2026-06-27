@@ -5,6 +5,7 @@ from app.extractors.model_extractor import _field_from_model, _payload_from_resp
 from app.extractors.model_field_schemas import descriptions_for_fields, field_descriptions_for
 from app.extractors.model_field_schemas import schema_for_fields
 from app.extractors.model_prompt import field_context_blocks, page_text, tax_return_sections
+from app.extractors.model_vision_value_cleaner import clean_vision_entry
 from app.extractors.model_w2_context import w2_context_blocks
 from app.extractors.w2_extractor import _form_blocks as w2_form_blocks
 from app.schemas.extraction import ExtractedField
@@ -26,7 +27,12 @@ def extract_fields_with_vision(
     )
     payload = _payload_from_response(response)
     return [
-        _field_from_model(name, payload.get(name), _field_blocks(name, group_blocks, doc_type), document_id)
+        _field_from_model(
+            name,
+            clean_vision_entry(name, payload.get(name)),
+            _field_blocks(name, group_blocks, doc_type),
+            document_id,
+        )
         for name in field_names
     ]
 
@@ -54,8 +60,12 @@ def _vision_prompt(descriptions: dict[str, str], blocks: list[dict]) -> str:
         "Extract mortgage income document fields from the attached page images. "
         "Use the OCR text only as page and source-position context. Return strict "
         "JSON matching the supplied schema. Use numbers only, with no dollar signs "
-        "or commas. If a value is not visible, set it to null. Never compute income "
-        "or infer missing values.\n\n"
+        "or commas. Return only the field value, never a box number, field label, "
+        "or description. Numeric example: good w2_wages=57278.79; bad "
+        "w2_wages='1 Wages, tips, other compensation 57278.79'. Tax year example: "
+        "good tax_year=2025; bad tax_year='W-2 Wage and Tax Statement 2025'. "
+        "If a value is not visible, set it to null. Never compute income or infer "
+        "missing values.\n\n"
         f"Image page order: {pages or 'unknown'}.\n\n"
         f"Fields:\n{_field_list(descriptions)}\n\nOCR text:\n{page_text(blocks)}"
     )
