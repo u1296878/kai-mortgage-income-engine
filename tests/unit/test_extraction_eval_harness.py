@@ -90,6 +90,35 @@ def test_eval_harness_reports_schedule_c_subtotal(tmp_path, monkeypatch):
     assert result["summary"]["tieouts"] == 1
 
 
+def test_eval_harness_reports_multi_property_schedule_e_subtotal(tmp_path, monkeypatch):
+    labels = tmp_path / "labels.json"
+    document = tmp_path / "tax.pdf"
+    document.write_text("stub")
+    labels.write_text(
+        json.dumps(
+            {
+                "documents": [
+                    {
+                        "id": "rental",
+                        "path": str(document),
+                        "doc_type": "tax_return",
+                        "expected_fields": {"schedule_e_property_a_gross_rents": 22480},
+                        "subtotal": {"type": "schedule_e_properties", "expected": 32986.44},
+                    }
+                ]
+            }
+        )
+    )
+    monkeypatch.setattr(harness, "_extract", lambda path, doc_type: _multi_property_schedule_e_fields())
+
+    report, result = harness.run_eval(
+        harness.EvalConfig(provider="anthropic", runs=1, labels_path=labels, results_dir=None)
+    )
+
+    assert "Subtotal `schedule_e_properties`: expected 32986.44, got 32986.44 (PASS, 1/1)." in report
+    assert result["summary"]["tieouts"] == 1
+
+
 def test_eval_harness_skips_missing_documents_and_restores_settings(tmp_path):
     labels = tmp_path / "labels.json"
     labels.write_text(
@@ -114,3 +143,21 @@ def test_eval_harness_skips_missing_documents_and_restores_settings(tmp_path):
 
     assert "SKIPPED: missing document" in report
     assert settings.extraction_provider == original_provider
+
+
+def _multi_property_schedule_e_fields():
+    return [
+        field("schedule_e_property_a_fair_rental_days", 366),
+        field("schedule_e_property_a_gross_rents", 22480),
+        field("schedule_e_property_a_total_expenses", 19943),
+        field("schedule_e_property_a_insurance", 211),
+        field("schedule_e_property_a_mortgage_interest", 5264),
+        field("schedule_e_property_a_taxes", 1677),
+        field("schedule_e_property_a_depreciation_depletion", 8116),
+        field("schedule_e_property_b_fair_rental_days", 240),
+        field("schedule_e_property_b_gross_rents", 13500),
+        field("schedule_e_property_b_total_expenses", 12597),
+        field("schedule_e_property_b_other_interest", 4280),
+        field("schedule_e_property_b_taxes", 889),
+        field("schedule_e_property_b_depreciation_depletion", 4049),
+    ]

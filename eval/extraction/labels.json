@@ -27,15 +27,28 @@
       "subtotal": {"type": "schedule_c", "expected": 89079}
     },
     {
-      "id": "saunders_schedule_e",
-      "path": "eval/extraction/documents/saunders_schedule_e.pdf",
+      "id": "rental_multi_property_2024",
+      "path": "eval/extraction/documents/rental_multi_property_2024.pdf",
       "doc_type": "tax_return",
       "expected_fields": {
-        "schedule_e_property_a_rents_received": 12000,
-        "schedule_e_property_a_total_expenses": 20000,
-        "schedule_e_property_a_depreciation_depletion": 2000
+        "schedule_e_property_a_fair_rental_days": 366,
+        "schedule_e_property_a_gross_rents": 22480,
+        "schedule_e_property_a_total_expenses": 19943,
+        "schedule_e_property_a_insurance": 211,
+        "schedule_e_property_a_mortgage_interest": 5264,
+        "schedule_e_property_a_other_interest": 0,
+        "schedule_e_property_a_taxes": 1677,
+        "schedule_e_property_a_depreciation_depletion": 8116,
+        "schedule_e_property_b_fair_rental_days": 240,
+        "schedule_e_property_b_gross_rents": 13500,
+        "schedule_e_property_b_total_expenses": 12597,
+        "schedule_e_property_b_insurance": 0,
+        "schedule_e_property_b_mortgage_interest": 0,
+        "schedule_e_property_b_other_interest": 4280,
+        "schedule_e_property_b_taxes": 889,
+        "schedule_e_property_b_depreciation_depletion": 4049
       },
-      "subtotal": {"type": "schedule_e_property", "expected": -6000}
+      "subtotal": {"type": "schedule_e_properties", "expected": 32986.44}
     },
     {
       "id": "w2_fake_filled",

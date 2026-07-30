@@ -1,4 +1,4 @@
-from app.income.rental import compute_rental_income
+from app.income.rental import compute_rental_income, months_from_fair_rental_days
 from app.income.self_employment import compute_schedule_c
 from app.schemas.extraction import ExtractedField
 from app.schemas.rental_inputs import PropertyClass, RentalMethod, RentalProperty, ScheduleEYear
@@ -10,6 +10,8 @@ def compute_subtotal(kind: str, by_name: dict[str, ExtractedField]) -> float | N
         return _schedule_c_subtotal(by_name)
     if kind == "schedule_e_property":
         return _schedule_e_annual(by_name)
+    if kind == "schedule_e_properties":
+        return _schedule_e_properties_annual(by_name)
     return None
 
 
@@ -32,28 +34,42 @@ def _schedule_c_subtotal(by_name: dict[str, ExtractedField]) -> float | None:
 
 
 def _schedule_e_annual(by_name: dict[str, ExtractedField]) -> float | None:
-    rents = _num(by_name, "schedule_e_property_a_rents_received")
-    expenses = _num(by_name, "schedule_e_property_a_total_expenses")
-    if rents is None or expenses is None:
+    return _schedule_e_property_annual(by_name, "a")
+
+
+def _schedule_e_properties_annual(by_name: dict[str, ExtractedField]) -> float | None:
+    subtotals = [
+        subtotal
+        for key in ("a", "b", "c")
+        if (subtotal := _schedule_e_property_annual(by_name, key)) is not None
+    ]
+    return round(sum(subtotals), 2) if subtotals else None
+
+
+def _schedule_e_property_annual(by_name: dict[str, ExtractedField], key: str) -> float | None:
+    prefix = f"schedule_e_property_{key}"
+    rents = _num(by_name, f"{prefix}_gross_rents")
+    expenses = _num(by_name, f"{prefix}_total_expenses")
+    if rents is None and expenses is None:
         return None
     year = ScheduleEYear(
-        months_in_service=12,
-        rents_received=rents,
-        total_expenses=expenses,
-        insurance=_num(by_name, "schedule_e_property_a_insurance") or 0.0,
-        mortgage_interest=_num(by_name, "schedule_e_property_a_mortgage_interest") or 0.0,
-        taxes=_num(by_name, "schedule_e_property_a_taxes") or 0.0,
-        depreciation_depletion=_num(by_name, "schedule_e_property_a_depreciation_depletion") or 0.0,
-        hoa_addback=_num(by_name, "schedule_e_property_a_hoa_addback") or 0.0,
-        casualty_one_time=_num(by_name, "schedule_e_property_a_casualty_one_time") or 0.0,
+        months_in_service=months_from_fair_rental_days(_num(by_name, f"{prefix}_fair_rental_days")),
+        rents_received=rents or 0.0,
+        total_expenses=expenses or 0.0,
+        insurance=_num(by_name, f"{prefix}_insurance") or 0.0,
+        mortgage_interest=(
+            (_num(by_name, f"{prefix}_mortgage_interest") or 0.0)
+            + (_num(by_name, f"{prefix}_other_interest") or 0.0)
+        ),
+        taxes=_num(by_name, f"{prefix}_taxes") or 0.0,
+        depreciation_depletion=_num(by_name, f"{prefix}_depreciation_depletion") or 0.0,
     )
     prop = RentalProperty(
-        property_class=PropertyClass.investment,
+        property_class=PropertyClass.primary_2_4_unit,
         method=RentalMethod.schedule_e,
-        monthly_pitia=0.0,
         schedule_e_years=[year],
     )
-    return compute_rental_income(prop).qualifying_monthly * 12
+    return round(compute_rental_income(prop).qualifying_monthly * 12, 2)
 
 
 def _num(by_name: dict[str, ExtractedField], field: str) -> float | None:

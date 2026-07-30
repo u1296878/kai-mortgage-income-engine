@@ -188,6 +188,11 @@ Income engine, Phase 22 (vision/OCR reconciliation) is complete:
 - The Ollama text path keeps the older anchor-preferred reconcile behavior.
 - Vision Schedule C guards now reject label-only business miles and non-amortization Part V amounts.
 
+Income engine, Phase 23 rental verification/eval is prepared but blocked on local PDFs:
+- The extraction eval label now uses an anonymized multi-property Schedule E fixture (`rental_multi_property_2024`) with per-property fair-rental days, rents, expenses, add-backs, and an annualized rental subtotal.
+- The eval subtotal scorer now uses the rental engine across Schedule E property A/B/C fields, including fair-rental-day month conversion and existing `gross_rents` field names.
+- Skip-safe 5-run evals for both `anthropic` (`claude-sonnet-4-6`) and `ollama` (`llama3.2:latest`) currently report `0/0` tieouts and `0` varied fields because all labeled PDFs are missing from `eval/extraction/documents/`; no go-live decision can be made until those local, gitignored PDFs are placed.
+
 Income engine, Step 3 (non-taxable + Social Security calc core) is complete:
 - `app/income/nontaxable.py` is a pure engine: one source in (`NonTaxableSource` / `SocialSecuritySource` in `app/schemas/nontaxable_inputs.py`), one qualifying monthly figure out, plus a small taxable/eligible breakdown where the method splits the amount — mirroring the rental engine's shape.
 - Three non-taxable methods (spec 3): `gross_100` (`gross/12`), `total_adjusted` (taxable not grossed up + non-taxable slice grossed up 25%, each term rounded then summed), `current_monthly` (the return's taxable ratio applied to the current monthly amount, then the eligible slice grossed up). Two Social Security methods: `gross_100` and `adjusted` (`(gross + gross*0.15*0.25)/12`). Gross-up rate is a parameter defaulting to 0.25 (spec 1.3).
