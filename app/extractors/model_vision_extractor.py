@@ -8,8 +8,9 @@ from app.extractors.model_prompt import field_context_blocks, page_text, tax_ret
 from app.extractors.model_schedule_e_vision import extract_schedule_e_with_vision
 from app.extractors.model_vision_value_cleaner import clean_vision_entry
 from app.extractors.model_w2_context import w2_context_blocks
+from app.extractors.source_lines import build_source_lines
 from app.extractors.w2_extractor import _form_blocks as w2_form_blocks
-from app.schemas.extraction import BoundingBox, ExtractedField
+from app.schemas.extraction import ExtractedField
 
 
 def extract_fields_with_vision(
@@ -74,10 +75,9 @@ def _vision_prompt(descriptions: dict[str, str], blocks: list[dict]) -> str:
         "w2_wages='1 Wages, tips, other compensation 57278.79'. Tax year example: "
         "good tax_year=2025; bad tax_year='W-2 Wage and Tax Statement 2025'. "
         "If a value is not visible, set it to null. Never compute income or infer "
-        "missing values. For each visible field, also return box=[x0,y0,x1,y1] "
-        "as normalized 0.0-1.0 coordinates around the value on the page image, "
-        "plus zero-based page_index in the attached image order. These boxes are "
-        "approximate review regions; use null when you cannot place one.\n\n"
+        "missing values. If you return box=[x0,y0,x1,y1] plus zero-based "
+        "page_index, treat them as approximate fallback hints only; backend OCR "
+        "source locations are authoritative. Use null when you cannot place one.\n\n"
         f"Image page order: {pages or 'unknown'}.\n\n"
         f"Fields:\n{_field_list(descriptions)}\n\nOCR text:\n{page_text(blocks)}"
     )
@@ -95,6 +95,7 @@ def _field_from_vision(
     page_numbers: list[int],
     page_sizes: dict[int, tuple[float, float]],
 ) -> ExtractedField:
+    source_lines = build_source_lines(blocks) if _has_source_line_ids(entry) else None
     field = _field_from_model(
         name,
         entry,
@@ -102,42 +103,28 @@ def _field_from_vision(
         document_id,
         preserve_confidence_without_source=True,
         prefer_model_on_mismatch=True,
+        source_lines=source_lines,
     )
     if field.page is not None and field.bounding_box is not None:
         return field
-    model_source = _model_source(entry, page_numbers, page_sizes)
-    if model_source is None:
-        return field
-    field.page = model_source["page"]
-    field.bounding_box = BoundingBox(
-        x1=model_source["x1"],
-        y1=model_source["y1"],
-        x2=model_source["x2"],
-        y2=model_source["y2"],
-    )
+    if _has_model_source_hint(entry, page_numbers):
+        field.confidence = min(field.confidence, 0.2)
+        field.review_flags.append(
+            {"fields": [name], "message": "source is model-estimated; verify", "severity": "low"}
+        )
     return field
 
 
-def _model_source(
-    entry,
-    page_numbers: list[int],
-    page_sizes: dict[int, tuple[float, float]],
-) -> dict | None:
-    if not isinstance(entry, dict):
-        return None
-    page = _model_page(entry, page_numbers)
-    box = _normalized_box(entry.get("box"))
-    if page is None or box is None or page not in page_sizes:
-        return None
-    width, height = page_sizes[page]
-    x0, y0, x1, y1 = box
-    return {
-        "page": page,
-        "x1": round(x0 * width, 2),
-        "y1": round(y0 * height, 2),
-        "x2": round(x1 * width, 2),
-        "y2": round(y1 * height, 2),
-    }
+def _has_source_line_ids(entry) -> bool:
+    return isinstance(entry, dict) and isinstance(entry.get("source_line_ids"), list)
+
+
+def _has_model_source_hint(entry, page_numbers: list[int]) -> bool:
+    return (
+        isinstance(entry, dict)
+        and _model_page(entry, page_numbers) is not None
+        and _normalized_box(entry.get("box")) is not None
+    )
 
 
 def _model_page(entry: dict, page_numbers: list[int]) -> int | None:

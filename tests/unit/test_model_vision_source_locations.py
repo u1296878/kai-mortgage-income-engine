@@ -15,7 +15,7 @@ class FakeVisionBackend:
         return self.payload
 
 
-def test_vision_source_box_converts_normalized_coords_to_pdf_points():
+def test_vision_source_box_is_untrusted_when_it_is_the_only_source():
     backend = FakeVisionBackend(
         {
             "w2_wages": {
@@ -39,9 +39,11 @@ def test_vision_source_box_converts_normalized_coords_to_pdf_points():
     )
 
     wages = _field(fields, "w2_wages")
-    assert wages.page == 3
-    assert wages.bounding_box.model_dump() == {"x1": 61.2, "y1": 158.4, "x2": 183.6, "y2": 198.0}
-    assert "normalized 0.0-1.0 coordinates" in backend.prompts[0]
+    assert wages.page is None
+    assert wages.bounding_box is None
+    assert wages.confidence == 0.2
+    assert _messages(wages) == ["source is model-estimated; verify"]
+    assert "approximate fallback hints only" in backend.prompts[0]
     assert "box" in backend.schemas[0]["properties"]["fields"]["properties"]["w2_wages"]["properties"]
 
 
@@ -112,7 +114,7 @@ def test_vision_source_box_ignores_malformed_model_box_without_crashing():
     assert _field(fields, "w2_wages").bounding_box is None
 
 
-def test_vision_source_box_clamps_out_of_range_model_coords():
+def test_vision_source_box_out_of_range_stays_untrusted():
     backend = FakeVisionBackend(
         {
             "w2_wages": {
@@ -135,9 +137,10 @@ def test_vision_source_box_clamps_out_of_range_model_coords():
         page_sizes={1: (612.0, 792.0)},
     )
 
-    assert _field(fields, "w2_wages").bounding_box.model_dump() == {
-        "x1": 0.0, "y1": 158.4, "x2": 612.0, "y2": 316.8,
-    }
+    wages = _field(fields, "w2_wages")
+    assert wages.bounding_box is None
+    assert wages.confidence == 0.2
+    assert _messages(wages) == ["source is model-estimated; verify"]
 
 
 def _w2_blocks():
@@ -165,3 +168,7 @@ def _line(page: int, y: float, text: str) -> list[dict]:
 
 def _field(fields, name: str):
     return next(field for field in fields if field.field == name)
+
+
+def _messages(field):
+    return [flag["message"] for flag in field.review_flags]
