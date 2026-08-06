@@ -69,10 +69,15 @@ def field_descriptions_for(doc_type: str) -> dict[str, str]:
     return _fields_for_doc_type(doc_type)
 
 
-def schema_for_fields(field_names: tuple[str, ...], include_source_box: bool = False) -> dict:
+def schema_for_fields(
+    field_names: tuple[str, ...],
+    include_source_box: bool = False,
+    include_source_line_ids: bool = True,
+) -> dict:
     return _json_schema(
         {name: _field_description(name) for name in field_names},
         include_source_box,
+        include_source_line_ids,
     )
 
 
@@ -98,7 +103,11 @@ def _field_description(name: str) -> str:
     return TAX_RETURN_FIELDS[name]
 
 
-def _json_schema(fields: dict[str, str], include_source_box: bool = False) -> dict:
+def _json_schema(
+    fields: dict[str, str],
+    include_source_box: bool = False,
+    include_source_line_ids: bool = True,
+) -> dict:
     field_properties = {
         name: {
             "type": ["object", "null"],
@@ -108,9 +117,15 @@ def _json_schema(fields: dict[str, str], include_source_box: bool = False) -> di
                 "confidence": {"type": ["number", "null"]},
                 "source_text": {"type": ["string", "null"]},
                 "text_value": {"type": ["string", "null"]},
+                **_source_line_properties(include_source_line_ids),
                 **_source_box_properties(include_source_box),
             },
-            "required": ["value", "confidence", "source_text"],
+            "required": [
+                "value",
+                "confidence",
+                "source_text",
+                *_source_line_required(include_source_line_ids),
+            ],
         }
         for name in fields
     }
@@ -127,6 +142,21 @@ def _json_schema(fields: dict[str, str], include_source_box: bool = False) -> di
         },
         "required": ["fields"],
     }
+
+
+def _source_line_properties(include_source_line_ids: bool) -> dict:
+    if not include_source_line_ids:
+        return {}
+    return {
+        "source_line_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+        }
+    }
+
+
+def _source_line_required(include_source_line_ids: bool) -> list[str]:
+    return ["source_line_ids"] if include_source_line_ids else []
 
 
 def _source_box_properties(include_source_box: bool) -> dict:

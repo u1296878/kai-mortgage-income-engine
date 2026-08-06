@@ -26,7 +26,7 @@ def extract_fields_with_vision(
     ordered_pages = page_numbers or sorted({block["page"] for block in group_blocks})
     response = backend.complete_json(
         _vision_prompt(descriptions_for_fields(field_names), group_blocks),
-        schema_for_fields(field_names, include_source_box=True),
+        schema_for_fields(field_names, include_source_box=True, include_source_line_ids=False),
         images=image_pages,
     )
     payload = _payload_from_response(response)

@@ -1,4 +1,5 @@
 from app.extractors.model_field_schemas import LINE_NUMBER_FIELDS
+from app.extractors.source_lines import build_source_lines, format_source_lines
 from app.extractors.tax_return_block_index import TaxReturnBlockIndex
 from app.extractors.tax_return_locator import federal_form_pages, line_matches, schedule_c_pages
 from app.extractors.tax_return_text import normalized_line_text
@@ -18,16 +19,22 @@ def build_prompt(descriptions: dict[str, str], blocks: list[dict]) -> str:
     fields = "\n".join(f"- {name}: {description}" for name, description in descriptions.items())
     return (
         "Extract mortgage income document fields from the OCR/text below.\n"
-        "Return strict JSON matching the supplied schema. Use numbers only, "
-        "with no dollar signs or commas. A value printed as 94,380 must be "
-        "returned as 94380, never 94. Each line has a printed line number "
-        "(for example 12, 13, 31) that is a label, not a value. Never return "
-        "a line number as the field value. Ignore amounts that belong to other "
-        "line numbers. If a line has no numeric amount or the "
-        "visible text is ambiguous, set its value to null. Never compute income "
-        "or infer missing values.\n\n"
-        f"Fields:\n{fields}\n\nDocument text:\n{page_text(blocks)}"
+        "Return strict JSON matching the supplied schema. For each field, return "
+        "value, confidence, source_text, and source_line_ids. Use source_line_ids "
+        "from the bracketed IDs only, such as L0007. Do not invent IDs or return "
+        "coordinates. Use numbers only, with no dollar signs or commas. A value "
+        "printed as 94,380 must be returned as 94380, never 94. Each line has a "
+        "printed line number (for example 12, 13, 31) that is a label, not a "
+        "value. Never return a line number as the field value. Ignore amounts "
+        "that belong to other line numbers. If a line has no numeric amount or "
+        "the visible text is ambiguous, set its value to null and source_line_ids "
+        "to []. Never compute income or infer missing values.\n\n"
+        f"Fields:\n{fields}\n\nSource lines:\n{source_line_text(blocks)}"
     )
+
+
+def source_line_text(blocks: list[dict]) -> str:
+    return format_source_lines(build_source_lines(blocks))
 
 
 def page_text(blocks: list[dict]) -> str:
