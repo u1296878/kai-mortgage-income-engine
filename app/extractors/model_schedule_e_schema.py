@@ -1,4 +1,5 @@
-from app.extractors.model_prompt import page_text
+from app.extractors.model_prompt import source_line_text
+from app.extractors.source_lines import SourceLine
 
 FIELD_NAMES = (
     "address",
@@ -13,18 +14,21 @@ FIELD_NAMES = (
 )
 
 
-def schedule_e_prompt(blocks: list[dict]) -> str:
+def schedule_e_prompt(blocks: list[dict], source_lines: list[SourceLine] | None = None) -> str:
     return (
         "Extract Schedule E rental properties from the attached tax-return images. "
-        "Return a properties array, one item per property column A, B, or C. "
+        "Return strict JSON matching the supplied schema with a properties array, "
+        "one item per property column A, B, or C. "
         "Do not extract PITIA or property type; those are underwriter inputs. "
-        "For blank numeric line items, return 0, not the printed line number. "
-        "Each field object should include value, confidence, source_text, box, "
-        "and page_index. Use normalized 0.0-1.0 image coordinates for box, or "
-        "null when not placeable. Fields: address line 1a, fair_rental_days line 2, "
+        "Each field object should include value, confidence, source_text, and "
+        "source_line_ids. Use source_line_ids from bracketed IDs only, such as "
+        "L0007. Do not invent source IDs or return coordinates. If a field is "
+        "not visible, return value null, source_text null, and source_line_ids []. "
+        "Never compute income or infer missing values. Fields: address line 1a, "
+        "fair_rental_days line 2, "
         "rents_received line 3, insurance line 9, mortgage_interest line 12, "
         "other_interest line 13, taxes line 16, depreciation_depletion line 18, "
-        f"total_expenses line 20.\n\nOCR text:\n{page_text(blocks)}"
+        f"total_expenses line 20.\n\nSource lines:\n{source_line_text(blocks, source_lines)}"
     )
 
 
@@ -37,15 +41,12 @@ def schedule_e_schema() -> dict:
             "confidence": {"type": ["number", "null"]},
             "source_text": {"type": ["string", "null"]},
             "text_value": {"type": ["string", "null"]},
-            "box": {
-                "type": ["array", "null"],
-                "items": {"type": "number"},
-                "minItems": 4,
-                "maxItems": 4,
+            "source_line_ids": {
+                "type": "array",
+                "items": {"type": "string"},
             },
-            "page_index": {"type": ["integer", "null"]},
         },
-        "required": ["value", "confidence", "source_text", "box", "page_index"],
+        "required": ["value", "confidence", "source_text", "source_line_ids"],
     }
     return {
         "type": "object",
