@@ -9,7 +9,7 @@ from app.exceptions import (
 from app.models.income_stream import IncomeStream
 from app.models.result import Result
 from app.repositories import case_repo, income_stream_repo, result_repo
-from app.services import income_service
+from app.services import income_stream_snapshot_service
 
 
 def create_income_stream(
@@ -90,7 +90,7 @@ def unassign_result_from_stream(
 
 def recalculate_income_stream(db: Session, stream_id: UUID) -> IncomeStream:
     stream_results = result_repo.list_results_by_income_stream(db, stream_id)
-    annual_income, confidence = income_service.stream_income_snapshot(stream_results)
+    annual_income, confidence = income_stream_snapshot_service.stream_income_snapshot(stream_results)
     return income_stream_repo.update_income_stream(
         db,
         stream_id,

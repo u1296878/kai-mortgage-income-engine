@@ -19,7 +19,7 @@ from app.repositories import (
 )
 from app.schemas.extraction import ExtractedField
 from app.schemas.result import CaseSummaryResponse
-from app.services import case_summary_builder, extraction_validation, income_service
+from app.services import case_summary_builder, extraction_validation, result_income_service
 
 
 def save_extraction_result(
@@ -31,7 +31,7 @@ def save_extraction_result(
     fields: list[ExtractedField],
 ) -> Result:
     review_flags = extraction_validation.validate_extraction(doc_type, fields)
-    annual_income, confidence, notes = income_service.compute_annual_income(
+    annual_income, confidence, notes = result_income_service.compute_annual_income(
         fields,
         doc_type,
     )

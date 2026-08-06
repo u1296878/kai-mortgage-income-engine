@@ -2,8 +2,10 @@ from uuid import uuid4
 
 from app.models.case import Case
 from app.models.employment_calculation import EmploymentCalculation
+from app.models.income_stream import IncomeStream
 from app.models.nontaxable_calculation import NonTaxableCalculation
 from app.models.rental_calculation import RentalCalculation
+from app.models.result import Result
 from app.models.self_employment_calculation import SelfEmploymentCalculation
 from tests.local_user_helpers import make_user
 from app.schemas.extraction import BoundingBox, ExtractedField
@@ -30,6 +32,31 @@ def test_summary_adds_saved_employment_calculations(test_db):
 
     assert summary.total_annual_income == 169000.00
     assert len(summary.employment_calculations) == 1
+
+
+def test_summary_dedupes_saved_employment_calculation_source_result(test_db):
+    case_id, document_id = _case_with_result(test_db, 85000.00, return_document_id=True)
+    test_db.add(_employment_calc(case_id, 84000.00, source_document_id=document_id))
+    test_db.commit()
+
+    summary = result_service.get_case_summary(test_db, case_id)
+
+    assert summary.total_annual_income == 84000.00
+
+
+def test_summary_dedupes_saved_calculation_when_source_result_is_streamed(test_db):
+    case_id, document_id = _case_with_result(test_db, 85000.00, return_document_id=True)
+    result = test_db.query(Result).filter_by(document_id=str(document_id)).one()
+    stream = _stream(case_id, 85000.00)
+    test_db.add(stream)
+    test_db.commit()
+    result.income_stream_id = stream.id
+    test_db.add(_employment_calc(case_id, 84000.00, source_document_id=document_id))
+    test_db.commit()
+
+    summary = result_service.get_case_summary(test_db, case_id)
+
+    assert summary.total_annual_income == 85000.00
 
 
 def test_summary_adds_saved_rental_calculations(test_db):
@@ -87,17 +114,18 @@ def test_summary_negative_self_employment_calculation_reduces_total(test_db):
     assert len(summary.self_employment_calculations) == 1
 
 
-def _case_with_result(test_db, annual_income):
+def _case_with_result(test_db, annual_income, return_document_id=False):
     case_id = uuid4()
+    document_id = uuid4()
     test_db.add(Case(id=str(case_id), title="Add-on"))
     test_db.commit()
     result_service.save_extraction_result(
-        test_db, uuid4(), uuid4(), case_id, "other", [make_field(value=annual_income)]
+        test_db, uuid4(), document_id, case_id, "other", [make_field(value=annual_income)]
     )
-    return case_id
+    return (case_id, document_id) if return_document_id else case_id
 
 
-def _employment_calc(case_id, annual_income):
+def _employment_calc(case_id, annual_income, source_document_id=None):
     monthly = round(annual_income / 12, 2)
     bucket = {"qualifying_monthly": 0.0, "rate_of_pay_monthly": 0.0, "periods": []}
     breakdown = {
@@ -114,7 +142,19 @@ def _employment_calc(case_id, annual_income):
         inputs={},
         total_monthly=monthly,
         annual_income=annual_income,
+        source_document_id=str(source_document_id) if source_document_id else None,
         breakdown=breakdown,
+    )
+
+
+def _stream(case_id, annual_income):
+    return IncomeStream(
+        id=str(uuid4()),
+        case_id=str(case_id),
+        name="Employment",
+        stream_type="employment",
+        annual_income=annual_income,
+        confidence="high",
     )
 
 

@@ -8,7 +8,7 @@ from app.models.rental_calculation import RentalCalculation
 from app.models.result import Result
 from app.models.self_employment_calculation import SelfEmploymentCalculation
 from app.schemas.result import CaseSummaryResponse
-from app.services import income_service
+from app.services import case_result_summary_service
 
 
 def build_case_summary(
@@ -25,26 +25,21 @@ def build_case_summary(
     rental_calculations = rental_calculations or []
     nontaxable_calculations = nontaxable_calculations or []
     self_employment_calculations = self_employment_calculations or []
-    result_total, sources = income_service.summarize_case_income(results)
+    stream_document_ids = _stream_document_ids(results)
+    saved_document_ids = _saved_document_ids(
+        employment_calculations,
+        rental_calculations,
+        self_employment_calculations,
+    )
+    result_total, sources = case_result_summary_service.summarize_case_income(
+        results,
+        saved_document_ids,
+    )
     stream_total = sum(stream.annual_income or 0.0 for stream in income_streams)
-    employment_total = sum(
-        calc.annual_income or 0.0
-        for calc in employment_calculations
-        if calc.included
-    )
-    rental_total = sum(
-        calc.annual_income or 0.0
-        for calc in rental_calculations
-        if calc.included
-    )
+    employment_total = _included_total(employment_calculations, stream_document_ids)
+    rental_total = _included_total(rental_calculations, stream_document_ids)
     nontaxable_total = sum(calc.annual_income or 0.0 for calc in nontaxable_calculations)
-    self_employment_total = sum(
-        calc.annual_income or 0.0
-        for calc in self_employment_calculations
-        if calc.included
-    )
-    # Saved worksheet calculations are additive and can double-count if an
-    # underwriter also keeps the same income in a stream; no dedupe in this slice.
+    self_employment_total = _included_total(self_employment_calculations, stream_document_ids)
     total = (
         (stream_total if income_streams else result_total)
         + employment_total
@@ -64,3 +59,28 @@ def build_case_summary(
         results=results,
         sources=sources,
     )
+
+
+def _included_total(calculations, suppressed_document_ids: set[str]) -> float:
+    return sum(
+        calc.annual_income or 0.0
+        for calc in calculations
+        if calc.included and getattr(calc, "source_document_id", None) not in suppressed_document_ids
+    )
+
+
+def _saved_document_ids(*calculation_groups) -> set[str]:
+    return {
+        calc.source_document_id
+        for calculations in calculation_groups
+        for calc in calculations
+        if calc.included and calc.source_document_id
+    }
+
+
+def _stream_document_ids(results: list[Result]) -> set[str]:
+    return {
+        result.document_id
+        for result in results
+        if result.income_stream_id is not None
+    }

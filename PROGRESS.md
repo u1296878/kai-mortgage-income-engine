@@ -222,4 +222,10 @@ Income engine, Step 4c (wire + persist self-employment) is complete:
 - Frontend: `/income/self-employment` renders a config-driven worksheet for personal schedules and business entities, normalizes blank numeric cells to 0 before API calls, saves to a case, and case detail lists/deletes saved self-employment calculations.
 - All three Excel workbooks are now replicated and surfaced end-to-end through preview/save/case-summary workflows.
 
-Remaining for the income engine: decide printable worksheet output, revisit blank line-item defaults across self-employment API/form inputs, edit saved calcs (+ optional dedupe vs streams), wire extractors to populate the input models, and finally retire `app/services/income_service.py` in favor of `app/income/`.
+Income engine, Step 6 cleanup is complete:
+- `app/services/income_service.py` is retired. Result annual-income decisions now call `app/income/result_income.py` through a thin result service; case result summarization and income-stream snapshot selection live in purpose-named services.
+- Case summary totals now dedupe saved worksheet calculations by source document, including the stream case where a source result is already represented by an income stream.
+- Frontend coverage was expanded with direct calculation-panel tests, and the oversized income API/data hook files were split under the project file-size cap.
+- Live Anthropic use remains blocked until zero-retention/data-processing terms for borrower NPI are confirmed and configured.
+
+Remaining for the income engine: decide printable worksheet output, revisit blank line-item defaults across self-employment API/form inputs, add saved employment-calculation edit support, and wire extractors to populate the input models.

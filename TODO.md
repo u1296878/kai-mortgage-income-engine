@@ -15,7 +15,8 @@
 - [x] Income engine, Step 1: employment qualifying-income calc core (`app/income/` — dates, pay frequency, employment blend/rate-of-pay/AY toggle) ties out to the worksheet
 - [x] Income engine, Step 1b: wire employment engine end-to-end (stateless) — `POST /income/employment/calculate` + worksheet form UI
 - [x] Income engine, Step 1c: persist employment calculations to a case and fold into the case-summary total; case-detail panel to list/delete saved calcs
-- [ ] Income engine, Step 1d: edit a saved employment calculation; dedupe saved calc vs income stream representing the same income (currently additive by design)
+- [ ] Income engine, Step 1d: edit a saved employment calculation
+- [x] Income engine cleanup: dedupe saved worksheet calculations against source results and income streams representing the same income
 - [x] Income engine, Step 2: rental calc engine (`app/income/rental.py` — Schedule E primary/investment averaging + lease vacancy method) ties out to the worksheet
 - [x] Income engine, Step 2b: wire + persist rental — `POST /income/rental/calculate`, case-scoped save/list/delete, folded into case summary (loss reduces total), worksheet + case-detail panel UI
 - [x] Income engine, Step 2c: edit a saved rental calculation, including extracted Schedule E drafts
@@ -27,7 +28,7 @@
 - [x] Phase 15: extraction accuracy/variance is measurable per backend with local gitignored PDFs and JSON result output
 - [x] Phase 22: Claude vision now wins over disagreeing OCR anchors while recording high review flags; Ollama text extraction keeps anchor-preferred reconciliation
 - [ ] Run Sonnet-vs-Haiku extraction eval on the local labeled PDF set and record the first comparison numbers
-- [ ] Before live Anthropic use: confirm zero-retention/data-processing requirements for borrower NPI and set `ANTHROPIC_API_KEY` on the account/environment
+- [ ] BLOCKER before live Anthropic use: confirm zero-retention/data-processing requirements for borrower NPI and set `ANTHROPIC_API_KEY` on the account/environment
 - [x] Income engine, Step 3: non-taxable + Social Security calc engine (`app/income/nontaxable.py` — 3 non-taxable methods + 2 SS methods, 25% gross-up) ties out to the worksheet
 - [x] Income engine, Step 3b: wire + persist non-taxable; Income-Worksheet and Rental-Worksheet are now fully covered
 - [x] Income engine, Step 3c: transcribe SAM rows 113-443 into spec section 5
@@ -37,7 +38,7 @@
 - [ ] Income engine, Step 4d: printable self-employment worksheet output decision
 - [ ] Income engine, Step 4e: revisit blank line-item defaults across self-employment API/form inputs
 - [ ] Income engine, Step 5: wire extractors to populate employment input models (capture per-bucket `date_from`, `date_through`, `total_earnings`)
-- [ ] Income engine, Step 6: replace `app/services/income_service.py` with calls into `app/income/`
+- [x] Income engine, Step 6: replace `app/services/income_service.py` with calls into `app/income/`
 - [ ] Phase 4, Step 5: income history averaging rules per stream and borrower
 - [ ] Phase 4, Step 6: borrower-specific qualification logic and underwriting outputs
 - [x] Phase 5, Step 2: PDF viewer with page jump/highlight polish for extracted source references

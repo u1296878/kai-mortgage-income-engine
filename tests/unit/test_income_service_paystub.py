@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from app.schemas.extraction import BoundingBox, ExtractedField
-from app.services import income_service
+from app.services import result_income_service
 
 
 def make_field(field: str, value: float, raw_text: str | None = None) -> ExtractedField:
@@ -18,7 +18,7 @@ def make_field(field: str, value: float, raw_text: str | None = None) -> Extract
 def test_paystub_result_income_is_reference_only():
     fields = [make_field("gross_ytd", 42500.0)]
 
-    annual_income, confidence, notes = income_service.compute_annual_income(fields, "pay_stub")
+    annual_income, confidence, notes = result_income_service.compute_annual_income(fields, "pay_stub")
 
     assert annual_income is None
     assert confidence == "medium"
