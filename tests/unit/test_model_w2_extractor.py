@@ -20,9 +20,9 @@ def test_model_w2_extractor_returns_fields_with_source_refs():
     backend = FakeBackend(
         {
             "fields": {
-                "tax_year": {"value": 2024, "confidence": 0.9, "source_text": "2024"},
-                "w2_wages": {"value": 85000, "confidence": 0.92, "source_text": "85,000.00"},
-                "w2_employer_name": {"value": None, "confidence": 0.8, "source_text": "Acme LLC"},
+                "tax_year": {"value": 2024, "confidence": 0.9, "source_text": "2024", "source_line_ids": ["L0001"]},
+                "w2_wages": {"value": 85000, "confidence": 0.92, "source_text": "85,000.00", "source_line_ids": ["L0001"]},
+                "w2_employer_name": {"value": None, "confidence": 0.8, "source_text": "Acme LLC", "source_line_ids": ["L0001"]},
             }
         }
     )
@@ -32,22 +32,22 @@ def test_model_w2_extractor_returns_fields_with_source_refs():
 
     assert by_name["w2_wages"].value == 85000
     assert by_name["w2_wages"].page == 1
-    assert by_name["w2_wages"].bounding_box.x1 == 210
-    assert by_name["w2_employer_name"].raw_text == "Acme LLC"
+    assert by_name["w2_wages"].bounding_box.x1 == 20
+    assert by_name["w2_employer_name"].raw_text == "Employer name Acme LLC"
     assert any("w2_wages" in prompt for prompt in backend.prompts)
 
 
 def test_model_w2_extractor_corrects_box_label_value():
     document_id = uuid4()
     backend = FakeBackend(
-        {"fields": {"w2_wages": {"value": 1, "confidence": 0.9, "source_text": "1"}}}
+        {"fields": {"w2_wages": {"value": 1, "confidence": 0.9, "source_text": "1", "source_line_ids": ["L0001"]}}}
     )
 
     fields = extract_fields_with_model(_w2_blocks(), document_id, "w2", backend)
     wages = next(field for field in fields if field.field == "w2_wages")
 
     assert wages.value == 85000
-    assert wages.raw_text == "85,000.00"
+    assert wages.raw_text == "1 Wages tips other compensation 85,000.00"
 
 
 def test_model_w2_extractor_recovers_missing_wages_from_box_anchor():

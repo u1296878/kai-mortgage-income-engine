@@ -18,9 +18,9 @@ def test_model_paystub_extractor_returns_numeric_and_text_fields():
     backend = FakeBackend(
         {
             "fields": {
-                "paystub_gross_ytd": {"value": 45000, "confidence": 0.92, "source_text": "45,000.00"},
-                "paystub_period_end": {"value": None, "confidence": 0.88, "text_value": "2025-06-30"},
-                "paystub_employer_name": {"value": None, "confidence": 0.8, "text_value": "Acme Corp"},
+                "paystub_gross_ytd": {"value": 45000, "confidence": 0.92, "source_text": "45,000.00", "source_line_ids": ["L0003"]},
+                "paystub_period_end": {"value": None, "confidence": 0.88, "text_value": "2025-06-30", "source_line_ids": ["L0002"]},
+                "paystub_employer_name": {"value": None, "confidence": 0.8, "text_value": "Acme Corp", "source_line_ids": ["L0001"]},
             }
         }
     )
@@ -30,8 +30,8 @@ def test_model_paystub_extractor_returns_numeric_and_text_fields():
 
     assert by_name["paystub_gross_ytd"].value == 45000
     assert by_name["paystub_gross_ytd"].page == 1
-    assert by_name["paystub_period_end"].raw_text == "2025-06-30"
-    assert by_name["paystub_employer_name"].raw_text == "Acme Corp"
+    assert by_name["paystub_period_end"].raw_text == "Period End 2025-06-30"
+    assert by_name["paystub_employer_name"].raw_text == "Employer Name Acme Corp"
     assert any("paystub_gross_ytd" in prompt for prompt in backend.prompts)
 
 

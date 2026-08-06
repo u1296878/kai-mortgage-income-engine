@@ -1,5 +1,5 @@
 from app.extractors.model_field_schemas import LINE_NUMBER_FIELDS
-from app.extractors.source_lines import build_source_lines, format_source_lines
+from app.extractors.source_lines import SourceLine, build_source_lines, format_source_lines
 from app.extractors.tax_return_block_index import TaxReturnBlockIndex
 from app.extractors.tax_return_locator import federal_form_pages, line_matches, schedule_c_pages
 from app.extractors.tax_return_text import normalized_line_text
@@ -15,7 +15,11 @@ def tax_return_sections(blocks: list[dict]) -> dict[str, list[dict]]:
     }
 
 
-def build_prompt(descriptions: dict[str, str], blocks: list[dict]) -> str:
+def build_prompt(
+    descriptions: dict[str, str],
+    blocks: list[dict],
+    source_lines: list[SourceLine] | None = None,
+) -> str:
     fields = "\n".join(f"- {name}: {description}" for name, description in descriptions.items())
     return (
         "Extract mortgage income document fields from the OCR/text below.\n"
@@ -29,12 +33,12 @@ def build_prompt(descriptions: dict[str, str], blocks: list[dict]) -> str:
         "that belong to other line numbers. If a line has no numeric amount or "
         "the visible text is ambiguous, set its value to null and source_line_ids "
         "to []. Never compute income or infer missing values.\n\n"
-        f"Fields:\n{fields}\n\nSource lines:\n{source_line_text(blocks)}"
+        f"Fields:\n{fields}\n\nSource lines:\n{source_line_text(blocks, source_lines)}"
     )
 
 
-def source_line_text(blocks: list[dict]) -> str:
-    return format_source_lines(build_source_lines(blocks))
+def source_line_text(blocks: list[dict], source_lines: list[SourceLine] | None = None) -> str:
+    return format_source_lines(source_lines or build_source_lines(blocks))
 
 
 def page_text(blocks: list[dict]) -> str:

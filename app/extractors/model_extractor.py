@@ -1,17 +1,17 @@
 from uuid import UUID
-
 from app.extractors.model_backend import ModelBackend
 from app.extractors.model_field_schemas import FEDERAL_FIELDS, PAYSTUB_MODEL_FIELDS, SCHEDULE_C_FIELDS, W2_MODEL_FIELDS
 from app.extractors.model_field_schemas import descriptions_for_fields, field_descriptions_for
 from app.extractors.model_field_schemas import schema_for_fields
 from app.extractors.model_prompt import build_prompt, field_context_blocks, tax_return_sections
+from app.extractors.model_source_citations import resolve_model_source
 from app.extractors.model_source_locator import locate_source
 from app.extractors.model_value_guard import guarded_value
 from app.extractors.model_w2_context import w2_context_blocks
+from app.extractors.source_lines import build_source_lines
 from app.extractors.w2_extractor import _form_blocks as w2_form_blocks
 from app.exceptions import ModelExtractionFailed
 from app.schemas.extraction import BoundingBox, ExtractedField
-
 
 def extract_fields_with_model(
     blocks: list[dict],
@@ -36,7 +36,6 @@ def extract_fields_with_model(
         *_extract_group(SCHEDULE_C_FIELDS, sections["schedule_c"], document_id, backend),
     ]
 
-
 def _extract_group(
     field_names: tuple[str, ...],
     blocks: list[dict],
@@ -47,7 +46,6 @@ def _extract_group(
     if not blocks:
         return [_null_field(name, document_id) for name in field_names]
     return [_extract_one_field(name, blocks, document_id, backend, context_blocks) for name in field_names]
-
 
 def _extract_one_field(
     name: str,
@@ -60,20 +58,19 @@ def _extract_one_field(
     if not field_blocks:
         return _null_field(name, document_id)
     field_names = (name,)
+    source_lines = build_source_lines(field_blocks)
     response = backend.complete_json(
-        build_prompt(descriptions_for_fields(field_names), field_blocks),
+        build_prompt(descriptions_for_fields(field_names), field_blocks, source_lines),
         schema_for_fields(field_names),
     )
     payload = _payload_from_response(response)
-    return _field_from_model(name, payload.get(name), field_blocks, document_id)
-
+    return _field_from_model(name, payload.get(name), field_blocks, document_id, source_lines=source_lines)
 
 def _payload_from_response(response: dict) -> dict:
     payload = response.get("fields", response)
     if not isinstance(payload, dict):
         raise ModelExtractionFailed("Model extraction payload must be an object")
     return payload
-
 
 def _field_from_model(
     name: str,
@@ -82,6 +79,7 @@ def _field_from_model(
     document_id: UUID,
     preserve_confidence_without_source: bool = False,
     prefer_model_on_mismatch: bool = False,
+    source_lines=None,
 ) -> ExtractedField:
     value, confidence, source_text = _entry_parts(entry)
     original_value = value
@@ -93,7 +91,14 @@ def _field_from_model(
         confidence = min(confidence, 0.2)
         if original_value is not None:
             source_text = None
-    source = locate_source(blocks, value, source_text)
+    if source_lines is None or (original_value is None and source_text is None and value is not None):
+        source = locate_source(blocks, value, source_text)
+        review_flags = guarded.review_flags
+    else:
+        citation = resolve_model_source(name, entry, source_lines, blocks, value, source_text, confidence)
+        source = citation.source
+        confidence = citation.confidence
+        review_flags = [*guarded.review_flags, *citation.review_flags]
     if source is None:
         source_confidence = confidence if preserve_confidence_without_source else min(confidence, 0.2)
         return ExtractedField(
@@ -104,7 +109,7 @@ def _field_from_model(
             bounding_box=None,
             raw_text=source_text,
             confidence=source_confidence,
-            review_flags=guarded.review_flags,
+            review_flags=review_flags,
         )
     return ExtractedField(
         field=name,
@@ -117,11 +122,10 @@ def _field_from_model(
             x2=source["x2"],
             y2=source["y2"],
         ),
-        raw_text=source.get("raw_text", source["text"]),
+        raw_text=source.get("raw_text") or source.get("text"),
         confidence=confidence,
-        review_flags=guarded.review_flags,
+        review_flags=review_flags,
     )
-
 
 def _null_field(name: str, document_id: UUID) -> ExtractedField:
     return ExtractedField(
@@ -132,7 +136,6 @@ def _null_field(name: str, document_id: UUID) -> ExtractedField:
         bounding_box=None,
         confidence=0.0,
     )
-
 
 def _entry_parts(entry) -> tuple[float | None, float, str | None]:
     if entry is None:
@@ -147,12 +150,10 @@ def _entry_parts(entry) -> tuple[float | None, float, str | None]:
         source_text = str(raw_value)
     return value, _confidence(confidence), source_text
 
-
 def _source_text(entry) -> str | None:
     if not isinstance(entry, dict):
         return None
     return entry.get("source_text") or entry.get("text_value")
-
 
 def _float_or_none(value) -> float | None:
     if value is None:
@@ -161,7 +162,6 @@ def _float_or_none(value) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
-
 
 def _confidence(value) -> float:
     numeric = _float_or_none(value)
